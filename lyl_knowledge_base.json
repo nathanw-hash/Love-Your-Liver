@@ -1,0 +1,1366 @@
+{
+  "metadata": {
+    "title": "Love Your Liver (LYL) Program Knowledge Base",
+    "version": "1.0",
+    "created": "2025",
+    "author": "Garrett Smith, NMD",
+    "description": "Structured knowledge base for the Love Your Liver program. Based on articles, guides, and training materials by Garrett Smith. Four topics pending addition from video transcripts: Hydration Basics, Sunlight/UVB, MMS/Chlorine Dioxide, MSG.",
+    "note": "LYL supersedes the Basic Vitamin A Detox Program. All LYL content overrides old program content."
+  },
+
+  "categories": [
+    "program_foundations",
+    "supplements_minerals",
+    "supplements_niacin",
+    "supplements_specialty",
+    "supplements_topical",
+    "supplements_avoid",
+    "diet_nutrition",
+    "gut_health",
+    "womens_health",
+    "clinical_education",
+    "lifestyle_protocols",
+    "testing_labs",
+    "detox_tools",
+    "b_vitamins",
+    "pending_video"
+  ],
+
+  "entries": [
+
+    {
+      "id": "prog_001",
+      "category": "program_foundations",
+      "subcategory": "introduction",
+      "title": "What Is the Love Your Liver Program?",
+      "source": "Garrett Smith — What Is The Love Your Liver Program?",
+      "tags": ["overview", "orientation", "onboarding"],
+      "summary": "The Love Your Liver (LYL) program is the evolution of the Basic Vitamin A Detox Program. It condenses and simplifies the most important elements into an easier, more accessible approach while expanding scope. LYL supersedes and replaces all content from the old program.",
+      "key_points": [
+        "LYL supersedes the Basic Vitamin A Detox Program entirely",
+        "Any information in LYL always overrides the old Basic Vitamin A Detox Program",
+        "Old articles are retired as new LYL articles are published",
+        "Designed to give members everything needed to fix health problems for good"
+      ],
+      "app_note": "Display prominently in onboarding. Establishes content authority hierarchy."
+    },
+
+    {
+      "id": "prog_002",
+      "category": "program_foundations",
+      "subcategory": "starter_guide",
+      "title": "Love Your Liver Starter Guide",
+      "source": "Garrett Smith (assembled by Tyler Ginter) — Love Your Liver Starter Guide",
+      "tags": ["starter", "overview", "diet", "lifestyle", "quick_reference"],
+      "summary": "The master quick-reference for the entire program. Organized into three sections: Increase, Agitators/Bile-Dumpers, and Reduce/Eliminate. Intentionally non-nuanced — refer to individual articles for specifics.",
+      "increase": [
+        "Organic — always",
+        "Total protein — minimum 50g/day from all sources",
+        "100% grassfed lean ruminant muscle meat — beef, bison, lamb, elk, venison",
+        "Beans and whole grains — soak overnight, cook in Instant Pot",
+        "Low-VA plant foods — white, off-white, or light green parts only",
+        "Reverse osmosis or distilled water for drinking and cooking",
+        "Bright white single-ingredient sea salt — Jacobsen most recommended",
+        "Single-ingredient whole foods",
+        "At least 1 bowel movement daily",
+        "Soluble fiber — increase slowly, observe reactions",
+        "Sunlight, walking, hiking, biking, swimming outdoors"
+      ],
+      "agitators_bile_dumpers": {
+        "description": "These are generally healthy things but cause bile-dumping. The more cholestatic you are, the less you will tolerate. If any make you feel worse, do LESS next time. Tolerance grows as program progresses. Pushing too hard causes prolonged worsening.",
+        "items": [
+          "Stress (any type)",
+          "Soluble fiber",
+          "Sunlight, UV-B, red light, near-infrared light",
+          "Exercise (especially core muscle contractions)",
+          "Heat",
+          "Sweating",
+          "Massage (especially deep tissue)"
+        ]
+      },
+      "reduce_minimize_eliminate": {
+        "reduce_minimize": [
+          "Unproductive stress",
+          "Overly strenuous exercise",
+          "Fruit — white-fleshed only; apples and bananas best; avoid dried fruit",
+          "Natural sugar sources",
+          "Added fats and fatty foods (UNDER types read Over/Under Types article first)",
+          "Dairy — max 2 tbsp/day if insisting; raw + organic + grassfed only",
+          "Nightshades — tomatoes, peppers, eggplant, potatoes",
+          "Fish — wild-caught lean white-fleshed only",
+          "Chicken — corn and soy free only",
+          "Condiments and spices — nothing spicy, bright, colorful, or sweet"
+        ],
+        "eliminate": [
+          "Added sugar, natural sweeteners, all artificial sweeteners",
+          "Alcohol",
+          "THC/CBD",
+          "Caffeine from any source",
+          "Chocolate/cocoa/cacao",
+          "Pharmaceuticals (requires doctor supervision)"
+        ],
+        "full_avoidance_list": "Soy, peanuts, coconut, dried fruit, eggs*, pork*, feedlot beef, farmed fish, corn/soy-fed chicken, liver and organ meats, bone broth, shellfish*, fish oils, multivitamins, vitamin D supplements, calcium supplements, iron supplements, protein powders, collagen peptides, artificial sweeteners, processed foods, seed oils, ibuprofen, estrogen, pheromones, essential oils, scented candles, microplastics, heavy metals, glyphosate, mold, Lyme, EMF, copper/aluminum/cast iron cookware, microwave-safe plastics, mercury fillings, breast implants, IUDs, birth control, tattoos, baby formula, baby food, chemically laden cosmetics/personal hygiene/cleaning supplies. (*Controversial — individual experimentation recommended)"
+      },
+      "self_assessment": {
+        "description": "If feeling worse as you progress, one or more of the following is likely:",
+        "causes": [
+          "Taking in toxins knowingly or unknowingly",
+          "Pushing detox/bile-dumping too hard",
+          "Worsening nutrient deficiency (especially minerals) due to detox demands and/or diet",
+          "Unsure? Read the articles more or ask on the network"
+        ]
+      },
+      "app_note": "Natural home screen / dashboard reference. The three-column framework maps to a visual quick-reference card. Self-assessment section powers the troubleshooting flow."
+    },
+
+    {
+      "id": "prog_003",
+      "category": "program_foundations",
+      "subcategory": "prerequisites",
+      "title": "Fix These Things FIRST Or You Will NOT Get Better",
+      "source": "Garrett Smith — Fix These Things FIRST Or You Will NOT Get Better",
+      "tags": ["prerequisites", "troubleshooting", "mold", "copper", "mercury", "salt", "protein"],
+      "summary": "Five foundational issues that must be addressed before or alongside any LYL protocol work. If steadily getting worse, super-sensitive to supplements, or becoming more sensitive over time — one of these problems almost certainly exists.",
+      "the_five_issues": [
+        {
+          "number": 1,
+          "issue": "SALT — Do Not Avoid Salting Your Food",
+          "detail": "People who don't salt their food consistently fail to improve. Garrett Smith states: 'I cannot get them better if they don't salt their food.' Salt food to taste with bright white single-ingredient salt. Reintroduce slowly if unaccustomed.",
+          "cross_ref": "min_004"
+        },
+        {
+          "number": 2,
+          "issue": "MOLD — Fix Any Mold Exposure",
+          "detail": "Living or working in a moldy environment means constant mycotoxin inhalation. Musty smell = mold present. Wet/humid climate = high probability. Unprofessionally remediated water leaks = likely still moldy. DO NOT attempt mold detox until the source is completely eliminated. Test home, find all sources, eliminate professionally or move.",
+          "warning": "Do not try to detox mold until the actual mold source is completely gone."
+        },
+        {
+          "number": 3,
+          "issue": "COPPER — Remove Copper from Drinking and Bathing Water",
+          "detail": "Copper is absorbed from drinking water and transdermally through bathing. Copper pipes are bronzish-orange colored at water heater. Solutions: RO filtration or distiller for drinking/cooking water. Aquayouth shower filter for bathing. Whole-house filtration effectiveness uncertain.",
+          "cross_ref": "clin_002"
+        },
+        {
+          "number": 4,
+          "issue": "MERCURY — Remove Amalgam Fillings and Minimize Fish",
+          "detail": "Gray/silver/dark fillings = mercury amalgam. Every chew or warm drink offgasses mercury. Use only IAOMT-trained dentists for removal (iaomt.org). Remove only 2-3 fillings per session. All fish and shellfish contain significant mercury regardless of source — minimize intake.",
+          "resources": ["iaomt.org"]
+        },
+        {
+          "number": 5,
+          "issue": "PROTEIN & CALORIES — Eat Enough",
+          "detail": "Minimum 50g total protein per day from all food sources. Cravings for chips, cookies, ice cream signal insufficient total calories. High-fiber LYL foods create fullness before adequate calories are consumed — common pitfall during dietary transition."
+        }
+      ],
+      "app_note": "Ideal as a prominent Troubleshooting or 'Why Am I Not Getting Better?' section. Five items work as an onboarding checklist. Natural first response when user reports worsening symptoms or supplement sensitivity."
+    },
+
+    {
+      "id": "prog_004",
+      "category": "program_foundations",
+      "subcategory": "protocol_sequence",
+      "title": "Order of Adding Stuff (OAS)",
+      "source": "Garrett Smith — Order of Adding Stuff (Short)",
+      "last_updated": "August 28, 2025",
+      "tags": ["protocol", "sequence", "phases", "order", "onboarding"],
+      "summary": "The suggested sequence for introducing interventions. Not everything works for everyone — the order reflects what to try first. Can also be run in REVERSE — if feeling too detox-y, reduce or stop things from the bottom up.",
+      "critical_rules": [
+        "If you've skipped earlier phases but added later ones — go back and work on earlier phases",
+        "If something further down is confirmed safe and working — keep it",
+        "If something is uncertain or suspected of causing detox-dumping — stop it and return to earlier phases",
+        "OAS can be run in REVERSE — reduce from bottom up to slow detox when feeling too unwell"
+      ],
+      "phases": [
+        {
+          "phase": 0,
+          "name": "Hydration, Breathing, Light, Movement",
+          "items": [
+            "Hydration — see Hydration Basics video",
+            "Breathing/Breathwork — improves all-day toxin elimination",
+            "Sunlight/UVB exposure — to bare skin; not so much that symptoms worsen or skin damage occurs",
+            "Big 6 Lymph Drainage — daily",
+            "Movement — start with easy walking (10,000 steps/day goal); never push to point of feeling worse or dumping excessive bile"
+          ]
+        },
+        {
+          "phase": 1,
+          "name": "Bowels, Biome, Bile",
+          "items": {
+            "constipation_helpers": ["Nicotinic acid (NA)", "Oral magnesium", "Food/supplemental potassium", "Sunfiber", "Prunes", "Green kiwi (well-peeled, NOT golden kiwi)"],
+            "diarrhea_helpers": ["Activated charcoal — orally and/or topically", "Lactospore"],
+            "probiotics_order": ["Lactobacillus (fermentative) — start here", "Bifidobacterium (putrefactive) — second step", "Both/mixed type", "Lactospore"],
+            "fiber": {
+              "soluble": {"preferred_by": "Fermentative bacteria", "foods": "Beans, oats, barley, apples", "supplements": "Apple pectin, Sunfiber, psyllium"},
+              "insoluble": {"preferred_by": "Putrefactive bacteria", "foods": "Most low-VA vegetables", "supplements": "Apple peel powder, oat fiber, psyllium"}
+            }
+          }
+        },
+        {
+          "phase": 2,
+          "name": "Electrolytes",
+          "items": ["Magnesium — topical and/or oral", "Potassium — topical and/or oral", "Sodium/salt — oral, salt to taste", "MSG — see LYL article (pending)"]
+        },
+        {
+          "phase": 3,
+          "name": "Big Minerals",
+          "items": ["Selenium", "Molybdenum", "Zinc"]
+        },
+        {
+          "phase": 4,
+          "name": "Antidotes and B-Vitamins",
+          "items": ["Vitamin K2 (MK-4 form)", "Folate — folinic acid/calcium folinate", "B1 — thiamine HCl preferred", "B12 — adenosylcobalamin or hydroxocobalamin"]
+        },
+        {
+          "phase": 5,
+          "name": "Lactoferrin",
+          "items": ["Bovine lactoferrin powder"]
+        }
+      ],
+      "note": "Niacin and charcoal used throughout as tolerated, alongside all phases.",
+      "app_note": "Core navigation structure for the app. Each phase links to detailed articles. Reverse-OAS rule powers the troubleshooting/symptom feature."
+    },
+
+    {
+      "id": "prog_005",
+      "category": "program_foundations",
+      "subcategory": "testing_philosophy",
+      "title": "Why We Test, Don't Guess — Scientific Basis",
+      "source": "Garrett Smith — In Regards To The Liver's Health & Why We Test, Don't Guess",
+      "tags": ["testing", "htma", "blood_testing", "micronutrients", "liver"],
+      "summary": "Peer-reviewed scientific backing for the LYL program's core test-don't-guess principle. Source study: Micronutrients in Liver Disease (ASPEN Journals).",
+      "key_research_findings": [
+        "Vitamin and mineral deficiencies impair metabolic processes at cellular/biochemical level before clinical symptoms are visible",
+        "Severity of liver disease correlates directly with severity of micronutrient disturbances",
+        "Failure to evaluate micronutrient status poses considerable risk to nutrition status",
+        "Early intervention to correct deficiencies may minimize symptoms and improve clinical outcomes",
+        "Excessive, prolonged, or unmonitored supplementation of certain minerals or fat-soluble vitamins can result in toxicity",
+        "Treatment (once deficiencies identified) is simple, cost-effective, and high yield"
+      ],
+      "lyl_application": [
+        "Test, don't guess — deficiencies are invisible until tested",
+        "Address deficiencies strategically — supplementing without knowing status risks toxicity",
+        "The liver is central — all micronutrient metabolism flows through it"
+      ],
+      "source_url": "https://aspenjournals.onlinelibrary.wiley.com/doi/10.1002/ncp.10451",
+      "app_note": "Use as 'Why We Test' explainer card for new members questioning the emphasis on testing before supplementing."
+    },
+
+    {
+      "id": "prog_006",
+      "category": "program_foundations",
+      "subcategory": "retracing",
+      "title": "Retracing / Healing Crisis / Unwinding",
+      "source": "Garrett Smith — LYL Livestream #53",
+      "tags": ["retracing", "healing_crisis", "detox_reactions", "troubleshooting"],
+      "summary": "When old symptoms return temporarily during healing. Normal and expected. The body heals in reverse order — most recent issues resolve first, older issues resurface temporarily.",
+      "retracing_vs_pushing_too_hard": {
+        "retracing_normal": {
+          "duration": "Temporary — days to 1-2 weeks",
+          "pattern": "Follows a period of doing well",
+          "symptoms": "Old symptoms returning",
+          "resolution": "Passes on its own"
+        },
+        "pushing_too_hard": {
+          "duration": "Persistent, worsens over time",
+          "pattern": "Associated with recently increasing protocols",
+          "symptoms": "New symptoms appearing",
+          "resolution": "Doesn't resolve without backing off"
+        }
+      },
+      "what_to_do": "Slow down, rest, support elimination (bowels), let it pass. Do not suppress with medications.",
+      "practical_rule": "When in doubt, slow down. Reduce whatever was most recently added or increased. Give it a few days. If you improve — you were pushing too hard. If it passes on its own — it was probably retracing."
+    },
+
+    {
+      "id": "min_001",
+      "category": "supplements_minerals",
+      "subcategory": "zinc",
+      "title": "Zinc Basics",
+      "source": "Garrett Smith — Zinc Basics",
+      "tags": ["zinc", "big_minerals", "copper", "ADH", "RBP", "detox"],
+      "summary": "Zinc is involved in 200+ enzyme pathways and is critical for LYL detox. Most people are deficient. Strong negative reactions to zinc often indicate copper toxicity.",
+      "why_zinc_matters": [
+        "Involved in 200+ enzyme pathways",
+        "Soil depletion makes dietary zinc insufficient for most people",
+        "Required to make Retinol-Binding Protein (RBP) — protects from vitamin A in blood",
+        "Displaces/kicks copper out of the liver",
+        "Required to run Alcohol Dehydrogenase (ADH) — key enzyme in vitamin A detox pathway",
+        "Detox process itself can consume zinc faster than diet and supplements provide"
+      ],
+      "dosing": {
+        "long_term_safe_adult_dose": "30mg/day zinc picolinate",
+        "previous_recommendation": "15mg/day (updated upward)",
+        "starting_note": "If strong negative reactions at low doses — likely copper toxic; start very low or hold until later in detox",
+        "liquid_option": "ND Liquid Zinc Picolinate 2mg/drop for customized/low dosing"
+      },
+      "toxicity": {
+        "threshold": "Zinc toxicity documented at doses >100mg (usually >200mg) for months",
+        "safe_ceiling": "Do not exceed 30mg without practitioner guidance"
+      },
+      "products": [
+        "Liquid Zinc Picolinate 2mg/drop",
+        "Zinc Picolinate 15mg capsules",
+        "Zinc Picolinate 30mg capsules",
+        "Keystone Minerals (combo)",
+        "Keystone Minerals Plus Niacin (combo)"
+      ],
+      "big_minerals_rule": "If you don't feel good on a certain dose, take less — even zero if necessary. Most issues appear within 3 days of starting/increasing but can take up to a week.",
+      "cross_refs": ["min_002", "min_003", "clin_002", "clin_001"]
+    },
+
+    {
+      "id": "min_002",
+      "category": "supplements_minerals",
+      "subcategory": "selenium",
+      "title": "Selenium Basics",
+      "source": "Garrett Smith — Selenium Basics",
+      "tags": ["selenium", "big_minerals", "ALDH", "copper", "thyroid", "mercury"],
+      "summary": "Selenium is essential for the vitamin A detox pathway (ALDH enzyme), copper detox, heavy metal detox, thyroid function, and sex hormone function.",
+      "functions": [
+        "Protects the liver against vitamin A toxicity",
+        "Essential component of ALDH (aldehyde dehydrogenase) — key enzyme in vitamin A detox pathway",
+        "Copper antagonist — helps detox copper (can also stir up copper during the process)",
+        "Helps detox mercury, cadmium, and lead",
+        "Necessary for proper thyroid function",
+        "Necessary for proper sex hormone function and fertility"
+      ],
+      "products": [
+        "Nutrition Detective Selenium Glycinate 150mcg capsules"
+      ],
+      "big_minerals_rule": "If you don't feel good on a certain dose, take less — even zero if necessary. Most issues appear within 3 days of starting/increasing but can take up to a week.",
+      "cross_refs": ["min_001", "min_003", "clin_001", "clin_002"]
+    },
+
+    {
+      "id": "min_003",
+      "category": "supplements_minerals",
+      "subcategory": "molybdenum",
+      "title": "Molybdenum Basics",
+      "source": "Garrett Smith — Molybdenum Basics",
+      "tags": ["molybdenum", "big_minerals", "ALDH", "sulfur", "iron", "copper", "yeast"],
+      "summary": "Molybdenum is essential for ALDH enzyme function (vitamin A detox), sulfur metabolism, and iron regulation via copper control.",
+      "functions": [
+        "Aldehyde Dehydrogenase (ALDH) — very important for vitamin A detox",
+        "Aldehyde Oxidase — processes aldehydes to carboxylic acids including retinaldehyde to retinoic acid",
+        "Xanthine Oxidase — detoxes uric acid and caffeine",
+        "Sulfite Oxidase — essential for proper sulfur metabolism and detox",
+        "Iron metabolism — regulates toxic copper; deficiency can cause iron overload OR iron deficiency"
+      ],
+      "deficiency_signs": [
+        "Hair molybdenum below 0.004 on Trace Elements Hair Mineral Test",
+        "Sensitivity to alcohol (easily intoxicated, flushing, strong hangovers)",
+        "Wine causes different/worse symptoms than other alcohol (sulfites)",
+        "Sensitivity to caffeine",
+        "History of gout and/or high uric acid",
+        "History of yeast and/or fungal issues",
+        "Sensitivity to high-sulfur foods (garlic, onions, cruciferous vegetables) or supplements",
+        "Sulfur-smelling gas, body odor, or breath",
+        "Iron overload (high ferritin)",
+        "Chronic low iron/ferritin"
+      ],
+      "products": [
+        "Nutrition Detective Molybdenum Glycinate 150mcg capsules",
+        "EIDON Ionic Minerals Molybdenum Liquid 2oz",
+        "Keystone Minerals (combo)",
+        "Keystone Minerals Plus Niacin (combo)"
+      ],
+      "big_minerals_rule": "If you don't feel good on a certain dose, take less — even zero if necessary. Most issues appear within 3 days of starting/increasing but can take up to a week.",
+      "cross_refs": ["min_001", "min_002", "clin_001", "clin_002"]
+    },
+
+    {
+      "id": "min_004",
+      "category": "supplements_minerals",
+      "subcategory": "sodium",
+      "title": "Sodium (Salt) Basics",
+      "source": "Garrett Smith — Sodium (Salt) Basics",
+      "tags": ["sodium", "salt", "electrolytes", "potassium"],
+      "summary": "Salt your food to taste. People who don't salt their food do not get better. HTMA sodium levels are not useful for determining sodium intake needs.",
+      "core_instruction": "Salt your food to taste with a bright white, single-ingredient salt.",
+      "key_points": [
+        "People who don't salt their food consistently fail to improve",
+        "Garrett Smith: 'I cannot get them better if they don't salt their food'",
+        "If unaccustomed to salt — reintroduce slowly to rebuild instinctual salt sensors",
+        "50/50 salt (sodium + potassium blend) — slightly less salty; use more as needed",
+        "Trust taste buds — animals self-regulate salt intake at salt licks without overdosing",
+        "HTMA sodium levels NOT useful for determining sodium intake or needs",
+        "Hair sodium/potassium ratio obsession in some HTMA practitioners is a waste of time"
+      ],
+      "important_note": "Potassium intake should track upward alongside sodium increases. Increasing sodium without adequate potassium may help one issue while creating another.",
+      "cross_refs": ["min_005", "prog_003"]
+    },
+
+    {
+      "id": "min_005",
+      "category": "supplements_minerals",
+      "subcategory": "potassium",
+      "title": "Potassium Basics",
+      "source": "Garrett Smith — Potassium Basics",
+      "tags": ["potassium", "electrolytes", "cholestasis", "heart_palpitations", "cramps", "vitamin_a"],
+      "summary": "Potassium is critically important but very hard to test accurately. Best assessed by symptoms and response to increased intake. Vitamin A toxicity blocks potassium channels. Cholestasis is the root cause of potassium deficiency issues.",
+      "testing_limitations": [
+        "Hair potassium: NOT useful for assessing intake",
+        "Low blood potassium: confirms deficiency",
+        "Normal blood potassium: does NOT rule out deficiency",
+        "High blood potassium: often indicates excessive losses from tissues (not excess intake)"
+      ],
+      "root_causes_in_lyl": [
+        "Vitamin A toxicity blocks potassium channels — creates intracellular deficiency even with normal blood levels",
+        "Copper toxicity depletes potassium",
+        "Vitamin D supplements deplete potassium",
+        "Cholestasis commonly associated with hypokalemia"
+      ],
+      "strategy": {
+        "short_term": "Increase potassium intake to reduce deficiency symptoms",
+        "long_term": "Eliminate underlying toxicity — fixes cholestasis — eliminates potassium problem permanently",
+        "warning": "Do not chase detox symptoms with ever-increasing potassium. If potassium demands keep rising — slow down the detox instead. 'The poison always wins.'"
+      },
+      "deficiency_symptoms": {
+        "high_specificity": [
+          "Foot and/or leg cramps — especially at night",
+          "Fatigue soon after eating ('eating makes me tired') — also check gluten sensitivity",
+          "Heart rhythm issues, palpitations, racing heart — especially at night and around bedtime",
+          "Topical magnesium chloride causes racing heart (magnesium unmasking underlying potassium deficiency)"
+        ],
+        "less_specific": [
+          "General fatigue",
+          "Anxiety",
+          "Depression",
+          "Muscle cramps (if potassium doesn't help, suspect another mineral deficiency)"
+        ]
+      },
+      "self_test": "When symptoms appear, take more potassium and observe. If symptoms improve, potassium deficiency was the cause.",
+      "note_on_electrolyte_drinks": "Commercial mixed electrolyte drinks not recommended. Address sodium, potassium, and magnesium separately and specifically.",
+      "cross_refs": ["min_004", "top_001", "clin_001", "clin_002"]
+    },
+
+    {
+      "id": "nia_001",
+      "category": "supplements_niacin",
+      "subcategory": "basics",
+      "title": "What Is Niacin (Nicotinic Acid)?",
+      "source": "Garrett Smith — What is Niacin? And What Happens When You Take It?",
+      "tags": ["niacin", "nicotinic_acid", "flush", "vitamin_A_detox", "liver", "cholesterol"],
+      "summary": "Niacin in LYL always means nicotinic acid (NA) — the flushing form only. Technically an amino acid derived from tryptophan, not a B-vitamin.",
+      "terminology": {
+        "correct_names": ["Nicotinic acid", "Niacin (flushing form)", "NA", "Nicotinate", "Sodium nicotinate"],
+        "do_not_use": [
+          "Niacinamide / nicotinamide — totally different",
+          "Inositol hexanicotinate / flush-free niacin — doesn't work",
+          "Nicotinamide Riboside (NR) — totally different",
+          "NAD+/NADH — totally different",
+          "Time-released/extended-release niacin — too hard on the liver",
+          "Buffered niacin — doesn't flush and thus doesn't work",
+          "Prescription niacin",
+          "Copper nicotinate (MitoSynergy)",
+          "Chromium polynicotinate",
+          "Nicotine in any form"
+        ]
+      },
+      "what_niacin_does": [
+        "Provides NAD+ molecule (primary electron carrier for energy production)",
+        "Moves fat-soluble toxins, particularly vitamin A/retinol/retinoic acid",
+        "Increases blood flow to the liver",
+        "Opens blood vessels / improves circulation",
+        "Acts as choleretic (increases bile production) and cholagogue (promotes bile flow)",
+        "Speeds up ALDH enzyme function",
+        "Stimulates growth hormone release",
+        "Reverses fatty liver",
+        "Clears atherosclerotic plaque",
+        "Reduces Lp(a)",
+        "Raises HDL",
+        "Normalizes triglycerides",
+        "Helps with constipation"
+      ],
+      "liver_enzymes_note": "AST, ALT, GGT may temporarily rise in first 4-8 weeks. This reflects increased detox activity — not liver damage. Immediate-release flushing niacin is beneficial for the liver. Time-released niacin is the form associated with liver stress.",
+      "products": ["Niacin 100mg", "Keystone Minerals Plus Niacin"],
+      "cross_refs": ["nia_002", "nia_003", "nia_004", "nia_005"]
+    },
+
+    {
+      "id": "nia_002",
+      "category": "supplements_niacin",
+      "subcategory": "flush_detail",
+      "title": "The Niacin Flush — Physiology and Management",
+      "source": "Garrett Smith — The Famous (Or Infamous) Niacin Flush: What YOU Need To Know",
+      "tags": ["niacin", "flush", "prostaglandin", "detox", "tachyphylaxis", "niacin_paradox"],
+      "summary": "The niacin flush is a planned, intentional physiological response — not an allergic reaction. Caused by prostaglandin D2 release and vasodilation.",
+      "physiology": [
+        "Niacin triggers arachidonic acid release from cells",
+        "Arachidonic acid converts to prostaglandin D2 (PGD2)",
+        "PGD2 causes vasodilation in skin — produces flush",
+        "Begins 15-30 minutes after taking niacin on empty stomach",
+        "Most intense on face, chest, and neck"
+      ],
+      "detox_purpose": [
+        "Pushes fat-soluble toxins from deep fatty tissue to skin surface",
+        "Key toxins mobilized: heavy metals, fat-soluble pesticides, vitamin A (retinol and retinoic acid)",
+        "Toxins eliminated via sweating and skin cleansing post-flush",
+        "Showering after flushing is critical"
+      ],
+      "flush_management": {
+        "maximize": [
+          "Take on empty stomach",
+          "Do not pre-take aspirin (blocks flush)",
+          "Do not drink large amounts of water beforehand",
+          "Shower or thoroughly cleanse skin after flushing",
+          "Be consistent to build cumulative detox effect"
+        ],
+        "food_effects": [
+          "More carbohydrates = stronger, quicker flush",
+          "More soluble fiber = weaker, delayed flush",
+          "More protein = weaker, delayed flush",
+          "Empty stomach = strongest, fastest flush"
+        ],
+        "reduce_intensity": [
+          "Start as low as 25-50mg",
+          "Take with food (buffering)",
+          "Increase dose gradually over time"
+        ]
+      },
+      "tachyphylaxis": "With repeated use, flush becomes shorter and milder. Normal and expected — not a sign the niacin stopped working.",
+      "niacin_paradox": {
+        "description": "Feeling worse before feeling better when starting or increasing niacin. Mobilized toxins enter bloodstream before elimination — temporarily raising retinoic acid levels.",
+        "management": ["Start low, increase slowly", "Maintain regular bowel movements", "Shower after every flush", "Reduce dose if paradox becomes too intense", "Be patient — this phase passes"]
+      },
+      "not_an_allergic_reaction": "True allergic reactions involve hives, difficulty breathing, or facial/throat swelling. These are NOT symptoms of the niacin flush.",
+      "when_to_contact_doctor": ["Severe nausea or vomiting", "Extreme dizziness or fainting", "Rapid or irregular heartbeat", "Difficulty breathing", "Severe skin reactions beyond normal flushing"],
+      "blood_pressure_note": "Flush can cause temporary blood pressure drop — caution if prone to dizziness. People with liver disease, diabetes, or gout should consult a doctor before use.",
+      "cross_refs": ["nia_001", "nia_003", "nia_004", "nia_005"]
+    },
+
+    {
+      "id": "nia_003",
+      "category": "supplements_niacin",
+      "subcategory": "beginner_protocol",
+      "title": "Beginner / Low-Dose NA Guidelines",
+      "source": "Garrett Smith — Beginner / Low-Dose NA Guidelines",
+      "tags": ["niacin", "beginner", "low_dose", "protocol", "starting"],
+      "summary": "Everyone — LYL members and general public alike — starts here. Universal starting point: 25mg nicotinic acid once daily after a meal with protein and fiber.",
+      "universal_start": "25mg nicotinic acid (flush niacin) once daily, taken after finishing a meal containing protein and fiber, with slightly more water than usual.",
+      "two_tracks": {
+        "non_lyl_general_public": {
+          "includes": "Very ill, chronically ill, elderly, or only moderately adhering to LYL principles",
+          "maximum": "25mg twice daily (50mg total) — do not exceed without full LYL adherence and buffering"
+        },
+        "lyl_adherent": {
+          "start": "25mg once daily after a meal with protein, fiber, and ample clean water",
+          "week_1": "Hold at 25mg once daily for one full week",
+          "week_2": "If feeling okay (even with mild detox symptoms) — consider increasing to 25mg twice daily for one week",
+          "progression": "Continue reassessing week by week, increasing by 25mg increments",
+          "ceiling": "Do not exceed 150-200mg total per day without buffering"
+        }
+      },
+      "dose_reduction_rule": "If NA causes problems at any dose: cut dose by HALF only — do not stop suddenly.",
+      "flush_note": "Flush at 25mg is possible but unlikely, especially when taken with a meal and water. It is not an allergic reaction, not dangerous, and is beneficial.",
+      "hydration_note": "NA will likely increase water requirements. Ensure adequate hydration.",
+      "cross_refs": ["nia_001", "nia_002", "nia_004", "nia_005"]
+    },
+
+    {
+      "id": "nia_004",
+      "category": "supplements_niacin",
+      "subcategory": "buffering_and_charcing",
+      "title": "Niacin Buffering and Charcing",
+      "source": "Garrett Smith — Niacin Buffering and Charcing Basics",
+      "tags": ["niacin", "buffering", "charcing", "charcoal", "bile", "protocol"],
+      "summary": "Two key protocols: Buffering reduces flush intensity. Charcing combines niacin + activated charcoal for synergistic toxin elimination through skin AND gut simultaneously.",
+      "buffering": {
+        "what_it_is": "Taking niacin with food or after a meal to reduce flush intensity for those who find it too intense",
+        "methods": ["Take niacin with food/after meal — weaker, slower, more tolerable flush", "Reduce the dose — also reduces intensity", "Both methods can be combined"],
+        "important_distinctions": [
+          "Buffering is a temporary strategy — goal is eventually taking on empty stomach for maximum effect",
+          "Buffered niacin is NOT flush-free niacin — a flush still occurs, just milder",
+          "If flush is too intense, buffer with food rather than skipping niacin entirely"
+        ]
+      },
+      "charcing": {
+        "what_it_is": "The combination of niacin AND activated charcoal — coined 'charcing' within the LYL community",
+        "why_synergistic": [
+          "Niacin mobilizes fat-soluble toxins from fatty tissue to skin surface",
+          "Many same toxins also excreted via bile into the gut",
+          "Charcoal adsorbs bile in gut during the same window",
+          "Addresses two elimination pathways simultaneously — skin and gut"
+        ],
+        "protocol_order": [
+          "Step 1: Take niacin on empty stomach (strong flush) OR with food (buffered/reduced flush)",
+          "Step 2: Take charcoal after flush begins or just after taking niacin — catches bile during flush window",
+          "Step 3: Shower or bathe after flush to remove toxins brought to skin surface",
+          "Step 4: Wait at least 1-2 hours after charcoal before eating or taking other supplements"
+        ],
+        "critical_reminders": [
+          "Do NOT do daily charcing if not having at least 2 bowel movements per day",
+          "Do not block niacin flush with aspirin or large amounts of water beforehand",
+          "Showering after flush is non-negotiable",
+          "Start LOW and SLOW with both niacin and charcoal doses"
+        ]
+      },
+      "cross_refs": ["nia_001", "nia_002", "nia_003", "nia_005", "dtx_001"]
+    },
+
+    {
+      "id": "nia_005",
+      "category": "supplements_niacin",
+      "subcategory": "master_dosing_guide",
+      "title": "Niacin Master Dosing Guide",
+      "source": "Garrett Smith — Summary Article on NA (Niacin) Supplementation",
+      "tags": ["niacin", "advanced", "high_dose", "buffering", "protocol", "master_guide"],
+      "summary": "The operational master guide for niacin use. Covers everything from terminology to advanced high-dose protocol. Read the beginner guide first.",
+      "things_never_to_take_with_na": [
+        "Empty stomach at 150-200mg+ doses — always take after eating, within 60 minutes of a meal",
+        "High-polyphenol foods — coffee, chocolate, proanthocyanidins, bioflavonoids, isoflavones, phytoestrogens (brightly/darkly colored foods) — separate by 1-2 hours",
+        "Zinc picolinate or any mineral picolinate including Keystone Minerals, ND Liquid Zinc — separate by 1-2 hours"
+      ],
+      "buffering_requirement": {
+        "when_required": "At 150-200mg/day or more — mandatory",
+        "signs_need_buffering": ["Ammonia smell to breath, urine, body odor, or sweat", "Taking more than 150-200mg total per day"],
+        "buffers": [
+          {"agent": "Sodium bicarbonate (baking soda)", "adds": "Sodium", "too_much_may_cause": "Thirst, dry mouth, increased heart rate/BP"},
+          {"agent": "Potassium bicarbonate", "adds": "Potassium", "too_much_may_cause": "Palpitations, thirst, dry mouth"},
+          {"agent": "Magnesium carbonate", "adds": "Magnesium", "too_much_may_cause": "Loose bowels, stomach gurgling"}
+        ]
+      },
+      "low_dose_protocol": {
+        "who": "Everyone — including LYL veterans who have never used NA",
+        "start": "25mg/day (or less for anxious/very sensitive types)",
+        "frequency": "Up to 3x/day (once daily is fine)",
+        "progression": "Increase by 25mg when comfortable with flush at current dose",
+        "ceiling": "200mg total/day maximum for this stage",
+        "note": "50mg/day has shown great results in studies — low dose is not ineffective. People who remain in constant re-toxing will never progress beyond this level."
+      },
+      "high_dose_protocol": {
+        "prerequisites": [
+          "Following 80%+ of LYL principles 80%+ of the time",
+          "Not actively re-toxing",
+          "Correcting zinc, selenium, molybdenum, magnesium, and potassium deficiencies",
+          "Completed low-dose stage progression (up to 200mg/day)",
+          "Committed to buffering",
+          "Comfortable with the flush",
+          "Knows personal toxic bile/detox dumping symptom patterns",
+          "Understands retracing/unwinding/healing crisis concept",
+          "Familiar with personal soluble fiber and charcoal tolerance"
+        ],
+        "progression": "200mg → 500mg (one capsule) → jumps of 500mg as flush tolerance develops",
+        "typical_maximum": "3000mg/day total",
+        "absolute_ceiling": "5000mg/day — not long-term",
+        "must_buffer": true,
+        "warning": "Retracing of old health issues happens fast and intensely at high doses. Once started, it will complete on its own. Do not suppress with medications."
+      },
+      "stopping_or_reducing": {
+        "rule": "Do NOT stop suddenly from high doses",
+        "method": "Reduce by half first, maintain for 3-7 days before further reduction",
+        "use_charcoal": true,
+        "temporary_start_symptoms": ["Increased heart rate", "Dry skin (may be part of vitamin A skin detox)", "Mild temporary blurred vision or eye pressure", "Nausea, diarrhea, vomiting (bile dumping) — add charcoal"]
+      },
+      "cross_refs": ["nia_001", "nia_002", "nia_003", "nia_004", "dtx_001", "min_001", "min_005"]
+    },
+
+    {
+      "id": "spc_001",
+      "category": "supplements_specialty",
+      "subcategory": "lactoferrin",
+      "title": "Lactoferrin",
+      "source": "Garrett Smith — Lactoferrin FAQ",
+      "tags": ["lactoferrin", "bile_ducts", "cholangiocytes", "copper", "iron", "phase_5"],
+      "summary": "A protein found in mammalian bodily fluids. Critical for repairing bile duct cells (cholangiocytes) damaged by vitamin A toxicity. Phase 5 of the OAS.",
+      "the_core_chain": [
+        "Vitamin A damages epithelial cells → less lactoferrin produced",
+        "Vitamin A destroys neutrophils (neutropenia) → even less lactoferrin",
+        "Cholangiocytes (bile duct cells) are epithelial cells → also damaged by vitamin A",
+        "Bile duct damage is the root of all cholestasis/liver injury",
+        "Lactoferrin is critical for repairing and renewing cholangiocytes",
+        "Supplementing tolerated lactoferrin helps accelerate bile duct repair"
+      ],
+      "additional_functions": [
+        "Binds free copper and iron in the body (beneficial)",
+        "Balances gut microbiome over time",
+        "Transports zinc",
+        "Fixes iron-deficiency anemia more effectively than iron supplements",
+        "Breaks down biofilms",
+        "Multiple anti-cancer properties",
+        "Supports immune function by reducing toxicity and cholestasis"
+      ],
+      "sources_ranked": [
+        {"source": "Recombinant lactoferrin from GMO rice", "verdict": "NEVER USE"},
+        {"source": "Human breastmilk", "verdict": "Impractical, contains mother's toxins — not pursued"},
+        {"source": "Camel's milk", "verdict": "Highest lactoferrin of any mammalian milk, 90% similar to human; fairly low VA; very expensive"},
+        {"source": "Cow's milk/dairy colostrum", "verdict": "Not recommended — high VA, vitamin D, calcium; pasteurization destroys most/all lactoferrin"},
+        {"source": "Bovine lactoferrin powder", "verdict": "RECOMMENDED — purified from dairy; most dairy-sensitive people tolerate fine"}
+      ],
+      "preferred_product": "Nutrition Detective Lactoferrin (bovine lactoferrin powder)",
+      "other_acceptable": ["Life Extension (bovine lactoferrin)", "Jarrow (bovine lactoferrin)"],
+      "dosing_note": "Must be tolerated — start at a dose that doesn't cause negative reactions.",
+      "cross_refs": ["clin_001", "clin_002", "prog_004", "gut_001"]
+    },
+
+    {
+      "id": "spc_002",
+      "category": "supplements_specialty",
+      "subcategory": "activated_charcoal",
+      "title": "Activated Charcoal",
+      "source": "Garrett Smith — Summary Article: Activated Charcoal for Removal of Gut Bile & Toxins",
+      "tags": ["charcoal", "bile_binder", "gut", "detox", "charcing", "constipation"],
+      "summary": "Activated charcoal works exclusively in the digestive tract — NOT absorbed into the bloodstream. Binds toxic bile, vitamin A (via bile), and other toxins including oxalates in the gut. Comparable in effect to cholestyramine without major side effects.",
+      "critical_prerequisite": "Must be pooping at least 2x per day before using charcoal daily. Charcoal WILL worsen constipation in people already constipated. Poop first. Worry about binding bile later.",
+      "constipation_exception": "Constipated individuals may use charcoal AS NEEDED for acute gut symptoms (nausea, heartburn) but NOT as a daily protocol.",
+      "symptoms_it_may_help": {
+        "stomach": ["Nausea", "Morning sickness", "Acid reflux/GERD", "Belching", "Stomach pain", "Excess flatulence"],
+        "intestinal": ["Diarrhea", "Loose stools", "Burning/acidic stools", "Excessive flatulence"],
+        "note": "Powder in water preferred over capsules for stomach symptoms"
+      },
+      "product_recommendations": {
+        "type": "Hardwood or bamboo charcoal ONLY — not coconut (hardwood cheaper and easier to clean)",
+        "form": "Powder strongly preferred — capsules cost approximately 12x more per gram",
+        "use": "Can be used orally/internally AND topically/externally"
+      },
+      "dosing": {
+        "starting_doses": {
+          "oral": "1/4 tsp or 1 pill per day",
+          "bath": "1/4 cup",
+          "foot_soak": "1/8 cup"
+        },
+        "progression": "Maintain each dose for 2-3 days before increasing",
+        "maximum_long_term": "1 tablespoon in water, 1-2x per day",
+        "timing": "1 hour before or after food and supplements. First thing in morning or last thing at night is easiest."
+      },
+      "if_causes_constipation": ["Increase fluid intake", "Reduce dose", "Add non-toxic non-habit-forming bowel regularity support", "Switch to topical approaches"],
+      "myth_debunked": "Charcoal does NOT deplete beneficial nutrients. This claim is thoroughly debunked in the Advanced program articles.",
+      "not_recommended": ["Zeolites — not effective for vitamin A detox", "Clays — may contain bioavailable lead"],
+      "cross_refs": ["nia_004", "gut_001", "prog_004"]
+    },
+
+    {
+      "id": "top_001",
+      "category": "supplements_topical",
+      "subcategory": "magnesium",
+      "title": "Topical / Transdermal Magnesium",
+      "source": "Garrett Smith — Topical/Transdermal Magnesium Approaches",
+      "tags": ["magnesium", "topical", "transdermal", "calcium_metabolism", "deficiency"],
+      "summary": "Topical/transdermal magnesium is approximately 10x more effective than oral magnesium when done properly. Critical during detox phases when dietary intake is insufficient.",
+      "why_magnesium_matters": [
+        "Vitamin A, vitamin D supplements, and calcium supplements all disrupt calcium metabolism",
+        "Magnesium is the body's primary counterbalance to calcium",
+        "Most people in detox phases are not getting enough from food alone",
+        "Dietary sources are generally insufficient during active detox"
+      ],
+      "assessing_deficiency": [
+        "Feeling better on any form of magnesium = strong indicator of deficiency",
+        "NOT feeling anything from magnesium does NOT mean levels are adequate — testing required",
+        "Best assessed via Hair Mineral Analysis (HTMA) by knowledgeable practitioner"
+      ],
+      "topical_vs_oral": "Topical/transdermal magnesium, done properly, is approximately 10x more effective than oral magnesium supplements. Exceptions exist for some individuals.",
+      "topical_forms": ["Magnesium lotions", "Magnesium sprays", "Magnesium baths", "Foot soaks"],
+      "reference_article": "https://steemit.com/health/@drgarrettsmith/all-about-topical-magnesium-lotions-sprays-baths-foot-soaks-oh-my",
+      "cross_refs": ["min_005", "prog_004", "test_001"]
+    },
+
+    {
+      "id": "diet_001",
+      "category": "diet_nutrition",
+      "subcategory": "body_type_fat_intake",
+      "title": "The OVER and UNDER Types",
+      "source": "Garrett Smith — The OVER & UNDER Types",
+      "tags": ["over_type", "under_type", "fat_intake", "body_type", "bile", "weight"],
+      "summary": "A foundational framework for personalizing fat intake during detox based on body weight tendency. ~95% of modern people are OVER types; ~5% are UNDER types.",
+      "over_type": {
+        "definition": "Overweight, or normal weight with tendency to GAIN weight",
+        "mechanism": "Body is efficient at creating body fat and liver fat to store toxic bile — pulls bile out of bloodstream. Fewer symptoms but more toxic bile storage in fat tissue.",
+        "goal": "Reduce dietary fat intake as much as practically possible",
+        "tips": [
+          "Stop adding fats/oils to foods — easiest and most impactful change",
+          "Whole food fats that occur naturally are less of a concern but reduce where possible",
+          "Rinse browned ground beef in strainer to significantly reduce fat content",
+          "Choose lower-fat cuts of meat (lower fat = higher zinc, lower fat-soluble toxin content including vitamin A)",
+          "Do not eat poultry skin",
+          "Eliminate dairy"
+        ]
+      },
+      "under_type": {
+        "definition": "Underweight, or normal weight with tendency to LOSE weight",
+        "mechanism": "Body is poor at making body fat and liver fat to store toxic bile — bile stays in bloodstream. More symptoms, more liver damage, but less toxic bile storage.",
+        "goal": "Find the MINIMUM fat intake that minimizes symptoms AND prevents undesirable weight loss. NOT a free pass to eat high fat.",
+        "the_balance": {
+          "too_little_fat": "Feeling bad + losing weight",
+          "too_much_fat": "Dietary fat increases bile reabsorption — puts toxic bile back into circulation",
+          "target": "The middle ground, determined individually by symptoms and scale weight"
+        },
+        "tips": [
+          "Prefer whole food fats over added oils",
+          "Red meat: choose grassfed; poultry: ensure not soy-fed",
+          "Be cautious with nuts/seeds — high in copper (common problem for UNDER types)",
+          "If using oils — choose organic and naturally refined (not chemically refined)",
+          "If using butter/ghee — choose grassfed, non-soy-fed sources",
+          "No universal gram target — self-monitor via symptoms and weight"
+        ]
+      },
+      "key_insight": "Toxic bile is the central variable. Body fat acts as a buffer. Dietary fat during detox interacts directly with bile reabsorption, making fat intake a therapeutic lever, not just a dietary preference.",
+      "cross_refs": ["clin_001", "clin_002", "food_001"]
+    },
+
+    {
+      "id": "diet_002",
+      "category": "diet_nutrition",
+      "subcategory": "food_lists",
+      "title": "LYL Food Lists — Complete Reference",
+      "source": "Garrett Smith — LYL Food Lists + Additional Notes; Beth — LYL Low Toxin Food List",
+      "tags": ["food_list", "eat", "avoid", "vitamin_a", "copper", "low_toxin", "cookware", "restaurants"],
+      "summary": "Complete food reference combining what to eat, what to avoid, why, label reading guidance, cookware, and restaurant tips.",
+      "foods_to_eat": {
+        "proteins_excellent": ["Beef (lean, grassfed)", "Bison", "Lamb (lean cuts)", "Venison", "Elk"],
+        "proteins_okay": ["Pork (lean, not cured/processed)", "Chicken breast skinless — corn and soy free ONLY", "Turkey breast skinless — corn and soy free ONLY", "Cod", "Haddock", "Halibut", "Flounder", "Tilapia", "Tuna (canned in water)", "Trout (wild-caught, caution)", "Clams (fresh or canned)", "Oysters (fresh, not smoked, caution — zinc-rich)"],
+        "vegetables": {
+          "note": "Cooked preferred over raw for most. All cruciferous vegetables MUST be cooked.",
+          "list": ["White potatoes (peeled)", "Zucchini", "Summer squash", "Green beans", "Cucumber (raw okay)", "Celery (raw okay)", "Lettuce (iceberg safest)", "Cabbage (cooked)", "Cauliflower (cooked)", "Broccoli (cooked)", "Brussels sprouts (cooked)", "Asparagus", "Artichoke", "Leeks", "Fennel", "Jicama", "Daikon radish", "Radishes", "Turnips", "Rutabaga", "Kohlrabi", "Peas (fresh or frozen)", "Onions (cooked)", "Mushrooms (cooked)", "Beets (with caution)", "Bok choy (small amounts — thyroid caution)"]
+        },
+        "fruits": {
+          "note": "White-fleshed preferred. Peel when possible.",
+          "good": ["Apples (peeled)", "Bananas", "Pears (peeled)", "White grapes", "Lychee", "Pomelo", "White figs", "Coconut (fresh/unsweetened)", "Lemons/Limes (small amounts)"],
+          "okay": ["Pineapple", "Strawberries", "Raspberries", "Blueberries", "Cherries", "Peaches (peeled)", "Plums", "Kiwi", "Watermelon", "Passion fruit", "Dates (moderation)"],
+          "caution": ["Mango (ripe, moderation)", "Papaya (ripe, moderation)"]
+        },
+        "grains_starches": ["White rice (well-cooked) — excellent", "Rice pasta/noodles", "Cream of rice", "Oats (gluten-free)", "Masa harina (nixtamalized corn)", "White corn tortillas", "Cassava", "Tapioca", "Arrowroot", "Potato starch", "Sago", "Taro root"],
+        "fats_oils": {
+          "best": ["Beef tallow (grassfed)", "Lamb tallow", "Lard (pastured, non-hydrogenated)"],
+          "good": ["Ghee (grassfed)", "Coconut oil (unrefined)"],
+          "okay_small_amounts": ["Butter (grassfed, OVER types very sparingly)", "Olive oil (cold-pressed, extra virgin)"],
+          "note": "OVER types use sparingly. UNDER types see Over/Under Types entry."
+        },
+        "beverages": ["Filtered/RO/distilled water — best", "Herbal teas (plain, no additives) — most okay", "Coconut water (moderation)"],
+        "sweeteners": ["Raw honey (moderation)", "Pure maple syrup (moderation)", "White sugar (moderation, controversial)"],
+        "herbs_spices": ["Basil (fresh)", "Bay leaves", "Chives", "Cilantro", "Dill", "Ginger", "Lemongrass", "Mint", "Oregano (small amounts)", "Parsley (small amounts)", "Rosemary (small amounts)", "Salt", "Thyme (small amounts)", "Turmeric (small amounts, controversial)"]
+      },
+      "foods_to_avoid": {
+        "high_vitamin_a": {
+          "completely_avoid": ["Liver and all organ meats", "Cod liver oil", "Fish oils", "Dairy products (milk, cheese, yogurt, cream, ice cream)", "Carrots", "Sweet potatoes/yams", "Pumpkin/orange squash", "Spinach", "Swiss chard", "Collard greens", "Red/orange/yellow peppers", "Tomatoes", "Farmed salmon", "Sardines", "Mackerel", "Herring", "Anchovies", "Raw/fresh tuna", "Any deeply colored orange, yellow, red, or dark green vegetables"],
+          "minimize": ["Butter (especially OVER types)", "Ghee (use sparingly)", "Beet greens", "Kale (cooked in moderation only)"]
+        },
+        "high_copper": {
+          "completely_avoid": ["Chocolate/cocoa/cacao (ALL forms)", "All nuts (almonds, walnuts, cashews, pecans, etc.)", "All seeds (pumpkin, sunflower, chia, flax, hemp, etc.)", "Soy and all soy products"],
+          "avoid_minimize": ["Shellfish in large amounts", "Organ meats", "Mushrooms in large amounts"],
+          "hidden_copper_sources": ["Nutritional yeast/yeast extract", "Spirulina/chlorella", "Most superfood powders", "Cashew-based products", "Most nut-based products"]
+        },
+        "supplements_to_avoid": ["Multivitamins", "Vitamin D supplements", "Fish oil supplements", "Calcium supplements", "Iron supplements", "Protein powders (most)", "Collagen peptides/powders", "Bone broth"],
+        "other_avoid": ["All seed oils", "Processed foods", "Fast food", "Alcohol", "Coffee and all caffeinated beverages", "Artificial sweeteners", "Added sugars in processed foods", "Gluten (wheat, barley, rye) — minimize or eliminate", "Dried fruit", "Fruit juices", "Energy drinks", "Cannabis (THC/CBD)", "Peanuts and peanut butter"]
+      },
+      "foods_use_with_caution": ["Whole eggs/pasture-raised eggs — controversial; individual experimentation", "Wild-caught salmon — controversial", "Sardines in water — controversial", "Nightshades — minimize; potatoes okay if peeled", "Fermented foods — some tolerate, some don't", "Coconut products — most tolerate, some react", "Corn — except nixtamalized forms", "Oats — ensure gluten-free"],
+      "why_specific_foods_avoided": {
+        "liver_organ_meats": "Liver is the vitamin A storage organ — extremely high retinol. Even small amounts can set back progress. Desiccated liver supplements equally problematic.",
+        "dairy": "Contains VA, vitamin D, calcium, and estrogen compounds — all four problematic in LYL. Pasteurization destroys lactoferrin. Raw dairy slightly better but still not recommended for most.",
+        "bone_broth": "High in VA (marrow/connective tissue), high copper, high glutamate. Directly contradicts popular health narrative.",
+        "collagen_peptides": "Derived from connective tissue and hides (high VA and copper). Contradicts popular skin/joint health narrative.",
+        "nuts_seeds": "All very high in copper. Small regular amounts significantly slow copper detox progress.",
+        "chocolate_cocoa": "Extremely high copper — ALL forms including dark chocolate, raw cacao. Even small regular amounts slow progress.",
+        "seed_oils": "Highly processed, oxidized, omega-6 dominant, often GMO/pesticide-laden, promote liver oxidative stress.",
+        "alcohol": "Directly competes with ALDH enzyme. Increases leaky gut and oxidative stress. Depletes zinc, magnesium, B vitamins.",
+        "caffeine_coffee": "High polyphenols interfere with niacin flushing; bile-dumping agitator; estrogenic; roasting creates acrylamide.",
+        "multivitamins": "Almost universally contain retinyl palmitate or beta-carotene + copper + wrong B vitamin forms. Directly counterproductive.",
+        "eggs": "Egg yolks contain significant retinol. Pasture-raised eggs actually higher VA than conventionally raised (counterintuitive). Individual experimentation recommended.",
+        "chicken": "The bird isn't the problem — what they're fed is. Most organic chickens still fed corn and soy, increasing copper and phytoestrogen content. Corn and soy free only.",
+        "farmed_salmon": "Fed artificial astaxanthin (VA precursor), soy-based feed, higher fat = more toxin storage.",
+        "soy": "High copper + phytoestrogens (feeds copper-estrogen spiral) + heavily GMO/pesticide-laden. Soy-fed animals accumulate in their tissue."
+      },
+      "label_reading": {
+        "hidden_vitamin_a": ["Retinyl palmitate or retinyl acetate — IS vitamin A, avoid", "Beta-carotene as colorant or additive — avoid", "Vitamin A in any form — avoid", "Fortified with vitamins — likely contains VA", "Natural colors from annatto, paprika, turmeric — contain carotenoids, minimize"],
+        "hidden_copper": ["Cocoa powder or chocolate in any form", "Yeast extract or nutritional yeast", "Spirulina or chlorella", "Most superfood powders", "Cashew-based or nut-based products"]
+      },
+      "cookware": {
+        "best": ["Stainless steel cookware", "Ceramic cookware", "Glass storage containers", "Stainless steel water bottles"],
+        "avoid": ["Copper cookware (leaches copper into food)", "Aluminum cookware (leaches aluminum)", "Cast iron (leaches iron)", "Non-stick/Teflon (PFAS chemicals)", "Plastic containers for hot food or liquids", "Microwave-safe plastics (use glass; stand away from microwave)"]
+      },
+      "food_preparation": ["Rinse cooked ground beef in strainer to reduce fat (especially OVER types)", "Peel fruits and vegetables when possible — reduces pesticide exposure", "Always cook cruciferous vegetables — reduces goitrogens", "Soak beans and grains overnight before cooking", "Use RO or distilled water for cooking", "Avoid very high temperature cooking (creates AGEs)"],
+      "eating_out": {
+        "safest": ["Steakhouses with grassfed beef options", "Grilled or baked plain proteins", "Ask for olive oil and lemon instead of dressings"],
+        "avoid": ["Anything fried", "Soups/stews (often contain bone broth or organ meat stocks)", "Asian restaurants (soy sauce and seed oils ubiquitous)", "Sauces and dressings (typically contain seed oils, sugar)"],
+        "principle": "Simple is better — fewer ingredients = safer"
+      },
+      "cross_refs": ["diet_001", "clin_001", "clin_002", "min_001", "min_003"]
+    },
+
+    {
+      "id": "gut_001",
+      "category": "gut_health",
+      "subcategory": "dysbiosis_biome",
+      "title": "Fixing Your Gut Biome / Dysbiosis",
+      "source": "Garrett Smith — Fixing Your Gut Biome / Dysbiosis: Important Background Info",
+      "tags": ["gut_biome", "probiotics", "dysbiosis", "SIBO", "candida", "leaky_gut", "fiber", "bile"],
+      "summary": "The gut biome is directly connected to bile acid metabolism, toxin processing, and enterohepatic circulation. Toxic bile is the primary driver of dysbiosis in LYL patients. Fix the gut first — everything else depends on it.",
+      "why_biome_matters_in_lyl": [
+        "Bile acid metabolism — gut bacteria transform primary bile acids into secondary bile acids, affecting toxicity and flow",
+        "Toxin processing — bacteria help process and eliminate vitamin A metabolites and copper",
+        "Enterohepatic circulation — bacteria influence how much toxic bile gets reabsorbed vs. eliminated",
+        "Immune regulation — influences autoimmune conditions",
+        "Neurotransmitter production — serotonin, dopamine precursors, GABA (mood, anxiety, depression)",
+        "Nutrient production — K2, B vitamins, short-chain fatty acids"
+      ],
+      "causes_of_dysbiosis": [
+        "Toxic bile — kills beneficial bacteria, promotes pathogenic bacteria",
+        "Vitamin A toxicity — damages gut epithelial cells, disrupts gut immune function",
+        "Copper toxicity — antimicrobial; kills beneficial gut bacteria",
+        "Pharmaceutical drugs — antibiotics and many others",
+        "Poor diet — processed foods, seed oils, excess sugar",
+        "Mold/mycotoxin exposure — antimicrobial",
+        "Chronic stress — disrupts gut motility and biome composition"
+      ],
+      "bacterial_types": {
+        "fermentative": {
+          "examples": ["Lactobacillus", "Bifidobacterium"],
+          "food_preference": "Soluble fiber",
+          "role": "Produce lactic acid and SCFAs; help bile acid metabolism; found in most probiotics"
+        },
+        "putrefactive": {
+          "examples": ["Bacteroides", "some Clostridia"],
+          "food_preference": "Insoluble fiber and protein",
+          "role": "Break down proteins; important for gut health but not in most probiotics"
+        }
+      },
+      "signs_of_dysbiosis": ["Bloating and gas (especially after eating)", "Irregular bowel movements", "Food intolerances", "Brain fog", "Mood issues", "Skin problems", "Chronic fatigue", "Yeast/fungal overgrowth (candida)", "SIBO"],
+      "protocol": {
+        "step_1_remove_causes": ["Follow LYL diet", "Address toxic bile (primary driver)", "Address copper toxicity", "Minimize pharmaceutical drugs", "Address mold exposure"],
+        "step_2_support_environment": ["Soluble fiber → feeds fermentative bacteria", "Insoluble fiber → feeds putrefactive bacteria", "Adequate hydration", "Regular bowel movements"],
+        "step_3_repopulate": {
+          "women": "Always start with Lactobacillus first",
+          "men": "Lactobacillus usually first choice; either type acceptable",
+          "both": "Add Bifidobacterium as second step if needed",
+          "products": [
+            {"name": "Pure Encapsulations Pure GG", "type": "Lactobacillus", "best_for": "First-line for most"},
+            {"name": "Bioclinic Naturals BB536", "type": "Bifidobacterium", "best_for": "Second step"},
+            {"name": "Lactospore (Bacillus coagulans)", "type": "Spore-forming", "best_for": "Diarrhea-predominant"},
+            {"name": "Sunfiber", "type": "Prebiotic", "best_for": "Feeding good bacteria + bowel regularity"}
+          ]
+        }
+      },
+      "special_considerations": {
+        "SIBO": ["Soluble fiber consistently causes significant bloating → consider SIBO", "Improving bile flow often helps SIBO (bile is naturally antimicrobial in small intestine)", "Start very low with fiber and probiotics if SIBO suspected"],
+        "candida": ["Common in LYL patients especially with copper toxicity", "Big Minerals (zinc, selenium, molybdenum) are all anti-fungal", "Lactoferrin has anti-fungal properties", "MMS (chlorine dioxide) used by some for stubborn candida", "Avoid high-sugar foods"],
+        "leaky_gut": ["Toxic bile and vitamin A toxicity both damage gut lining", "Lactoferrin (bile duct repair) also helps repair gut lining over time", "Adequate protein supports gut lining repair"]
+      },
+      "fiber_chain": {
+        "soluble": "Feeds fermentative bacteria → SCFAs → feeds gut lining cells → reduces inflammation → improves gut barrier",
+        "insoluble": "Feeds putrefactive bacteria → improves bulk and motility → reduces transit time → reduces toxin reabsorption"
+      },
+      "why_phase_1_first": "The gut is the primary elimination pathway for toxins. Constipation keeps toxins in gut longer. Dysbiosis means bacteria aren't properly processing bile acids. Fix the gut before adding more detox support.",
+      "cross_refs": ["prog_004", "spc_002", "clin_001", "clin_002", "spc_001"]
+    },
+
+    {
+      "id": "wom_001",
+      "category": "womens_health",
+      "subcategory": "hormonal_menstrual",
+      "title": "Focus Points For Women's Hormonal and/or Menstrual Issues",
+      "source": "Garrett Smith — Focus Points For Women's Hormonal and/or Menstrual Issues",
+      "tags": ["womens_health", "hormones", "menstrual", "copper", "estrogen", "PCOS", "cramps"],
+      "summary": "Hormonal and menstrual issues in LYL are primarily understood as downstream effects of copper toxicity and estrogen dysregulation. Long-term goal is consistent detox and nutritional restoration — not permanent symptom management.",
+      "copper_estrogen_connection": {
+        "the_spiral": ["Estrogen increases copper retention", "Copper stimulates estrogen production", "Each drives the other upward"],
+        "implications": ["Women on hormonal birth control or with copper IUDs doubly affected", "High copper mimics estrogen dominance — heavy periods, PMS, mood issues, anxiety", "As copper is detoxed, estrogen often normalizes spontaneously", "Zinc helps on both fronts — antagonizes both copper and estrogen"],
+        "pcos_connection": "PCOS in LYL framework is largely copper toxicity and estrogen dysregulation. High copper drives androgenic symptoms — elevated testosterone, irregular periods, acne, hair loss. Zinc is primary intervention."
+      },
+      "foundational_daily_practices": ["Big 6 Lymph Drainage — daily", "Exercise — even minimal: heel bouncing, mild rebounding, walking", "Sunlight and fresh air — daily outdoor exposure", "Bowel regularity — essential prerequisite"],
+      "core_protocol": {
+        "probiotics": "Women always start with Lactobacillus first. Bifidobacteria is second-try option.",
+        "soluble_fiber": ["Beans", "Oats", "Barley", "Apples", "Organic Sunfiber", "Apple Pectin", "Organic psyllium", "Oat Beta Glucan (Nutrim)"],
+        "flush_niacin": "Binds copper. Read niacin articles. Take only tolerated dose. Buffer as described.",
+        "high_copper_foods_eliminate": ["Chocolate/cocoa/cacao", "Nuts", "Seeds"],
+        "big_minerals": "Zinc, selenium, molybdenum — all necessary for detoxing VA and copper. All three are anti-yeast/anti-fungal."
+      },
+      "topical_applications": {
+        "charcoal_poultice": "1:1 activated hardwood charcoal + organic psyllium fiber + water to mask consistency. Apply to lower abdomen, leave 20+ minutes. Wrap in plastic wrap.",
+        "charcoal_magnesium_lotion": "1/2 tsp magnesium lotion + 1 tsp activated hardwood charcoal. Apply to lower abdomen, leave 20+ minutes. Apply thick enough to look black.",
+        "topical_magnesium": "Especially over abdomen — helps with cramps, anxiety, depression."
+      },
+      "cramps_anxiety_depression": ["Topical magnesium over abdomen", "Potassium (topical and/or dietary)", "Mineral citrates", "Cream of tartar (potassium bitartrate)"],
+      "symptom_support_extras": {
+        "rules_for_all_extras": ["Add only ONE new thing per week", "Don't change dose of one while adding another", "Increase slowly to max dose if tolerated", "Reduce or STOP if feeling worse", "STOP when issues resolve", "Anything binding/detoxing copper can stir up copper — do not push through if feeling bad"],
+        "extras": [
+          {"name": "Citric acid/Citrates", "detail": "Binds copper, decalcifies soft tissues, reduces kidney stones. Magnesium citrate powder (must react in water — not pre-formed capsules). Potassium citrate powder (non-GMO)."},
+          {"name": "Cream of tartar (potassium bitartrate)", "detail": "Binds copper, shown to help animal model of PCOS. Max 1 tsp/day."},
+          {"name": "Folinic acid (calcium folinate)", "detail": "Binds copper. Standard 400mcg/day, max 800mcg/day."},
+          {"name": "L-theanine", "detail": "Binds copper, reduces toxicity. Up to 1200mg/day. Helps with anxiety, stress tolerance, sleep onset, brain fog."},
+          {"name": "Vitamin K2 (MK-4 ONLY — not MK-7)", "detail": "VA depletes vitamin K. Normal 3-5mg/day, higher 10mg/day, max experimental 60mg/day. Helps heavy menstrual bleeding, bleeding gums, easy bruising, slow clotting, osteopenia. Stop when issues resolve."},
+          {"name": "Inositol", "detail": "Binds copper. Myo-inositol: up to 4000mg/day (2x2000mg) — better for blood sugar issues. D-Chiro: up to 600mg/day — better for androgenic/PCOS symptoms. Start slow."},
+          {"name": "Melatonin", "detail": "Binds copper, supports sleep onset. Max 3mg/day. Do NOT megadose (20-60mg approaches not recommended). Creates short-term dependence."},
+          {"name": "MMS (chlorine dioxide)", "detail": "For BV and/or candida. Oral and/or vaginal. Short-term use only — not long-term."},
+          {"name": "Megadose Vitamin C", "detail": "To slow/shut down detox if needed. Non-GMO ascorbic acid (must be buffered) or sodium ascorbate."}
+        ]
+      },
+      "long_term_goal": "Consistent detox and nutritional restoration — not permanent reliance on symptom-management supplements.",
+      "cross_refs": ["clin_002", "min_001", "min_002", "min_003", "nia_001", "spc_002", "min_005", "top_001", "gut_001"]
+    },
+
+    {
+      "id": "clin_001",
+      "category": "clinical_education",
+      "subcategory": "cholestasis",
+      "title": "Cholestasis and Liver Injury — Who, What, When, Where, Why, How",
+      "source": "Garrett Smith — The WHO, WHAT, WHEN, WHERE, WHY, HOW Basics of Cholestasis and Liver Injury",
+      "tags": ["cholestasis", "liver", "bile", "vitamin_a", "copper", "symptoms", "core_education"],
+      "summary": "Cholestasis and liver injury are the central health problem addressed by the LYL program. Understanding this condition is foundational to understanding why every protocol element exists.",
+      "who": "Everyone — cholestasis exists on a spectrum from perfectly clean flowing bile to full cirrhosis. Anyone can both develop and improve from wherever they are.",
+      "what": {
+        "definition": "Cholestasis = bile standing still. Chole = bile, stasis = standing still.",
+        "mechanism": "Bile is meant to flow from liver through bile ducts into small intestine. When disrupted, bile backs up in the liver, damaging liver cells.",
+        "manifestations": ["Non-alcoholic fatty liver disease (NAFLD)", "Non-alcoholic steatohepatitis (NASH)", "Cirrhosis (severe/end-stage, often with fibrosis)", "General liver damage (elevated liver enzymes)", "Intrahepatic cholestasis of pregnancy (ICP)", "Drug-induced liver injury (DILI)", "Autoimmune hepatitis", "Primary biliary cirrhosis (PBC)", "Sclerosing cholangitis (SC)"]
+      },
+      "when": {
+        "onset": "Develops gradually — often called silent disease. Damage accumulates over years or decades before clinical symptoms appear.",
+        "starts_at_birth": "Everyone is exposed to mother's toxic bile in the womb. Placenta filters incompletely — fat-soluble toxins (especially vitamin A) cross the placental barrier. Mother's bile excreted into amniotic fluid which fetus swallows. Everyone is born with some degree of cholestasis already present."
+      },
+      "where": {
+        "intrahepatic": "Inside the liver — most common; what LYL primarily addresses",
+        "extrahepatic": "Outside the liver — less common; usually from physical obstruction; more of a surgical situation"
+      },
+      "why": {
+        "primary_cause": "Vitamin A (retinol/retinoic acid) toxicity",
+        "secondary_cause": "Copper toxicity",
+        "other_causes": ["Heavy metal toxicity", "Pharmaceutical drug toxicity", "Mold/mycotoxin toxicity", "Dietary factors (high fat, high sugar, processed foods)", "Estrogen excess (why women more commonly affected)", "Other environmental toxins"]
+      },
+      "how_causes_symptoms": {
+        "mechanism": ["Liver becomes congested with toxic bile", "Toxic bile refluxes back into bloodstream", "Bloodstream carries toxic bile throughout the body", "Systemic symptoms appear across all body systems"],
+        "symptoms": ["Fatigue — often the first and most prevalent symptom", "Itching (pruritus) — from bile salts under skin", "Jaundice — yellowing of skin and eyes from bilirubin buildup", "Right upper quadrant pain/discomfort (liver area)", "Nausea", "Dark urine (bilirubin)", "Pale/clay-colored stools (lack of bile in intestines)", "Brain fog/cognitive issues", "Depression and anxiety", "Hormonal imbalances", "Food intolerances/digestive issues", "Chemical sensitivities", "Joint pain", "Skin issues (acne, rashes, dry skin)", "Insomnia", "Weight issues (over or underweight)", "Autoimmune conditions"]
+      },
+      "how_lyl_addresses": {
+        "remove_causes": ["Stop vitamin A intake (dietary changes)", "Address copper toxicity", "Address other toxic exposures (mold, mercury, etc.)", "Remove pharmaceutical toxins where possible"],
+        "support_bile_flow": ["Niacin (increases liver blood flow; choleretic and cholagogue)", "Soluble fiber (binds bile in gut)", "Adequate hydration", "Big 6 Lymph Drainage", "Movement and exercise", "Sunlight"],
+        "bind_remove_toxic_bile": ["Activated charcoal (gut)", "Soluble fiber (gut)", "Niacin flush (skin surface)"],
+        "repair_damage": ["Lactoferrin (repairs bile duct cells/cholangiocytes)", "Big Minerals — zinc, selenium, molybdenum", "B vitamins — thiamine, folate, B12", "Vitamin K2"],
+        "prevent_retoxing": ["Dietary changes (LYL food list)", "Environmental changes (water filtration, mold remediation, mercury removal)", "Lifestyle changes"]
+      },
+      "app_note": "Ideal 'Why Am I Sick?' explainer. Every symptom listed maps to a symptom-checker feature. The five treatment categories map directly to OAS phases. Essential reading for new members.",
+      "cross_refs": ["clin_002", "prog_004", "prog_002", "prog_003", "nia_001", "spc_002", "spc_001"]
+    },
+
+    {
+      "id": "clin_002",
+      "category": "clinical_education",
+      "subcategory": "toxic_cycle",
+      "title": "Vitamin A Toxicity, Copper Toxicity, and the Toxic Cycle",
+      "source": "Garrett Smith — LYL Provider Training Slide Deck (November 1, 2024) + Livestream #53",
+      "tags": ["vitamin_a", "copper", "toxic_cycle", "retinoic_acid", "beta_carotene", "ALDH", "estrogen"],
+      "summary": "Vitamin A toxicity is the primary cause of cholestasis in the LYL framework. Copper toxicity is the secondary cause. Together they form a self-reinforcing toxic cycle.",
+      "vitamin_a_toxicity": {
+        "why_primary_culprit": ["Modern diet is supersaturated with vitamin A", "Fat-soluble — accumulates in the liver over time", "Even normal dietary intake can cause toxicity over time", "Retinol is the storage form; retinoic acid is the active signaling form causing most damage"],
+        "primary_sources": ["Fortified foods", "Supplements", "Animal liver", "Dairy", "Eggs"],
+        "what_it_damages": ["Epithelial cells (including bile duct cells/cholangiocytes)", "Neutrophils (immune cells)", "Mitochondria", "Stellate cells (causes liver fibrosis)", "Creates oxidative stress", "Disrupts calcium metabolism", "Blocks potassium channels", "Depletes zinc, selenium, molybdenum", "Increases copper toxicity"],
+        "conversion_pathway": {
+          "chain": "Dietary VA (retinol/beta-carotene) → Retinol → Retinaldehyde → Retinoic acid",
+          "retinol": "Storage form; accumulates in liver",
+          "retinoic_acid": "Active signaling form; causes most damage",
+          "ALDH_role": "Aldehyde dehydrogenase involved in conversion — requires molybdenum and selenium",
+          "why_feel_worse_during_detox": "Stored retinol converts to retinoic acid for elimination — retinoic acid temporarily rises in blood before being eliminated"
+        },
+        "beta_carotene_note": "Beta-carotene is a VA precursor. With damaged liver and impaired metabolism, conversion can be dysregulated — converting too much to retinol. Beta-carotene itself can cause carotenemia (yellowing of skin). Avoid deeply colored orange, yellow, red, and dark green plant foods."
+      },
+      "copper_toxicity": {
+        "why_secondary_culprit": ["Modern environment is copper-rich", "Copper and vitamin A toxicity are synergistic — each makes the other worse", "Depletes zinc, potassium, and other minerals"],
+        "primary_sources": ["Copper pipes", "Copper cookware", "Hormonal birth control", "Copper IUDs", "Soy-fed animals", "Nuts and seeds", "Chocolate"],
+        "copper_estrogen_connection": "Estrogen increases copper retention; copper stimulates estrogen production — a self-reinforcing spiral. High copper causes estrogen dominance symptoms."
+      },
+      "the_toxic_cycle": [
+        "Vitamin A damages bile duct cells",
+        "Impaired bile flow → cholestasis",
+        "Cholestasis worsens copper accumulation",
+        "Copper worsens cholestasis",
+        "Both deplete key minerals (zinc, selenium, molybdenum, potassium)",
+        "Mineral depletion impairs detox enzymes (ALDH, ADH, etc.)",
+        "Impaired detox enzymes allow more toxin accumulation",
+        "Cycle continues and worsens over time"
+      ],
+      "who_most_affected": ["Everyone is on the cholestasis spectrum", "Starts in the womb", "Worsens with modern diet and environment", "Women more affected due to estrogen", "Copper IUD and hormonal birth control users especially affected", "Genetic variations (SNPs) can increase susceptibility"],
+      "autoimmune_connection": "Vitamin A directly affects immune regulation — too much dysregulates the immune system. Retinoic acid specifically affects T-regulatory cells and can cause immune system to attack self-tissues. Reducing toxic burden often improves autoimmune conditions.",
+      "cross_refs": ["clin_001", "min_001", "min_002", "min_003", "min_005", "wom_001", "prog_003"]
+    },
+
+    {
+      "id": "life_001",
+      "category": "lifestyle_protocols",
+      "subcategory": "lymph_drainage",
+      "title": "Big 6 Lymph Drainage",
+      "source": "Garrett Smith — LYL Livestream #53; Order of Adding Stuff",
+      "tags": ["lymph", "drainage", "phase_0", "daily", "detox", "Perry_Nickelston"],
+      "summary": "A lymphatic drainage technique developed by Perry Nickelston of Stop Chasing Pain. Focuses on the six primary lymphatic drainage areas. Part of Phase 0 — done daily.",
+      "what_it_is": "Gentle massage/activation of the six main lymphatic drainage areas of the body. Simple, takes a few minutes, done daily.",
+      "the_six_areas": ["Two sides of the neck", "Two armpits", "Two groins"],
+      "why_it_matters": ["Lymph carries toxins away from cells to be processed and eliminated", "Stagnant lymph = toxin accumulation", "Toxic bile and its components need to be moved out of tissues", "Prevents stagnation, increases oxygen levels for toxin oxidation"],
+      "when_to_do": "Daily — ideally every day as part of Phase 0 routine.",
+      "resource": "https://www.stopchasingpain.com/the-big-6-tm/#big-6-video",
+      "cross_refs": ["prog_004", "life_002"]
+    },
+
+    {
+      "id": "life_002",
+      "category": "lifestyle_protocols",
+      "subcategory": "breathwork",
+      "title": "Breathwork for Detox",
+      "source": "Garrett Smith — Basics Of Why You Want To Improve Your Breathing For Better Detox",
+      "tags": ["breathwork", "breathing", "aldehydes", "detox", "phase_0", "ALDH", "lungs"],
+      "summary": "Every exhale expels alcohols, aldehydes, and other gaseous toxins from the lungs. Better breathing — not faster or more — increases toxin elimination all day long without triggering detox symptoms.",
+      "the_science": {
+        "key_connections": ["EthanOL and retinOL are both alcohols", "AcetALDEHYDE and retinALDEHYDE are both aldehydes", "Slow ALDH causes aldehydes to build up in the system", "Accumulated aldehydes seek escape through the lungs and breath"],
+        "research_backing": "Studies on ethanol elimination via isocapnic hyperpnea show breathing can increase elimination rate of ethanol more than three-fold compared to liver metabolism alone. Same principle applies to retinol and retinaldehyde — chemically analogous.",
+        "aldehyde_lung_risk": "Slow ALDH + excess aldehyde intake + poor breathing = excess aldehydes damaging lung tissue. Research confirms elevated exhaled aldehydes as biomarkers for lung cancer, inflammatory lung disease, and esophageal cancer."
+      },
+      "the_two_part_solution": ["Reduce aldehydes coming IN — dietary and environmental changes (LYL principles)", "Improve how aldehydes get OUT — breathwork helps aldehydes escape faster all day long"],
+      "practical_application": {
+        "protocol": "Rome Za's Breakthrough Breathwork Protocol (recommended)",
+        "when": "Mornings — after meditation/self-hypnosis, before workouts",
+        "key_distinction": "Better breathing ≠ hyperventilation. Proper breathwork maintains CO2 balance while increasing toxin elimination. Simple hyperventilation drops CO2 and causes lightheadedness.",
+        "expected_benefit": "Increased breathing capacity over time; detox dumps resolve more quickly; no detox symptoms when done appropriately"
+      },
+      "important_advantage": "One of the rare Phase 0 interventions that supports toxin elimination without triggering bile-dumping symptoms — appropriate even for very sensitive individuals.",
+      "cross_refs": ["prog_004", "life_001", "min_002", "min_003"]
+    },
+
+    {
+      "id": "test_001",
+      "category": "testing_labs",
+      "subcategory": "htma",
+      "title": "HTMA (Hair Mineral Analysis) — Interpretation Guide",
+      "source": "Garrett Smith — LYL Provider Training Slide Deck (November 1, 2024)",
+      "tags": ["HTMA", "hair_mineral_analysis", "testing", "zinc", "copper", "selenium", "molybdenum", "Trace_Elements"],
+      "summary": "Hair Mineral Analysis provides a 90-day window of mineral status. Reveals mineral levels, oxidative stress patterns, adrenal and thyroid patterns. Lab: Trace Elements.",
+      "what_htma_reveals": ["Mineral status over time (90-day window)", "Zinc, selenium, molybdenum, copper levels", "Oxidative stress patterns", "Adrenal patterns", "Thyroid patterns"],
+      "optimal_ranges_trace_elements_lab": {
+        "zinc": "17-20",
+        "copper": "1.5-2.5",
+        "selenium": "0.11-0.15",
+        "molybdenum": "Above 0.004 (below = deficiency)",
+        "calcium_magnesium_ratio": "Indicates autonomic nervous system balance",
+        "sodium_potassium_ratio": "Indicates adrenal function and stress response",
+        "calcium_potassium_ratio": "Indicates thyroid function"
+      },
+      "what_htma_cannot_do": ["Hair sodium: NOT useful for assessing sodium intake", "Hair potassium: NOT useful for assessing potassium intake", "High hair calcium: indicates biounavailable calcium (depositing in soft tissues, not excess) — associated with vitamin D dysregulation, VA toxicity, magnesium deficiency"],
+      "high_hair_calcium_meaning": {
+        "what_it_means": "Biounavailable calcium — not in excess but depositing in wrong places (soft tissues rather than bones)",
+        "associated_with": ["Vitamin D dysregulation", "Vitamin A toxicity", "Magnesium deficiency"],
+        "what_to_do": ["Do NOT take less calcium — address underlying dysregulation", "Topical magnesium (keeps calcium in correct locations)", "Reduce vitamin A", "Get vitamin D from sunlight, not supplements", "Vitamin K2 MK-4 (directs calcium to bones)"]
+      },
+      "lab": "Trace Elements — traceelements.com",
+      "cross_refs": ["prog_005", "test_002", "min_001", "min_002", "min_003", "top_001"]
+    },
+
+    {
+      "id": "test_002",
+      "category": "testing_labs",
+      "subcategory": "blood_testing",
+      "title": "Blood Testing — Key Markers and Optimal Ranges",
+      "source": "Garrett Smith — LYL Provider Training Slide Deck (November 1, 2024) + Livestream #53",
+      "tags": ["blood_testing", "GGT", "ALT", "AST", "retinol", "RBP4", "ceruloplasmin", "ferritin", "testing"],
+      "summary": "Blood testing is the other half of the test-don't-guess approach. LYL uses stricter optimal ranges than conventional lab normals, particularly for GGT.",
+      "key_markers": [
+        {
+          "marker": "GGT (Gamma-Glutamyl Transferase)",
+          "optimal_lyl": "Below 20 U/L",
+          "conventional_normal": "Up to 60-70 U/L — considered too permissive in LYL framework",
+          "why_most_important": "Most sensitive marker of liver stress/cholestasis. Goes up before ALT and AST — the canary in the coal mine. Specifically elevated by alcohol, drug toxicity, fatty liver, and bile flow obstruction.",
+          "what_elevation_means": "Glutathione depletion and oxidative stress. Liver is under stress — catching cholestasis before cells start dying.",
+          "important_nuance": "In very advanced liver disease, ALT can be LOW (not enough cells left to release enzyme). Normal ALT does not always mean healthy liver."
+        },
+        {
+          "marker": "ALT (Alanine Aminotransferase)",
+          "optimal_lyl": "Below 20 U/L",
+          "what_it_measures": "Liver cell death (hepatocytes dying). Goes up when liver cells are actually dying — later than GGT."
+        },
+        {
+          "marker": "AST (Aspartate Aminotransferase)",
+          "optimal_lyl": "Below 20 U/L",
+          "what_it_measures": "Liver cell damage marker. Can be falsely low in severe liver disease."
+        },
+        {
+          "marker": "Retinol (Vitamin A)",
+          "optimal_lyl": "Below 50 mcg/dL",
+          "note": "Conventional normal range is considered too high in LYL framework"
+        },
+        {
+          "marker": "RBP4 (Retinol-Binding Protein)",
+          "optimal_lyl": "Should track with retinol levels",
+          "note": "Required to make RBP — zinc dependent"
+        },
+        {
+          "marker": "Ceruloplasmin",
+          "what_it_measures": "Copper transport protein",
+          "interpretation": "Low ceruloplasmin = poor copper transport = copper accumulation"
+        },
+        {
+          "marker": "Ferritin",
+          "interpretation": "High ferritin often indicates inflammation and/or copper toxicity — not always iron overload"
+        }
+      ],
+      "recommended_panel": ["GGT", "ALT", "AST", "Complete metabolic panel", "CBC with differential", "Retinol (Vitamin A)", "RBP4", "Ceruloplasmin and serum copper", "Zinc", "Vitamin D", "Ferritin and iron panel"],
+      "enzyme_elevation_during_lyl": "AST, ALT, GGT may temporarily rise when starting LYL or increasing protocols. This reflects increased liver detox activity — not liver damage. Like stirring mud at the bottom of a pond — looks murkier before getting clearer. Especially common in first 4-8 weeks. Key question: feeling better overall despite elevated enzymes?",
+      "progress_markers": ["GGT trending down over time", "Retinol levels dropping", "HTMA mineral levels improving", "Tolerance for bile-dumping agitators increasing", "Niacin flush intensity decreasing (rough proxy for toxicity level)"],
+      "cross_refs": ["prog_005", "test_001", "clin_001", "clin_002"]
+    },
+
+    {
+      "id": "dtx_001",
+      "category": "detox_tools",
+      "subcategory": "hdт",
+      "title": "Homeopathic Detox Therapy (HDT)",
+      "source": "Garrett Smith — How To Pick Your HDT Remedy(s); How To Take Your HDT Remedy(s); How To Manage Healing Crisis During HDT",
+      "tags": ["HDT", "homeopathic", "detox", "pharmaceuticals", "birth_control", "isopathic", "Ton_Jansen"],
+      "summary": "An isopathic approach to undoing the specific damage of pharmaceuticals, drugs, chemicals, and poisons. Based on the writings of Ton Jansen. Particularly relevant when health problems began after a specific medication or toxic exposure.",
+      "when_to_consider": ["A specific pharmaceutical/vaccine/drug/chemical can be identified as the turning point in health", "Side effects from a specific drug never went away", "Female issues began after birth control pills or other hormonal medications"],
+      "picking_remedies_priority_order": [
+        "1. The pharmaceutical that 'ruined your health' or 'life was never the same after' — your #1 remedy",
+        "2. Something you got side effects from that have never gone away",
+        "3. Something you had such a bad reaction to that you had to stop taking it",
+        "4. Other pharmaceuticals you simply want to address even if no obvious problems noticed"
+      ],
+      "poly_bowel_plus": "Everyone starts with Poly Bowel Plus — a homeopathic gut biome rebalancer. Works on a different level/mechanism than probiotics; neither replaces the other.",
+      "first_time_hdт": {
+        "super_sensitive": "Poly Bowel Plus alone for first 8-week sequence, then add one medication remedy",
+        "standard": "Poly Bowel Plus + one medication/drug/chemical remedy together for 8 weeks",
+        "maximum": "2 remedy sequences at one time"
+      },
+      "dosing_schedule": {
+        "before_starting": "ONE dose (2 pellets) of Camphora 200c — done once before any other remedies begin",
+        "sequence": [
+          {"weeks": "1-2", "strength": "30c", "pattern": "Remedy A: Mon & Thu / Remedy B: Tue & Fri"},
+          {"weeks": "3-4", "strength": "200c", "pattern": "Same pattern"},
+          {"weeks": "5-6", "strength": "1M", "pattern": "Same pattern"},
+          {"weeks": "7-8", "strength": "10M", "pattern": "Same pattern"}
+        ],
+        "key_rules": ["Never take two different remedies on the same day", "Each strength requires 4 total doses before advancing", "Complete each strength level fully before advancing", "Do not skip any of the 4 total doses of each strength"]
+      },
+      "missed_doses": {
+        "missed_few_days": "Catch up — rest days between doses are not mandatory",
+        "missed_a_week": "Resume following week — a skipped week doesn't require starting over",
+        "stopped_for_months": "Resume exactly where you left off — do NOT restart from beginning",
+        "unsure_if_took_dose": "Take it again — more important not to skip than to avoid an extra one"
+      },
+      "water_method_for_reactions": {
+        "when_to_use": "When significant, noticeable reactions occur that you suspect are from HDT",
+        "warning": "Do NOT push through reactions — symptoms will only strengthen if you continue. Relief only comes when sequence ends.",
+        "steps": [
+          "Step 1: Stop ALL homeopathic remedies immediately",
+          "Step 2: Watch and wait 24 hours. If symptoms resolve — resume HDT where you left off.",
+          "Step 3: If symptoms persist — place ONE pellet of suspect remedy in glass of water, let dissolve",
+          "Step 4: Take ONE spoonful of remedy water. Observe.",
+          "Step 5: Can take up to 4 spoonfuls in second 24-hour period, separated by at least 1 hour",
+          "Step 6: If resolved after any dose — resume HDT where you left off",
+          "Step 7: If still symptomatic — repeat Water Method for second remedy in third 24-hour period",
+          "Step 8: If Water Method fails — stop HDT sequence and look for other causes"
+        ],
+        "if_repeatedly_needed": "You are NOT READY YET for one or both remedies. Other remedies or nutrient deficiencies likely need to be addressed first."
+      },
+      "consultation": "30-minute consult available with Garrett Smith to help select remedy sequences. Contact Julie at admin@nutritionrestored.com.",
+      "cross_refs": ["gut_001", "wom_001", "prog_003"]
+    },
+
+    {
+      "id": "bvit_001",
+      "category": "b_vitamins",
+      "subcategory": "antidotes",
+      "title": "B Vitamins as Antidotes — Thiamine, Folate, B12",
+      "source": "Garrett Smith — B Vitamins as Antidotes",
+      "tags": ["B_vitamins", "thiamine", "B1", "folate", "folinic_acid", "B12", "adenosylcobalamin", "hydroxocobalamin", "methylation", "phase_4"],
+      "summary": "Three specific B vitamins used as antidotes to vitamin A and copper toxicity. They directly counter the damage — not just replace what was depleted. Phase 4 of the OAS. Form matters enormously.",
+      "critical_rule": "Do NOT use B-complex supplements — they typically contain wrong forms, often include copper, and commonly contain niacinamide instead of niacin. Use individual supplements in correct forms only.",
+      "why_methylated_forms_avoided": "Methylcobalamin and methylfolate push methylation. In copper-toxic individuals, methylation is dysregulated — pushing it causes anxiety, irritability, insomnia, racing thoughts. Folinic acid and adenosylcobalamin/hydroxocobalamin support the same pathways without forcing overmethylation. This is a common mistake in standard methylation protocols.",
+      "the_antidote_chain": "Vitamin A toxicity → depletes thiamine, folate, B12 → B vitamin deficiency worsens VA toxicity symptoms → correct B vitamin supplementation counters VA toxicity effects → folinic acid + hydroxocobalamin also bind copper → double antidote function",
+      "thiamine_b1": {
+        "correct_forms": ["Thiamine HCl (hydrochloride) — preferred", "Benfotiamine (fat-soluble) — secondary option", "TTFD — more aggressive; use with caution"],
+        "do_not_use": ["Thiamine mononitrate (common in fortified foods)"],
+        "why_critical": ["Vitamin A depletes thiamine", "Required for carbohydrate metabolism (Krebs cycle)", "Required for nerve function and myelin sheath maintenance", "Supports ALDH function — key detox enzyme for vitamin A", "Vitamin A toxicity damages myelin; thiamine helps protect and repair it", "Essential for vagus nerve function → poor thiamine = poor vagus nerve = poor gut motility = constipation"],
+        "deficiency_signs": ["Fatigue and weakness", "Brain fog and poor concentration", "Anxiety and depression", "Nerve pain, tingling, numbness", "Poor digestion/constipation", "Heart palpitations", "Poor stress tolerance", "Sensitivity to carbohydrates (feeling worse after eating carbs)"],
+        "dosing": {"starting": "25-50mg/day", "standard": "100-300mg/day", "high_dose": "Up to 600mg/day", "timing": "With food; can be split into multiple doses per day"}
+      },
+      "folate": {
+        "correct_form": "Folinic acid (calcium folinate) ONLY",
+        "do_not_use": ["Folic acid (synthetic; problematic for MTHFR variants)", "Methylfolate/5-MTHF (causes overmethylation in copper-toxic individuals)", "Standard folate supplements that are actually folic acid"],
+        "why_folinic_acid": ["Vitamin A depletes folate", "Copper toxicity dysregulates folate metabolism", "Naturally occurring, metabolically active form", "Does NOT force methylation", "Important for DNA synthesis, repair, and immune function", "Binds copper — functions as a copper binder"],
+        "dosing": {"standard": "400mcg/day", "maximum": "800mcg/day"}
+      },
+      "b12": {
+        "correct_forms": ["Adenosylcobalamin — mitochondrial form; important for energy production", "Hydroxocobalamin — natural form; binds cyanide and nitric oxide (detox functions); also BINDS COPPER"],
+        "do_not_use": ["Cyanocobalamin (synthetic; requires detox to use; contains cyanide molecule)", "Methylcobalamin (drives overmethylation in copper-toxic individuals)"],
+        "why_b12_matters": ["Vitamin A toxicity affects B12 metabolism", "Required for myelin sheath maintenance (with thiamine)", "Required for proper nerve function and DNA synthesis", "B12 deficiency symptoms overlap with vitamin A toxicity symptoms", "Hydroxocobalamin specifically binds copper — double antidote function"],
+        "dosing": {"standard": "500-1000mcg/day", "forms": ["Sublingual tablet", "Lozenge", "Capsule", "Hydroxocobalamin injection (more bioavailable but not necessary for most)"]}
+      },
+      "common_mistakes": ["Using folic acid instead of folinic acid", "Using methylcobalamin instead of adenosylcobalamin or hydroxocobalamin", "Using methylfolate (5-MTHF) — causes overmethylation in copper-toxic people", "Overlooking thiamine entirely (most commonly missed)", "Using B-complex supplements (wrong forms, often contain copper)", "Skipping Phase 0-3 and jumping straight to B vitamins without foundation"],
+      "cross_refs": ["prog_004", "clin_001", "clin_002", "min_001", "min_002", "min_003", "gut_001"]
+    },
+
+    {
+      "id": "pend_001",
+      "category": "pending_video",
+      "subcategory": "hydration",
+      "title": "Hydration Basics [PENDING — Video Transcription Required]",
+      "source": "Garrett Smith — Hydration Basics Video",
+      "tags": ["hydration", "pending", "phase_0"],
+      "summary": "Covers adequate fluid intake during LYL. Referenced in OAS Phase 0 and Beginner NA Guidelines as important prerequisite. Niacin increases water requirements.",
+      "known_references": ["OAS Phase 0 references Hydration Basics video", "Beginner NA guidelines note that NA will likely increase water requirements", "Reverse osmosis or distilled water recommended for drinking and cooking"],
+      "status": "PENDING — video transcription required"
+    },
+
+    {
+      "id": "pend_002",
+      "category": "pending_video",
+      "subcategory": "sunlight_uvb",
+      "title": "Sunlight / UVB Exposure [PENDING — Video Transcription Required]",
+      "source": "Garrett Smith — Sunlight/UVB Video",
+      "tags": ["sunlight", "UVB", "pending", "phase_0", "vitamin_D", "bile_dumping"],
+      "summary": "Covers sunlight and UVB exposure as a Phase 0 protocol element and bile-dumping agitator. Preferred source of vitamin D in LYL.",
+      "known_references": ["OAS Phase 0 — sunlight/UVB exposure to bare skin; not so much that symptoms worsen or skin damage occurs", "Starter Guide — agitator/bile dumper when overdone", "Vitamin D supplements avoided — sunlight is the preferred source", "Sauna guidelines note showering immediately after to wash off toxins sweated to skin"],
+      "status": "PENDING — video transcription required"
+    },
+
+    {
+      "id": "pend_003",
+      "category": "pending_video",
+      "subcategory": "mms_chlorine_dioxide",
+      "title": "MMS / Chlorine Dioxide [PENDING — Video Transcription Required]",
+      "source": "Garrett Smith — MMS Articles/Videos",
+      "tags": ["MMS", "chlorine_dioxide", "candida", "BV", "pending"],
+      "summary": "Used by some LYL members for stubborn candida, bacterial vaginosis (BV). Can be used orally and/or vaginally. Short-term use only — not long-term.",
+      "known_references": ["Women's Health entry: used for BV and/or candida; oral and/or vaginal; short-term only; see MMS e-books for dosing", "Gut Biome entry: used by some members for stubborn candida"],
+      "status": "PENDING — video transcription required"
+    },
+
+    {
+      "id": "pend_004",
+      "category": "pending_video",
+      "subcategory": "msg",
+      "title": "MSG (Monosodium Glutamate) [PENDING — Video/Article Required]",
+      "source": "Garrett Smith — MSG Article",
+      "tags": ["MSG", "monosodium_glutamate", "phase_2", "electrolytes", "pending"],
+      "summary": "Added to Phase 2 (Electrolytes) of the OAS in August 2025 update. Full details pending.",
+      "known_references": ["OAS Phase 2 lists MSG alongside magnesium, potassium, and sodium", "Added to OAS August 28, 2025"],
+      "status": "PENDING — article/video transcription required"
+    }
+
+  ],
+
+  "quick_reference": {
+    "big_minerals_rule": "If you don't feel good on a certain dose of zinc, selenium, or molybdenum, take less — even zero if necessary. Most issues appear within 3 days of starting or increasing dose but can take up to a week.",
+    "bowel_rule": "You must be pooping at least 2x per day before using daily charcoal. Poop first. Worry about binding bile later.",
+    "salt_rule": "Salt your food to taste. People who don't salt their food do not get better.",
+    "protein_minimum": "Minimum 50g total protein per day from all food sources combined.",
+    "niacin_forms_never_use": ["Niacinamide/nicotinamide", "Flush-free niacin", "Sustained/extended release niacin", "Nicotinamide Riboside (NR)", "NADH/NMN", "Inositol nicotinate", "Copper nicotinate"],
+    "b_vitamin_forms_never_use": ["Folic acid (use folinic acid instead)", "Methylcobalamin (use adenosylcobalamin or hydroxocobalamin)", "Methylfolate/5-MTHF", "Cyanocobalamin", "B-complex supplements"],
+    "supplements_always_avoid": ["Multivitamins", "Vitamin D supplements", "Fish oil supplements", "Calcium supplements", "Iron supplements", "Collagen peptides", "Bone broth"],
+    "oas_phases_summary": ["Phase 0: Hydration, Breathing, Light, Movement", "Phase 1: Bowels, Biome, Bile", "Phase 2: Electrolytes (Magnesium, Potassium, Sodium, MSG)", "Phase 3: Big Minerals (Selenium, Molybdenum, Zinc)", "Phase 4: Antidotes and B-Vitamins (K2, Folinic acid, Thiamine, B12)", "Phase 5: Lactoferrin"],
+    "fix_first_checklist": ["Salt your food to taste", "Fix any mold exposure", "Get copper out of drinking and bathing water", "Remove mercury amalgam fillings", "Eat at least 50g protein per day"],
+    "optimal_blood_ranges": {"GGT": "Below 20 U/L", "ALT": "Below 20 U/L", "AST": "Below 20 U/L", "Retinol": "Below 50 mcg/dL"},
+    "htma_optimal_ranges": {"zinc": "17-20", "copper": "1.5-2.5", "selenium": "0.11-0.15", "molybdenum": "Above 0.004"}
+  },
+
+  "cross_reference_index": {
+    "vitamin_a_toxicity": ["prog_002", "prog_004", "clin_001", "clin_002", "diet_002", "nia_001", "spc_001", "bvit_001"],
+    "copper_toxicity": ["prog_002", "prog_003", "clin_001", "clin_002", "wom_001", "min_001", "min_002", "diet_002", "bvit_001"],
+    "cholestasis": ["clin_001", "clin_002", "min_005", "nia_001", "spc_001", "spc_002", "gut_001"],
+    "niacin_cluster": ["nia_001", "nia_002", "nia_003", "nia_004", "nia_005"],
+    "big_minerals": ["min_001", "min_002", "min_003"],
+    "electrolytes": ["min_004", "min_005", "top_001"],
+    "oas_phases": ["prog_004"],
+    "testing": ["prog_005", "test_001", "test_002"],
+    "womens_health": ["wom_001", "clin_002"],
+    "gut_health": ["gut_001", "prog_004", "spc_002"],
+    "food_lists": ["diet_001", "diet_002"],
+    "detox_tools": ["spc_002", "nia_004", "dtx_001"],
+    "phase_0": ["life_001", "life_002", "pend_001", "pend_002"],
+    "b_vitamins": ["bvit_001"],
+    "lactoferrin": ["spc_001"],
+    "retracing": ["prog_006"]
+  }
+}
