@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Your Liver — Lab Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e2ddd6;
+    --text: #1a1815;
+    --text2: #6b6660;
+    --text3: #9e9890;
+    --accent: #2d6a4f;
+    --accent-light: #e8f4ee;
+    --amber: #b5560a;
+    --amber-light: #fef3e2;
+    --red: #b91c1c;
+    --red-light: #fef2f2;
+    --blue: #1d4ed8;
+    --blue-light: #eff6ff;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* AUTH SCREEN */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #f7f5f0 0%, #e8f4ee 100%);
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 48px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+  }
+
+  .auth-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .auth-tagline {
+    font-size: 13px;
+    color: var(--text3);
+    margin-bottom: 36px;
+    letter-spacing: 0.03em;
+  }
+
+  .auth-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 28px;
+  }
+
+  .auth-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .auth-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.15s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .auth-error {
+    background: var(--red-light);
+    color: var(--red);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 14px;
+    display: none;
+  }
+
+  /* MAIN APP */
+  #app { display: none; min-height: 100vh; }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--accent);
+    margin-right: 32px;
+    padding: 16px 0;
+    white-space: nowrap;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    flex: 1;
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 18px 18px;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .user-menu {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-email { font-size: 13px; color: var(--text3); }
+
+  .btn-signout {
+    font-size: 13px;
+    color: var(--text3);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-signout:hover { color: var(--red); border-color: var(--red); }
+
+  .main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    margin-bottom: 18px;
+    color: var(--text);
+  }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 28px 0 14px;
+  }
+
+  /* FORM FIELDS */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  .form-field { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-field label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    letter-spacing: 0.02em;
+  }
+
+  .form-field input, .form-field select {
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .form-field input:focus, .form-field select:focus { border-color: var(--accent); }
+
+  .form-field .hint {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  /* CHECKBOXES */
+  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 13px;
+  }
+
+  .check-item:hover { border-color: var(--accent); background: var(--accent-light); }
+  .check-item.checked { border-color: var(--accent); background: var(--accent-light); }
+
+  .check-item input { display: none; }
+
+  .check-box {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .check-item.checked .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .check-item.checked .check-box::after {
+    content: '';
+    width: 8px; height: 5px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-accent:hover { opacity: 0.88; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text2); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+
+  /* REPORT CARDS */
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+  .metric-card {
+    padding: 16px;
+    border-radius: 10px;
+    border: 1.5px solid transparent;
+  }
+
+  .metric-card.optimal { background: var(--accent-light); border-color: #a3d9be; }
+  .metric-card.low { background: var(--amber-light); border-color: #f8c97a; }
+  .metric-card.high { background: var(--red-light); border-color: #fca5a5; }
+  .metric-card.watch { background: var(--blue-light); border-color: #93c5fd; }
+
+  .metric-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+  .metric-value { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); margin-bottom: 2px; }
+  .metric-status { font-size: 12px; font-weight: 500; }
+  .metric-card.optimal .metric-status { color: var(--accent); }
+  .metric-card.low .metric-status { color: var(--amber); }
+  .metric-card.high .metric-status { color: var(--red); }
+  .metric-card.watch .metric-status { color: var(--blue); }
+
+  /* RECOMMENDATION ITEMS */
+  .rec-item {
+    padding: 16px 18px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 4px solid transparent;
+  }
+
+  .rec-item.urgent { background: var(--red-light); border-left-color: var(--red); }
+  .rec-item.action { background: var(--blue-light); border-left-color: var(--blue); }
+  .rec-item.watch { background: var(--amber-light); border-left-color: var(--amber); }
+  .rec-item.info { background: var(--accent-light); border-left-color: var(--accent); }
+
+  .rec-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .rec-body { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+  /* HISTORY */
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .history-item:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+  .history-date { font-family: 'DM Serif Display', serif; font-size: 16px; min-width: 100px; }
+  .history-pills { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+
+  .pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  .pill.optimal { background: var(--accent-light); color: var(--accent); }
+  .pill.low { background: var(--amber-light); color: var(--amber); }
+  .pill.high { background: var(--red-light); color: var(--red); }
+
+  /* CHART */
+  .chart-wrap { position: relative; height: 220px; margin-bottom: 8px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.2s;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  .loading {
+    text-align: center;
+    color: var(--text3);
+    padding: 40px;
+    font-size: 14px;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text3);
+    padding: 48px 24px;
+  }
+
+  .empty-state h3 { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text2); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+
+  @media (max-width: 600px) {
+    .form-grid, .form-grid-3, .check-grid { grid-template-columns: 1fr; }
+    .topbar { padding: 0 16px; }
+    .main { padding: 20px 16px; }
+    .auth-card { padding: 32px 24px; }
+    .user-email { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Love Your Liver</div>
+    <div class="auth-tagline">Lab tracking &amp; personalized recommendations</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign in</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Create account</button>
+    </div>
+
+    <div id="login-form">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="signIn()">Sign in</button>
+    </div>
+
+    <div id="signup-form" style="display:none">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 8 characters">
+      </div>
+      <button class="btn-primary" onclick="signUp()">Create account</button>
+    </div>
+
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">Love Your Liver</div>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('profile')">Profile</button>
+      <button class="tab" onclick="showTab('labs')">Enter Labs</button>
+      <button class="tab" onclick="showTab('report')">Report</button>
+      <button class="tab" onclick="showTab('history')">History</button>
+    </div>
+    <div class="user-menu">
+      <span class="user-email" id="user-email-display"></span>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- PROFILE TAB -->
+    <div class="panel active" id="panel-profile">
+      <div class="card">
+        <div class="card-title">Your profile</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Full name</label>
+            <input type="text" id="p-name" placeholder="Your name">
+          </div>
+          <div class="form-field">
+            <label>Sex</label>
+            <select id="p-sex">
+              <option value="">Select</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Body weight (lbs)</label>
+            <input type="number" id="p-weight" placeholder="e.g. 145">
+          </div>
+          <div class="form-field">
+            <label>Body type</label>
+            <select id="p-type">
+              <option value="unknown">Not sure yet</option>
+              <option value="over">OVER type (tends to gain)</option>
+              <option value="under">UNDER type (tends to lose)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title">Fix These FIRST — checklist</div>
+        <div class="check-grid" id="flags-grid"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-accent" onclick="saveProfile()">Save profile</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LABS TAB -->
+    <div class="panel" id="panel-labs">
+      <div class="card">
+        <div class="card-title">Enter lab results</div>
+
+        <div class="form-field" style="margin-bottom:16px">
+          <label>Test date</label>
+          <input type="date" id="l-date">
+        </div>
+
+        <div class="section-title">Blood markers</div>
+        <div class="form-grid-3">
+          <div class="form-field">
+            <label>Serum retinol (mcg/dL)</label>
+            <input type="number" step="0.1" id="l-retinol" placeholder="e.g. 62">
+            <span class="hint">Optimal &lt; 50</span>
+          </div>
+          <div class="form-field">
+            <label>Ferritin (ng/mL)</label>
+            <input type="number" step="0.1" id="l-ferritin" placeholder="e.g. 85">
+            <span class="hint">F: 50–100 · M: 30–70</span>
+          </div>
+          <div class="form-field">
+            <label>Blood copper (mcg/dL)</label>
+            <input type="number" step="0.1" id="l-bcopper" placeholder="e.g. 118">
+          </div>
+          <div class="form-field">
+            <label>Blood zinc (mcg/dL)</label>
+            <input type="number" step="0.1" id="l-bzinc" placeholder="e.g. 74">
+          </div>
+          <div class="form-field">
+            <label>GGT (U/L)</label>
+            <input type="number" step="0.1" id="l-ggt" placeholder="e.g. 28">
+            <span class="hint">Optimal &lt; 20</span>
+          </div>
+          <div class="form-field">
+            <label>ALT (U/L)</label>
+            <input type="number" step="0.1" id="l-alt" placeholder="e.g. 22">
+            <span class="hint">Optimal &lt; 20</span>
+          </div>
+          <div class="form-field">
+            <label>AST (U/L)</label>
+            <input type="number" step="0.1" id="l-ast" placeholder="e.g. 19">
+            <span class="hint">Optimal &lt; 20</span>
+          </div>
+        </div>
+
+        <div class="section-title">Hair mineral analysis (Trace Elements Lab)</div>
+        <div class="form-grid-3">
+          <div class="form-field">
+            <label>Calcium</label>
+            <input type="number" step="0.1" id="l-ca" placeholder="e.g. 38">
+            <span class="hint">Optimal 40–42</span>
+          </div>
+          <div class="form-field">
+            <label>Magnesium</label>
+            <input type="number" step="0.1" id="l-mg" placeholder="e.g. 4.2">
+          </div>
+          <div class="form-field">
+            <label>Phosphorus</label>
+            <input type="number" step="0.1" id="l-p" placeholder="e.g. 14">
+          </div>
+          <div class="form-field">
+            <label>Copper</label>
+            <input type="number" step="0.01" id="l-cu" placeholder="e.g. 2.8">
+            <span class="hint">Optimal 1.5–2.5</span>
+          </div>
+          <div class="form-field">
+            <label>Zinc</label>
+            <input type="number" step="0.1" id="l-zn" placeholder="e.g. 14">
+            <span class="hint">Optimal 17–20</span>
+          </div>
+          <div class="form-field">
+            <label>Selenium</label>
+            <input type="number" step="0.001" id="l-se" placeholder="e.g. 0.09">
+            <span class="hint">Optimal 0.11–0.15</span>
+          </div>
+          <div class="form-field">
+            <label>Molybdenum</label>
+            <input type="number" step="0.001" id="l-mo" placeholder="e.g. 0.003">
+            <span class="hint">Deficient &lt; 0.004</span>
+          </div>
+        </div>
+
+        <div class="section-title">Toxic elements</div>
+        <div class="form-grid-3">
+          <div class="form-field"><label>Mercury (Hg)</label><input type="number" step="0.001" id="l-hg" placeholder="e.g. 0.04"></div>
+          <div class="form-field"><label>Lead (Pb)</label><input type="number" step="0.001" id="l-pb" placeholder="e.g. 0.12"></div>
+          <div class="form-field"><label>Cadmium (Cd)</label><input type="number" step="0.001" id="l-cd" placeholder="e.g. 0.01"></div>
+          <div class="form-field"><label>Arsenic (As)</label><input type="number" step="0.001" id="l-as" placeholder="e.g. 0.02"></div>
+          <div class="form-field"><label>Aluminum (Al)</label><input type="number" step="0.01" id="l-al" placeholder="e.g. 2.1"></div>
+          <div class="form-field"><label>Uranium (U)</label><input type="number" step="0.001" id="l-ur" placeholder="e.g. 0.005"></div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-accent" onclick="saveLabs()">Save &amp; generate report</button>
+          <button class="btn btn-outline" onclick="loadDemo()">Load demo values</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORT TAB -->
+    <div class="panel" id="panel-report">
+      <div id="report-empty" class="empty-state">
+        <h3>No report yet</h3>
+        <p>Enter your lab results and save them to generate your personalized report.</p>
+      </div>
+      <div id="report-content" style="display:none"></div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div class="panel" id="panel-history">
+      <div class="card">
+        <div class="card-title">Lab history</div>
+        <div id="history-list"><div class="loading">Loading history…</div></div>
+      </div>
+      <div class="card" id="trend-card" style="display:none">
+        <div class="card-title">Trends over time</div>
+        <div style="margin-bottom:12px">
+          <select id="trend-marker" onchange="renderTrend()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+            <option value="ferritin">Ferritin</option>
+            <option value="serum_retinol">Serum retinol</option>
+            <option value="blood_zinc">Blood zinc</option>
+            <option value="blood_copper">Blood copper</option>
+            <option value="ggt">GGT</option>
+            <option value="hair_zinc">Hair zinc</option>
+            <option value="hair_copper">Hair copper</option>
+            <option value="hair_selenium">Hair selenium</option>
+            <option value="hair_molybdenum">Hair molybdenum</option>
+          </select>
+        </div>
+        <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://pkootwezezmqwopveigu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrb290d2V6ZXptcXdvcHZlaWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjAxNTIsImV4cCI6MjA5MTU5NjE1Mn0.OKeSR5NQMON7_hIEqpKtQmUW1jTId3BkOM9hteGhtzY';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let allLabResults = [];
+let trendChart = null;
+
+const FLAGS = [
+  { id: 'flag_mercury_fillings', label: 'Mercury fillings' },
+  { id: 'flag_high_fish',        label: 'High fish intake' },
+  { id: 'flag_mold_exposure',    label: 'Mold exposure' },
+  { id: 'flag_copper_pipes',     label: 'Copper pipes' },
+  { id: 'flag_hormonal_issues',  label: 'Hormonal issues' },
+  { id: 'flag_vegan',            label: 'Vegan / plant-based' },
+  { id: 'flag_low_protein',      label: 'Low protein intake' },
+];
+
+// ── AUTH ──────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('login-form').style.display  = tab==='login'  ? '' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? '' : 'none';
+  document.getElementById('auth-error').style.display  = 'none';
+}
+
+async function signIn() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) showAuthError(error.message);
+}
+
+async function signUp() {
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const { error } = await sb.auth.signUp({ email, password });
+  if (error) showAuthError(error.message);
+  else showAuthError('Check your email to confirm your account, then sign in.', true);
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  currentUser = null;
+}
+
+function showAuthError(msg, info=false) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.background = info ? 'var(--accent-light)' : 'var(--red-light)';
+  el.style.color      = info ? 'var(--accent)'       : 'var(--red)';
+}
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    currentUser = session.user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-email-display').textContent = currentUser.email;
+    buildFlagsGrid();
+    await loadProfile();
+    await loadHistory();
+  }
+});
+
+// ── TABS ─────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── FLAGS GRID ────────────────────────────────────────────────
+function buildFlagsGrid() {
+  const grid = document.getElementById('flags-grid');
+  grid.innerHTML = FLAGS.map(f => `
+    <label class="check-item" id="ci-${f.id}" onclick="toggleFlag(this)">
+      <input type="checkbox" id="${f.id}">
+      <span class="check-box"></span>
+      <span>${f.label}</span>
+    </label>
+  `).join('');
+}
+
+function toggleFlag(el) {
+  el.classList.toggle('checked');
+  el.querySelector('input').checked = el.classList.contains('checked');
+}
+
+// ── PROFILE ───────────────────────────────────────────────────
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+  if (!data) return;
+  document.getElementById('p-name').value   = data.name   || '';
+  document.getElementById('p-sex').value    = data.sex    || '';
+  document.getElementById('p-weight').value = data.weight_lbs || '';
+  document.getElementById('p-type').value   = data.over_under_type || 'unknown';
+  FLAGS.forEach(f => {
+    if (data[f.id]) {
+      const el = document.getElementById('ci-'+f.id);
+      if (el) { el.classList.add('checked'); el.querySelector('input').checked = true; }
+    }
+  });
+}
+
+async function saveProfile() {
+  const flagVals = {};
+  FLAGS.forEach(f => { flagVals[f.id] = document.getElementById(f.id)?.checked || false; });
+  const payload = {
+    user_id: currentUser.id,
+    name: document.getElementById('p-name').value,
+    sex: document.getElementById('p-sex').value || null,
+    weight_lbs: parseFloat(document.getElementById('p-weight').value) || null,
+    over_under_type: document.getElementById('p-type').value,
+    updated_at: new Date().toISOString(),
+    ...flagVals,
+  };
+  const { error } = await sb.from('profiles').upsert(payload, { onConflict: 'user_id' });
+  if (error) toast('Error saving profile: ' + error.message);
+  else toast('Profile saved');
+}
+
+// ── LABS ──────────────────────────────────────────────────────
+function loadDemo() {
+  document.getElementById('l-date').value     = new Date().toISOString().split('T')[0];
+  document.getElementById('l-retinol').value  = '72';
+  document.getElementById('l-ferritin').value = '142';
+  document.getElementById('l-bcopper').value  = '128';
+  document.getElementById('l-bzinc').value    = '68';
+  document.getElementById('l-ggt').value      = '34';
+  document.getElementById('l-alt').value      = '26';
+  document.getElementById('l-ast').value      = '22';
+  document.getElementById('l-ca').value       = '36';
+  document.getElementById('l-mg').value       = '3.8';
+  document.getElementById('l-p').value        = '13';
+  document.getElementById('l-cu').value       = '3.1';
+  document.getElementById('l-zn').value       = '12';
+  document.getElementById('l-se').value       = '0.08';
+  document.getElementById('l-mo').value       = '0.002';
+  document.getElementById('l-hg').value       = '0.06';
+  document.getElementById('l-pb').value       = '0.18';
+  document.getElementById('l-cd').value       = '0.02';
+  document.getElementById('l-as').value       = '0.03';
+  document.getElementById('l-al').value       = '3.2';
+  document.getElementById('l-ur').value       = '0.008';
+  toast('Demo values loaded');
+}
+
+function getLabValues() {
+  const v = id => { const el=document.getElementById(id); return el&&el.value!==''? parseFloat(el.value) : null; };
+  return {
+    test_date:       document.getElementById('l-date').value || new Date().toISOString().split('T')[0],
+    serum_retinol:   v('l-retinol'),
+    ferritin:        v('l-ferritin'),
+    blood_copper:    v('l-bcopper'),
+    blood_zinc:      v('l-bzinc'),
+    ggt:             v('l-ggt'),
+    alt:             v('l-alt'),
+    ast:             v('l-ast'),
+    hair_calcium:    v('l-ca'),
+    hair_magnesium:  v('l-mg'),
+    hair_phosphorus: v('l-p'),
+    hair_copper:     v('l-cu'),
+    hair_zinc:       v('l-zn'),
+    hair_selenium:   v('l-se'),
+    hair_molybdenum: v('l-mo'),
+    hair_toxics: {
+      mercury:  v('l-hg'),
+      lead:     v('l-pb'),
+      cadmium:  v('l-cd'),
+      arsenic:  v('l-as'),
+      aluminum: v('l-al'),
+      uranium:  v('l-ur'),
+    }
+  };
+}
+
+async function saveLabs() {
+  const labs = getLabValues();
+  if (!labs.test_date) { toast('Please enter a test date'); return; }
+
+  const { data: profileData } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+
+  const payload = { user_id: currentUser.id, ...labs };
+  const { data: labData, error } = await sb.from('lab_results').insert(payload).select().single();
+  if (error) { toast('Error saving: ' + error.message); return; }
+
+  toast('Lab results saved — generating report…');
+  const rec = generateRecommendations(labs, profileData || {});
+  const recPayload = {
+    user_id: currentUser.id,
+    lab_result_id: labData.id,
+    findings: rec.findings,
+    priority_actions: rec.priority_actions,
+    supplement_doses: rec.supplement_doses,
+    engine_version: '1.0',
+  };
+  await sb.from('recommendations').insert(recPayload);
+
+  renderReport(labs, rec, profileData || {});
+  await loadHistory();
+
+  showTab('report');
+  document.querySelectorAll('.tab')[2].classList.add('active');
+  document.querySelectorAll('.tab').forEach((t,i) => { if(i!==2) t.classList.remove('active'); });
+}
+
+// ── RECOMMENDATION ENGINE ─────────────────────────────────────
+function generateRecommendations(labs, profile) {
+  const findings = [];
+  const actions  = [];
+  const doses    = [];
+  const sex      = profile.sex || 'unknown';
+  const weight   = profile.weight_lbs || 150;
+
+  function status(val, low, high) {
+    if (val === null || val === undefined) return null;
+    if (val < low) return 'low';
+    if (val > high) return 'high';
+    return 'optimal';
+  }
+
+  // Serum retinol
+  if (labs.serum_retinol !== null) {
+    const s = status(labs.serum_retinol, 0, 50);
+    findings.push({ marker:'Serum retinol', value: labs.serum_retinol, unit:'mcg/dL', status: s==='high'?'high': s==='low'?'low':'optimal',
+      interpretation: s==='high' ? 'Elevated — key driver of cholestasis and liver injury in LYL framework.' :
+                      s==='low'  ? 'Low retinol — unusual; ensure no liver storage depletion.' :
+                                   'Within LYL optimal range.' });
+    if (s === 'high') actions.push({ priority:'urgent', title:'Reduce vitamin A intake', body:'Eliminate liver, organ meats, cod liver oil, dairy, and fortified foods. Avoid all vitamin A and fish oil supplements. High retinol is the primary driver of cholestasis.' });
+  }
+
+  // Ferritin
+  if (labs.ferritin !== null) {
+    const optLow  = sex==='male' ? 30 : 50;
+    const optHigh = sex==='male' ? 70 : 100;
+    const s = status(labs.ferritin, optLow, optHigh);
+    findings.push({ marker:'Ferritin', value: labs.ferritin, unit:'ng/mL', status: s==='high'?'high': s==='low'?'low':'optimal',
+      interpretation: s==='high' ? `High (${sex==='male'?'M':'F'} optimal ${optLow}–${optHigh}). Often indicates inflammation and/or copper toxicity, not true iron excess.` :
+                      s==='low'  ? `Low (${sex==='male'?'M':'F'} optimal ${optLow}–${optHigh}). True iron deficiency — address root cause (copper toxicity, cholestasis) first.` :
+                                   `Within optimal range (${optLow}–${optHigh} ng/mL for ${sex==='male'?'males':'females'}).` });
+    if (s==='high') actions.push({ priority:'action', title:'Address elevated ferritin', body:'High ferritin typically reflects inflammation or copper toxicity rather than true iron excess. Work the LYL protocol — do not supplement iron. Consider blood donation if consistently above range after confirming with provider.' });
+    if (s==='low')  actions.push({ priority:'urgent', title:'Investigate low ferritin', body:'Low ferritin suggests true iron deficiency. Address copper toxicity and cholestasis as root causes before considering iron supplementation.' });
+  }
+
+  // GGT
+  if (labs.ggt !== null) {
+    const s = status(labs.ggt, 0, 20);
+    findings.push({ marker:'GGT', value: labs.ggt, unit:'U/L', status: s==='high'?'high':'optimal',
+      interpretation: s==='high' ? 'Elevated above LYL optimal (< 20). Most sensitive early marker of cholestasis and glutathione depletion. Conventional "normal" of 60–70 U/L is too permissive.' :
+                                   'Within LYL optimal range (< 20 U/L).' });
+    if (s==='high') actions.push({ priority:'urgent', title:'Elevated GGT — cholestasis indicator', body:'GGT rises before ALT/AST — it is the canary in the coal mine. Prioritize bile flow support: niacin, soluble fiber, adequate hydration, Big 6 Lymph Drainage, and movement. Remove bile-dumping agitators.' });
+  }
+
+  // ALT / AST
+  ['alt','ast'].forEach(marker => {
+    const val = labs[marker];
+    if (val !== null && val !== undefined) {
+      const s = status(val, 0, 20);
+      findings.push({ marker: marker.toUpperCase(), value: val, unit:'U/L', status: s==='high'?'high':'optimal',
+        interpretation: s==='high' ? `${marker.toUpperCase()} elevated above LYL optimal (< 20). Indicates active liver cell stress. May temporarily rise when starting LYL protocols — this is expected.` :
+                                     `${marker.toUpperCase()} within LYL optimal range (< 20 U/L).` });
+    }
+  });
+
+  // Blood copper
+  if (labs.blood_copper !== null) {
+    findings.push({ marker:'Blood copper', value: labs.blood_copper, unit:'mcg/dL', status: labs.blood_copper > 120 ? 'high' : 'optimal',
+      interpretation: labs.blood_copper > 120 ? 'Elevated blood copper — synergistic with vitamin A toxicity. Major driver of cholestasis, hormonal dysregulation, and mineral depletion.' : 'Blood copper within acceptable range.' });
+    if (labs.blood_copper > 120) actions.push({ priority:'urgent', title:'Address copper toxicity', body:'Remove copper sources: eliminate chocolate, nuts, seeds, soy. Check water pipes (copper pipes leach into water — use RO filtration). Avoid copper cookware. Work the Big Minerals: selenium, molybdenum, and zinc antagonize copper.' });
+  }
+
+  // Blood zinc
+  if (labs.blood_zinc !== null) {
+    const s = status(labs.blood_zinc, 80, 130);
+    findings.push({ marker:'Blood zinc', value: labs.blood_zinc, unit:'mcg/dL', status: s==='low'?'low': s==='high'?'high':'optimal',
+      interpretation: s==='low' ? 'Low blood zinc — impairs RBP production (needed to clear vitamin A), reduces ADH enzyme activity, and slows copper displacement from the liver.' :
+                      s==='high' ? 'High blood zinc — unusual without supplementation. Confirm no excessive zinc supplementation.' : 'Blood zinc within acceptable range.' });
+    if (s==='low') {
+      const maxDose = Math.min(Math.round(weight * 0.40 / 15) * 15, 100);
+      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 100mg). Start at 15–30mg and increase slowly. Watch for copper-stirring reactions in first 3–7 days.` });
+      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate — personalized max dose ${maxDose}mg/day based on your weight. Begin at 15–30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity — reduce dose or pause until later in the program.` });
+    }
+  }
+
+  // Hair calcium
+  if (labs.hair_calcium !== null) {
+    const s = status(labs.hair_calcium, 40, 42);
+    findings.push({ marker:'Hair Ca', value: labs.hair_calcium, unit:'', status: s==='low'?'low': s==='high'?'watch':'optimal',
+      interpretation: s==='low'  ? 'Hair calcium below optimal (40–42). May indicate calcium dysregulation or magnesium deficiency.' :
+                      s==='high' ? 'High hair calcium often indicates biounavailable calcium depositing in soft tissues rather than bones. Associated with vitamin D dysregulation, vitamin A toxicity, and magnesium deficiency.' :
+                                   'Hair calcium within optimal range (40–42).' });
+    if (s==='high') actions.push({ priority:'watch', title:'High hair calcium — biounavailability', body:'Address with topical magnesium (keeps calcium in correct locations), reduce vitamin A, get vitamin D from sunlight not supplements, and consider vitamin K2 MK-4 (directs calcium to bones). Do not supplement calcium.' });
+  }
+
+  // Hair copper
+  if (labs.hair_copper !== null) {
+    const s = status(labs.hair_copper, 1.5, 2.5);
+    findings.push({ marker:'Hair Cu', value: labs.hair_copper, unit:'', status: s==='high'?'high': s==='low'?'low':'optimal',
+      interpretation: s==='high' ? 'Hair copper elevated above optimal (1.5–2.5). Confirms copper accumulation in tissues.' :
+                      s==='low'  ? 'Low hair copper — may reflect copper dumping out of tissues (a positive sign during detox) or true deficiency.' :
+                                   'Hair copper within optimal range (1.5–2.5).' });
+    if (s==='high') actions.push({ priority:'action', title:'Elevated hair copper', body:'Work the copper detox protocol: zinc picolinate, selenium, molybdenum, flush niacin, and soluble fiber. Eliminate high-copper foods: chocolate, nuts, seeds, soy. Check for copper pipes in your water supply.' });
+  }
+
+  // Hair zinc
+  if (labs.hair_zinc !== null) {
+    const s = status(labs.hair_zinc, 17, 20);
+    findings.push({ marker:'Hair Zn', value: labs.hair_zinc, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
+      interpretation: s==='low'  ? 'Hair zinc below optimal (17–20). Indicates zinc deficiency in tissues — impairs vitamin A detox pathway and copper clearance.' :
+                      s==='high' ? 'Hair zinc above range — confirm no excessive supplementation.' :
+                                   'Hair zinc within optimal range (17–20).' });
+  }
+
+  // Hair selenium
+  if (labs.hair_selenium !== null) {
+    const s = status(labs.hair_selenium, 0.11, 0.15);
+    findings.push({ marker:'Hair Se', value: labs.hair_selenium, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
+      interpretation: s==='low'  ? 'Hair selenium below optimal (0.11–0.15). Selenium is required for ALDH enzyme (vitamin A detox pathway) and protects the liver against vitamin A toxicity.' :
+                      s==='high' ? 'Hair selenium above optimal range.' :
+                                   'Hair selenium within optimal range (0.11–0.15).' });
+    if (s==='low') {
+      doses.push({ supplement:'Selenium glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3–7 days, reduce dose or stop temporarily.' });
+      actions.push({ priority:'action', title:'Support selenium levels', body:'Start selenium glycinate 150mcg/day. Selenium protects the liver, supports ALDH (vitamin A detox), and is a copper and mercury antagonist. Start at lower dose if sensitive.' });
+    }
+  }
+
+  // Hair molybdenum
+  if (labs.hair_molybdenum !== null) {
+    const s = status(labs.hair_molybdenum, 0.004, 999);
+    findings.push({ marker:'Hair Mo', value: labs.hair_molybdenum, unit:'', status: s==='low'?'low':'optimal',
+      interpretation: s==='low'  ? 'Hair molybdenum below 0.004 — indicates deficiency. Molybdenum is required for ALDH and aldehyde oxidase enzymes critical to vitamin A detox.' :
+                                   'Hair molybdenum above deficiency threshold (0.004).' });
+    if (s==='low') {
+      doses.push({ supplement:'Molybdenum glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3–7 days, reduce dose or stop temporarily.' });
+      actions.push({ priority:'action', title:'Address molybdenum deficiency', body:'Molybdenum deficiency impairs the ALDH enzyme pathway needed to process and eliminate vitamin A. Signs include sensitivity to alcohol, wine, caffeine, or high-sulfur foods.' });
+    }
+  }
+
+  // Toxic elements
+  const toxics = labs.hair_toxics || {};
+  const toxicFlags = [];
+  if (toxics.mercury  > 0.05)  toxicFlags.push('Mercury (Hg) elevated — remove amalgam fillings via IAOMT-trained dentist only. Minimize all fish intake.');
+  if (toxics.lead     > 0.15)  toxicFlags.push('Lead (Pb) elevated — identify environmental sources. Avoid clay supplements (may contain bioavailable lead).');
+  if (toxics.cadmium  > 0.05)  toxicFlags.push('Cadmium (Cd) elevated — common from cigarette smoke and contaminated foods.');
+  if (toxics.arsenic  > 0.06)  toxicFlags.push('Arsenic (As) elevated — check drinking water source. Avoid rice-heavy diet if confirmed.');
+  if (toxics.aluminum > 3.0)   toxicFlags.push('Aluminum (Al) elevated — eliminate aluminum cookware and foil contact with food.');
+  if (toxics.uranium  > 0.01)  toxicFlags.push('Uranium (U) elevated — check well water if applicable.');
+  if (toxicFlags.length > 0) {
+    actions.push({ priority:'urgent', title:'Toxic element burden detected', body: toxicFlags.join('\n') });
+    findings.push({ marker:'Toxic elements', value:'Elevated', unit:'', status:'high', interpretation: toxicFlags.join(' ') });
+  }
+
+  // Fix These FIRST warnings
+  const fixFirst = [];
+  if (profile.flag_mercury_fillings) fixFirst.push('Mercury fillings present — stop the exposure before detoxing. Use only an IAOMT-trained dentist for removal (iaomt.org).');
+  if (profile.flag_mold_exposure)    fixFirst.push('Mold exposure flagged — detoxing while still exposed is pointless. Identify and eliminate the mold source first.');
+  if (profile.flag_copper_pipes)     fixFirst.push('Copper pipes flagged — install RO filtration for drinking/cooking water. Standard shower filters do not remove copper.');
+  if (profile.flag_low_protein)      fixFirst.push('Low protein intake flagged — minimum 50g total protein per day from all sources combined.');
+  if (fixFirst.length > 0) actions.unshift({ priority:'urgent', title:'Fix These FIRST — blocking recovery', body: fixFirst.join('\n') });
+
+  // Women's hormonal
+  if (sex==='female' && profile.flag_hormonal_issues) {
+    actions.push({ priority:'action', title:'Women\'s hormonal support', body:'Consider vitamin K2 (MK-4 form, 3–5mg/day) for heavy menstrual bleeding. Topical magnesium over abdomen helps with cramps and copper detox. Always start probiotics with Lactobacillus first. Eliminate high-copper foods: chocolate, nuts, seeds.' });
+  }
+
+  return { findings, priority_actions: actions, supplement_doses: doses };
+}
+
+// ── RENDER REPORT ─────────────────────────────────────────────
+function renderReport(labs, rec, profile) {
+  const container = document.getElementById('report-content');
+  document.getElementById('report-empty').style.display = 'none';
+  container.style.display = 'block';
+
+  const priorityColor = p => p==='urgent'?'urgent': p==='action'?'action': p==='watch'?'watch':'info';
+
+  const metricsHtml = rec.findings.map(f => `
+    <div class="metric-card ${f.status}">
+      <div class="metric-label">${f.marker}</div>
+      <div class="metric-value">${f.value}${f.unit ? ' <span style="font-size:13px;font-family:\'DM Sans\',sans-serif;font-weight:400">'+f.unit+'</span>' : ''}</div>
+      <div class="metric-status">${f.status.charAt(0).toUpperCase()+f.status.slice(1)}</div>
+    </div>
+  `).join('');
+
+  const actionsHtml = rec.priority_actions.map(a => `
+    <div class="rec-item ${priorityColor(a.priority)}">
+      <div class="rec-title">${a.title}</div>
+      <div class="rec-body">${a.body.replace(/\n/g,'<br>')}</div>
+    </div>
+  `).join('');
+
+  const dosesHtml = rec.supplement_doses.length > 0 ? `
+    <div class="card">
+      <div class="card-title">Personalized supplement doses</div>
+      ${rec.supplement_doses.map(d => `
+        <div style="padding:14px 0;border-bottom:1px solid var(--border);">
+          <div style="font-weight:600;font-size:15px;margin-bottom:4px">${d.supplement} — ${d.dose}</div>
+          <div style="font-size:13px;color:var(--text2)">${d.instructions}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-title">Lab findings — ${labs.test_date}</div>
+      <div class="metric-grid">${metricsHtml}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recommendations</div>
+      ${actionsHtml || '<p style="color:var(--text3);font-size:14px">No specific actions flagged — all markers within range.</p>'}
+    </div>
+    ${dosesHtml}
+    <div class="card" style="background:var(--accent-light);border-color:#a3d9be">
+      <div style="font-size:13px;color:var(--accent);line-height:1.7">
+        <strong>Remember:</strong> This report is a tool, not a diagnosis. Work with a knowledgeable provider.
+        This is a long-term process — months to years. Salt your food. Poop every day.
+        Test, don't guess, then address. The body wants to heal — we are removing obstacles.
+      </div>
+    </div>
+  `;
+}
+
+// ── HISTORY ───────────────────────────────────────────────────
+async function loadHistory() {
+  const { data, error } = await sb.from('lab_results')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('test_date', { ascending: false });
+
+  if (error) { document.getElementById('history-list').innerHTML = '<div class="loading">Error loading history.</div>'; return; }
+  allLabResults = data || [];
+
+  const list = document.getElementById('history-list');
+  if (allLabResults.length === 0) {
+    list.innerHTML = '<div class="empty-state"><h3>No results yet</h3><p>Submit your first lab results to start tracking.</p></div>';
+    document.getElementById('trend-card').style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = allLabResults.map(r => {
+    const pills = [];
+    const sex = r.sex || 'unknown';
+    if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol ↑</span>');
+    if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin ↑</span>');
+    if (r.ferritin < 50)      pills.push('<span class="pill low">Ferritin ↓</span>');
+    if (r.hair_zinc < 17)     pills.push('<span class="pill low">Zn ↓</span>');
+    if (r.hair_copper > 2.5)  pills.push('<span class="pill high">Cu ↑</span>');
+    if (r.hair_selenium < 0.11) pills.push('<span class="pill low">Se ↓</span>');
+    if (r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓</span>');
+    if (r.ggt > 20)           pills.push('<span class="pill high">GGT ↑</span>');
+    if (pills.length === 0)   pills.push('<span class="pill optimal">All optimal</span>');
+    return `
+      <div class="history-item" onclick="viewHistoryItem('${r.id}')">
+        <div class="history-date">${r.test_date}</div>
+        <div class="history-pills">${pills.join('')}</div>
+      </div>
+    `;
+  }).join('');
+
+  if (allLabResults.length >= 2) {
+    document.getElementById('trend-card').style.display = 'block';
+    renderTrend();
+  }
+}
+
+function viewHistoryItem(id) {
+  const r = allLabResults.find(x => x.id === id);
+  if (!r) return;
+  const rec = generateRecommendations(r, {});
+  renderReport(r, rec, {});
+  showTab('report');
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===2));
+}
+
+function renderTrend() {
+  const marker = document.getElementById('trend-marker').value;
+  const labels  = [...allLabResults].reverse().map(r => r.test_date);
+  const values  = [...allLabResults].reverse().map(r => {
+    if (marker === 'mercury') return r.hair_toxics?.mercury ?? null;
+    return r[marker] ?? null;
+  });
+
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: marker.replace(/_/g,' '),
+        data: values,
+        borderColor: '#2d6a4f',
+        backgroundColor: 'rgba(45,106,79,0.08)',
+        tension: 0.3,
+        pointBackgroundColor: '#2d6a4f',
+        pointRadius: 5,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans', size: 12 } } },
+        y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans', size: 12 } } }
+      }
+    }
+  });
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+  document.getElementById('l-date').value = new Date().toISOString().split('T')[0];
+})();
+</script>
+</body>
+</html>
