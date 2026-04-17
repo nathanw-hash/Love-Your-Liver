@@ -901,16 +901,11 @@ async function saveLabs() {
   if (error) { toast('Error saving: ' + error.message); return; }
 
   toast('Lab results saved — generating report…');
-  const rec = generateRecommendations(labs, profileData || {});
-  const recPayload = {
-    user_id: currentUser.id,
-    lab_result_id: labData.id,
-    findings: rec.findings,
-    priority_actions: rec.priority_actions,
-    supplement_doses: rec.supplement_doses,
-    engine_version: '1.0',
-  };
-  await sb.from('recommendations').insert(recPayload);
+  const { data: { session } } = await sb.auth.getSession();
+  const res = await fetch(SUPABASE_URL + "/functions/v1/recommend", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token, "apikey": SUPABASE_KEY }, body: JSON.stringify({ lab_result_id: labData.id }) });
+  const result = await res.json();
+  if (!res.ok || result.error) { toast('Report error: ' + (result.error || 'Unknown error')); return; }
+  const rec = result.recommendation;
 
   renderReport(labs, rec, profileData || {});
   await loadHistory();
@@ -1245,3 +1240,4 @@ function toast(msg) {
 </script>
 </body>
 </html>
+
