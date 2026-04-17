@@ -893,26 +893,26 @@ function getLabValues() {
 async function saveLabs() {
   const labs = getLabValues();
   if (!labs.test_date) { toast('Please enter a test date'); return; }
-
-  const { data: profileData } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
-
   const payload = { user_id: currentUser.id, ...labs };
   const { data: labData, error } = await sb.from('lab_results').insert(payload).select().single();
   if (error) { toast('Error saving: ' + error.message); return; }
-
-  toast('Lab results saved — generating report…');
+  toast('Lab results saved � generating report�');
   const { data: { session } } = await sb.auth.getSession();
   const res = await fetch(SUPABASE_URL + "/functions/v1/recommend", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token, "apikey": SUPABASE_KEY }, body: JSON.stringify({ lab_result_id: labData.id }) });
   const result = await res.json();
   if (!res.ok || result.error) { toast('Report error: ' + (result.error || 'Unknown error')); return; }
   const rec = result.recommendation;
-
-  renderReport(labs, rec, profileData || {});
+  const { data: profileData } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+  renderReport(labs, { findings: rec.findings, priority_actions: rec.priority_actions, supplement_doses: rec.supplement_doses }, profileData || {});
   await loadHistory();
-
   showTab('report');
   document.querySelectorAll('.tab')[2].classList.add('active');
-  document.querySelectorAll('.tab').forEach((t,i) => { if(i!==2) t.classList.remove('active'); });
+}
+
+
+
+
+
 }
 
 // ── RECOMMENDATION ENGINE ─────────────────────────────────────
