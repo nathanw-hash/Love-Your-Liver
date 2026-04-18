@@ -930,15 +930,15 @@ async function saveLabs() {
   const payload = { user_id: currentUser.id, ...labs };
   const { data: labData, error } = await dbInsert('lab_results', payload);
   if (error) { toast('Error saving: ' + error.message); return; }
-  toast('Lab results saved — generating report…');
-  const sessionData = JSON.parse(localStorage.getItem('lyl-auth-v2') || '{}');
-  const session = { access_token: sessionData.access_token };
-  const res = await fetch(SUPABASE_URL + "/functions/v1/recommend", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token, "apikey": "sb_publishable_nrdRf543xZ6PB93rctCEgA_MZ2OEjNM" }, body: JSON.stringify({ lab_result_id: labData.id }) });
-  const result = await res.json();
-  if (!res.ok || result.error) { toast('Report error: ' + (result.error || 'Unknown error')); return; }
-  const rec = result.recommendation;
   const { data: profileData } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
-  renderReport(labs, { findings: rec.findings, priority_actions: rec.priority_actions, supplement_doses: rec.supplement_doses }, profileData || {});
+  const profile = Array.isArray(profileData) ? profileData[0] : profileData || {};
+  const rec = generateRecommendations(labs, profile);
+  await dbInsert('recommendations', { user_id: currentUser.id, lab_result_id: labData.id, findings: rec.findings, priority_actions: rec.priority_actions, supplement_doses: rec.supplement_doses, engine_version: '1.0' });
+  renderReport(labs, rec, profile);
+
+
+
+
   await loadHistory();
   showTab('report');
   document.querySelectorAll('.tab')[2].classList.add('active');
