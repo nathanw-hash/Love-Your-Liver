@@ -1022,9 +1022,9 @@ function generateRecommendations(labs, profile) {
       interpretation: s==='low' ? 'Low blood zinc â€” impairs RBP production (needed to clear vitamin A), reduces ADH enzyme activity, and slows copper displacement from the liver.' :
                       s==='high' ? 'High blood zinc â€” unusual without supplementation. Confirm no excessive zinc supplementation.' : 'Blood zinc within acceptable range.' });
     if (s==='low') {
-      const maxDose = Math.min(Math.round(weight * 0.40 / 15) * 15, 100);
-      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 100mg). Start at 15â€“30mg and increase slowly. Watch for copper-stirring reactions in first 3â€“7 days.` });
-      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate â€” personalized max dose ${maxDose}mg/day based on your weight. Begin at 15â€“30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity â€” reduce dose or pause until later in the program.` });
+      const maxDose = Math.min(Math.round(weight * 0.40 / 15) * 15, 60);
+      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15–30mg and increase slowly. Do not exceed 60mg/day — doses above 90mg risk zinc toxicity.` });
+      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate — personalized max dose ${maxDose}mg/day based on your weight. Begin at 15–30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity — reduce dose or pause until later in the program.` });
     }
   }
 
