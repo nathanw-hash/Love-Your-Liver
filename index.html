@@ -711,7 +711,7 @@
 <script>
 const SUPABASE_URL = 'https://pkootwezezmqwopveigu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrb290d2V6ZXptcXdvcHZlaWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjAxNTIsImV4cCI6MjA5MTU5NjE1Mn0.OKeSR5NQMON7_hIEqpKtQmUW1jTId3BkOM9hteGhtzY';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'lyl-auth', persistSession: true, detectSessionInUrl: false } });
 
 let currentUser = null;
 let allLabResults = [];
