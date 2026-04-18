@@ -713,6 +713,40 @@ const SUPABASE_URL = 'https://pkootwezezmqwopveigu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrb290d2V6ZXptcXdvcHZlaWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjAxNTIsImV4cCI6MjA5MTU5NjE1Mn0.OKeSR5NQMON7_hIEqpKtQmUW1jTId3BkOM9hteGhtzY';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'lyl-auth-v2', persistSession: true, detectSessionInUrl: false, lock: async (name, acquireTimeout, fn) => fn() } });
 
+function getToken() {
+  const s = JSON.parse(localStorage.getItem('lyl-auth-v2') || 'null');
+  return s ? s.access_token : null;
+}
+
+async function dbInsert(table, payload) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + getToken(), 'Prefer': 'return=representation' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  return { data: Array.isArray(data) ? data[0] : data, error: res.ok ? null : data };
+}
+
+async function dbSelect(table, filters) {
+  const params = new URLSearchParams(filters);
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + params, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + getToken() }
+  });
+  const data = await res.json();
+  return { data, error: res.ok ? null : data };
+}
+
+async function dbUpsert(table, payload, onConflict) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?on_conflict=' + onConflict, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + getToken(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  return { data: Array.isArray(data) ? data[0] : data, error: res.ok ? null : data };
+}
+
 let currentUser = null;
 let allLabResults = [];
 let trendChart = null;
@@ -804,7 +838,7 @@ function toggleFlag(el) {
 
 // ── PROFILE ───────────────────────────────────────────────────
 async function loadProfile() {
-  const { data } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+  const { data } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
   if (!data) return;
   document.getElementById('p-name').value   = data.name   || '';
   document.getElementById('p-sex').value    = data.sex    || '';
@@ -830,7 +864,7 @@ async function saveProfile() {
     updated_at: new Date().toISOString(),
     ...flagVals,
   };
-  const { error } = await sb.from('profiles').upsert(payload, { onConflict: 'user_id' });
+  const { error } = await dbUpsert('profiles', payload, 'user_id');
   if (error) toast('Error saving profile: ' + error.message);
   else toast('Profile saved');
 }
@@ -894,7 +928,7 @@ async function saveLabs() {
   const labs = getLabValues();
   if (!labs.test_date) { toast('Please enter a test date'); return; }
   const payload = { user_id: currentUser.id, ...labs };
-  const { data: labData, error } = await sb.from('lab_results').insert(payload).select().single();
+  const { data: labData, error } = await dbInsert('lab_results', payload);
   if (error) { toast('Error saving: ' + error.message); return; }
   toast('Lab results saved � generating report�');
   const sessionData = JSON.parse(localStorage.getItem('lyl-auth-v2') || '{}');
@@ -903,7 +937,7 @@ async function saveLabs() {
   const result = await res.json();
   if (!res.ok || result.error) { toast('Report error: ' + (result.error || 'Unknown error')); return; }
   const rec = result.recommendation;
-  const { data: profileData } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+  const { data: profileData } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
   renderReport(labs, { findings: rec.findings, priority_actions: rec.priority_actions, supplement_doses: rec.supplement_doses }, profileData || {});
   await loadHistory();
   showTab('report');
@@ -1135,10 +1169,7 @@ function renderReport(labs, rec, profile) {
 
 // ── HISTORY ───────────────────────────────────────────────────
 async function loadHistory() {
-  const { data, error } = await sb.from('lab_results')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('test_date', { ascending: false });
+  const { data, error } = await dbSelect('lab_results', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
 
   if (error) { document.getElementById('history-list').innerHTML = '<div class="loading">Error loading history.</div>'; return; }
   allLabResults = data || [];
