@@ -897,7 +897,8 @@ async function saveLabs() {
   const { data: labData, error } = await sb.from('lab_results').insert(payload).select().single();
   if (error) { toast('Error saving: ' + error.message); return; }
   toast('Lab results saved — generating report…');
-  const { data: { session } } = await sb.auth.getSession();
+  const sessionData = JSON.parse(localStorage.getItem('lyl-auth-v2') || '{}');
+  const session = { access_token: sessionData.access_token };
   const res = await fetch(SUPABASE_URL + "/functions/v1/recommend", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token, "apikey": SUPABASE_KEY }, body: JSON.stringify({ lab_result_id: labData.id }) });
   const result = await res.json();
   if (!res.ok || result.error) { toast('Report error: ' + (result.error || 'Unknown error')); return; }
