@@ -12,33 +12,41 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
-    const supabase = createClient(
+
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !user) throw new Error("Invalid token: " + (userError?.message ?? "no user"));
+
     const { lab_result_id } = await req.json();
     if (!lab_result_id) throw new Error("lab_result_id required");
-    const { data: labs, error: labError } = await supabase
+
+    const { data: labs, error: labError } = await supabaseAdmin
       .from("lab_results").select("*")
       .eq("id", lab_result_id).eq("user_id", user.id).single();
     if (labError || !labs) throw new Error("Lab result not found");
-    const { data: profile } = await supabase
+
+    const { data: profile } = await supabaseAdmin
       .from("profiles").select("*").eq("user_id", user.id).single();
+
     const p = profile || {};
     const sex = p.sex || "unknown";
     const weight = p.weight_lbs || 150;
     const findings = [];
     const actions = [];
     const doses = [];
+
     function status(val, low, high) {
       if (val === null || val === undefined) return null;
       if (val < low) return "low";
       if (val > high) return "high";
       return "optimal";
     }
+
     if (labs.serum_retinol !== null) {
       const s = status(labs.serum_retinol, 0, 50);
       findings.push({ marker: "Serum retinol", value: labs.serum_retinol, unit: "mcg/dL", status: s === "high" ? "high" : s === "low" ? "low" : "optimal", interpretation: s === "high" ? "Elevated — key driver of cholestasis. Eliminate all vitamin A sources immediately." : s === "low" ? "Low retinol — unusual." : "Within LYL optimal range (< 50 mcg/dL)." });
@@ -48,7 +56,7 @@ Deno.serve(async (req) => {
       const optLow = sex === "male" ? 30 : 50;
       const optHigh = sex === "male" ? 70 : 100;
       const s = status(labs.ferritin, optLow, optHigh);
-      findings.push({ marker: "Ferritin", value: labs.ferritin, unit: "ng/mL", status: s === "high" ? "high" : s === "low" ? "low" : "optimal", interpretation: s === "high" ? `High (${sex === "male" ? "M" : "F"} optimal ${optLow}-${optHigh}). Often indicates inflammation and/or copper toxicity.` : s === "low" ? `Low (optimal ${optLow}-${optHigh}). Address root cause before supplementing iron.` : `Within optimal range (${optLow}-${optHigh} ng/mL).` });
+      findings.push({ marker: "Ferritin", value: labs.ferritin, unit: "ng/mL", status: s === "high" ? "high" : s === "low" ? "low" : "optimal", interpretation: s === "high" ? `High (optimal ${optLow}-${optHigh}). Often indicates inflammation and/or copper toxicity.` : s === "low" ? `Low (optimal ${optLow}-${optHigh}). Address root cause before supplementing iron.` : `Within optimal range (${optLow}-${optHigh} ng/mL).` });
       if (s === "high") actions.push({ priority: "action", title: "Address elevated ferritin", body: "High ferritin typically reflects inflammation or copper toxicity. Work the LYL protocol — do not supplement iron." });
       if (s === "low") actions.push({ priority: "urgent", title: "Investigate low ferritin", body: "Address copper toxicity and cholestasis as root causes before considering iron supplementation." });
     }
@@ -128,10 +136,18 @@ Deno.serve(async (req) => {
     if (sex === "female" && p.flag_hormonal_issues) {
       actions.push({ priority: "action", title: "Women's hormonal support", body: "Consider vitamin K2 MK-4 (3-5mg/day) for heavy bleeding. Topical magnesium for cramps. Start probiotics with Lactobacillus first." });
     }
-    const { data: rec, error: recError } = await supabase.from("recommendations").insert({ user_id: user.id, lab_result_id, findings, priority_actions: actions, supplement_doses: doses, engine_version: "1.1" }).select().single();
+
+    const { data: rec, error: recError } = await supabaseAdmin.from("recommendations").insert({
+      user_id: user.id, lab_result_id, findings, priority_actions: actions, supplement_doses: doses, engine_version: "1.2"
+    }).select().single();
     if (recError) throw new Error("Failed to store recommendation: " + recError.message);
-    return new Response(JSON.stringify({ success: true, recommendation: rec }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
+
+    return new Response(JSON.stringify({ success: true, recommendation: rec }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+    });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
+    return new Response(JSON.stringify({ error: err.message }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400,
+    });
   }
 });
