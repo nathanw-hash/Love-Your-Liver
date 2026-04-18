@@ -80,8 +80,8 @@ Deno.serve(async (req) => {
       const s = status(labs.blood_zinc, 80, 130);
       findings.push({ marker: "Blood zinc", value: labs.blood_zinc, unit: "mcg/dL", status: s === "low" ? "low" : s === "high" ? "high" : "optimal", interpretation: s === "low" ? "Low — impairs RBP production and copper displacement from the liver." : s === "high" ? "High — confirm no excessive supplementation." : "Within acceptable range." });
       if (s === "low") {
-        const maxDose = Math.min(Math.round((weight * 0.40) / 15) * 15, 100);
-        doses.push({ supplement: "Zinc picolinate", dose: `${maxDose}mg/day`, instructions: `Calculated from body weight (40% of ${weight} lbs, capped at 100mg). Start at 15-30mg and increase slowly.` });
+        const maxDose = Math.min(Math.round((weight * 0.40) / 15) * 15, 60);
+        doses.push({ supplement: "Zinc picolinate", dose: `${maxDose}mg/day`, instructions: `Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15-30mg and increase slowly.` });
         actions.push({ priority: "action", title: "Support zinc levels", body: `Start zinc picolinate — max dose ${maxDose}mg/day. Begin at 15-30mg and increase gradually.` });
       }
     }
