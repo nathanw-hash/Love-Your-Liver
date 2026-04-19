@@ -1050,6 +1050,60 @@
     },
 
     {
+      "id": "wom_002",
+      "category": "womens_health",
+      "subcategory": "ferritin_iron_zinc",
+      "title": "Low Ferritin in Women — Iron, Zinc, and Copper Interactions",
+      "source": "Garrett Smith & Kelsey Kenny — LYL Livestream: Sun & UV (Q&A section)",
+      "tags": ["ferritin", "iron", "zinc", "women", "copper", "anemia", "thyroid"],
+      "summary": "A critical update for women with low ferritin: zinc supplements inhibit iron restoration and should be paused when ferritin is low. Low ferritin is distinct from anemia — CBC can look normal while ferritin is critically depleted. Copper toxicity drives blood loss and worsens the picture.",
+      "ferritin_reference_ranges_lyl": {
+        "women": "50–100 mcg/L optimal (below 50 = low; needs attention)",
+        "men": "30–70 mcg/L optimal",
+        "important_note": "In Canada, a ferritin below 50 in women triggers automatic iron infusion — use this as a benchmark for how seriously to take low ferritin",
+        "hemoglobin_vs_ferritin": "Hemoglobin (CBC/anemia panel) is the LAST marker to drop. Ferritin falls long before hemoglobin shows abnormal. Do not rely on a 'normal' CBC to rule out iron deficiency — always check ferritin separately."
+      },
+      "why_ferritin_matters_beyond_anemia": [
+        "Iron required to convert T4 to T3 (thyroid activation) — low ferritin → poor thyroid conversion",
+        "Iron required to make dopamine via tyrosine hydroxylase — low ferritin → mood, motivation, brain fog issues",
+        "Myoglobin (muscle oxygen storage) requires iron — low ferritin → muscle weakness and fatigue",
+        "Several detoxification enzymes require iron (heme-based oxidation) — low ferritin → impaired detox"
+      ],
+      "zinc_inhibits_iron_restoration": {
+        "the_problem": "When ferritin is low and zinc supplements are taken simultaneously, zinc competes with iron for incorporation into porphyrin (the precursor to heme in hemoglobin). Ferrochelatase puts zinc into the porphyrin ring instead of iron, producing a fluorescent but useless pigment — wasting zinc AND preventing iron restoration.",
+        "research": "Study: supplemental zinc (22mg/day as zinc gluconate) in women with low iron reserves (ferritin < 20 mcg/L) induced cellular iron deficiency and reduced iron status markers, despite improving zinc markers. Iron supplementation improved iron without lowering zinc.",
+        "practical_sign": "Women taking zinc who feel unusually fatigued — especially with low ferritin — are likely experiencing this zinc-iron competition. The fatigue is the zinc being wasted into useless porphyrin instead of supporting iron restoration.",
+        "rule": "For women with low ferritin (below 50): PAUSE zinc supplements. Get zinc from food (red meat) if needed. Focus on iron restoration first. Resume zinc after ferritin is restored."
+      },
+      "copper_toxicity_connection": {
+        "how_copper_causes_low_ferritin": [
+          "Copper toxicity causes excessive menstrual bleeding — monthly blood loss depletes iron stores faster than diet can replace",
+          "Excessive bleeding during childbirth also linked to copper toxicity",
+          "Heavy periods, PMS, and menorrhagia are common copper toxicity symptoms — all cause chronic iron loss"
+        ],
+        "molybdenum_note": "Molybdenum deficiency is heavily associated with long-term anemia. If not taking zinc (due to low ferritin), prioritize molybdenum and selenium for copper detox instead.",
+        "the_sequence": "Fix copper toxicity → reduces bleeding → iron can restore naturally"
+      },
+      "what_to_do_with_low_ferritin": [
+        "Stop zinc supplements — get zinc from red meat only",
+        "Do NOT donate blood if ferritin is below 50",
+        "Continue selenium, molybdenum, flush niacin, folinic acid, lactoferrin (these support copper detox without blocking iron)",
+        "Consider iron supplementation — but it is not straightforward (see below)",
+        "Consider iron infusion if available and ferritin is very low",
+        "Work with a practitioner (Kelsey's office hours) before starting iron supplementation"
+      ],
+      "iron_supplementation_notes": {
+        "caution": "Oral iron supplementation is not straightforward — takes weeks to months, can cause digestive discomfort, and may cause rebound exhaustion as the body uses iron for repair and regeneration.",
+        "form": "Ferrous sulfate (common) is not ideal — a European-sourced iron supplement may be brought to the US market; watch for updates.",
+        "timing": "Must be taken at a specific time and with specific cofactors — seek guidance before starting.",
+        "do_not_combine": "Do not take iron and zinc supplements simultaneously when ferritin is low.",
+        "infusion_option": "Iron infusion bypasses absorption issues — may be appropriate for very low ferritin. Does not combine with oral supplementation."
+      },
+      "thyroid_connection": "Low ferritin impairs T4-to-T3 conversion. If thyroid labs are off, check ferritin before assuming a thyroid problem. Restoring ferritin often improves thyroid function without direct thyroid intervention.",
+      "cross_refs": ["wom_001", "min_001", "min_002", "min_003", "test_002", "clin_002"]
+    },
+
+    {
       "id": "clin_001",
       "category": "clinical_education",
       "subcategory": "cholestasis",
@@ -1488,28 +1542,143 @@
     },
 
     {
-      "id": "pend_002",
-      "category": "pending_video",
+      "id": "life_004",
+      "category": "lifestyle_protocols",
       "subcategory": "sunlight_uvb",
-      "title": "Sunlight / UVB Exposure [PENDING — Video Transcription Required]",
-      "source": "Garrett Smith — Sunlight/UVB Video",
-      "tags": ["sunlight", "UVB", "pending", "phase_0", "vitamin_D", "bile_dumping"],
-      "summary": "Covers sunlight and UVB exposure as a Phase 0 protocol element and bile-dumping agitator. Preferred source of vitamin D in LYL.",
-      "known_references": ["OAS Phase 0 — sunlight/UVB exposure to bare skin; not so much that symptoms worsen or skin damage occurs", "Starter Guide — agitator/bile dumper when overdone", "Vitamin D supplements avoided — sunlight is the preferred source", "Sauna guidelines note showering immediately after to wash off toxins sweated to skin"],
-      "status": "PENDING — video transcription required"
+      "title": "Sunlight & UV Exposure",
+      "source": "Garrett Smith & Kelsey Kenny — LYL Livestream: Sun & UV",
+      "tags": ["sunlight", "UVB", "tanning_bed", "phase_0", "vitamin_D", "bile_dumping", "skin_cancer", "detox"],
+      "summary": "Sunlight and UV exposure are Phase 0 essentials — essentially free detox. Sunlight oxidizes toxins in the skin. The key rule: get as much sun as you can handle WITHOUT burning. Tanning beds count. Sun avoidance is as deadly as smoking according to a major 20-year Swedish study.",
+      "swedish_study": {
+        "citation": "Avoidance of sun exposure as a risk factor for major causes of death — melanoma in southern Sweden cohort (2016)",
+        "sample": "~30,000 Swedish women, 20-year follow-up (1990–1992 to ~2012), ages 25–64",
+        "key_findings": [
+          "Women with active sun exposure had lower mortality from cardiovascular disease and non-cancer/non-cardiovascular causes",
+          "Sun avoiders had 4x higher all-cause mortality hazard ratio compared to highest sun exposure group",
+          "Non-smokers who avoided sun exposure had life expectancy similar to smokers with highest sun exposure — avoidance of sun exposure is a mortality risk factor of similar magnitude as smoking",
+          "Life expectancy of sun avoiders was reduced by 0.6 to 2.1 years",
+          "Women with the most sun exposure AND non-melanoma skin cancer had the LOWEST probability of death — highest life expectancy of all groups",
+          "Tanning beds were included in the 'active sun exposure' group — vindicating tanning beds"
+        ],
+        "important_nuance": "Yes, skin cancer incidence was slightly higher in the high-sun group. But they were dying less from everything including cancer. The percentage contribution of cancer death increased only because everything else decreased. The absolute number of deaths from melanoma was lower in the high-sun group.",
+        "melanoma_mortality": "In the malignant melanoma group: most active sun exposure = 14/126 deaths (< 1/10); moderate = 20/127 (1/6); avoidance = 5/14 (> 1/3). More sun = better survival even in those who developed melanoma."
+      },
+      "how_sunlight_detoxes": [
+        "Sunlight oxidizes toxins stored in the skin — UV light drives oxidative reactions that break down fat-soluble toxins near the skin surface",
+        "Same mechanism applies to tanning beds",
+        "Acts as a bile-dumping agitator — pushes stored toxins into circulation for elimination",
+        "Vitamin D is produced — but this is a side benefit, not the primary LYL reason to get sun"
+      ],
+      "the_core_rule": "Get as much sun or UV exposure as you can handle WITHOUT BURNING. Burns are bad — they 'crispy fry' toxins into the skin, creating worse toxins that get stuck. Regular non-burning sun exposure helps detox. Burns do the opposite.",
+      "burning_vs_tanning": {
+        "burning": "Concentrates and damages toxins in skin — bad. Creates worse toxic byproducts. Increases melanoma risk through episodic overexposure.",
+        "regular_tanning": "Gradual, non-burning exposure — good. Oxidizes and eliminates toxins. Reduces all-cause mortality.",
+        "tanning_beds": "Included in beneficial exposure group in the Swedish study. Same rules apply — don't overdo it, don't burn."
+      },
+      "sunscreen_warning": "Sunscreen may increase melanoma risk indirectly. People apply it and stay out longer, while the sunscreen chemicals themselves get baked into the skin by UV light. The Swedish paper questioned the guideline that sunscreen makes prolonged sun safe. Avoid chemical sunscreen; if needed, use mineral-based (zinc oxide).",
+      "skin_sensitivity_and_detox": "As detox progresses, skin becomes less sensitive to burning. Reducing vitamin A intake and seed oils in the diet reduces skin sensitivity and burning. Early in the program, start slow — the more toxic, the lower the sun/UV tolerance.",
+      "as_bile_dumping_agitator": {
+        "what_it_means": "Sunlight, UV-B, red light, and near-infrared light can all cause bile dumping in highly cholestatic individuals",
+        "rule": "Start with small amounts. If sun exposure makes you feel worse, do LESS next time. Tolerance increases as detox progresses.",
+        "phase_0_principle": "Never push to the point of feeling worse or dumping excessive bile"
+      },
+      "practical_guidance": [
+        "Get daily outdoor sun exposure as part of Phase 0",
+        "Expose bare skin — sunlight through glass does not produce the same effects",
+        "Start with short exposures and build up",
+        "Do NOT burn — if burning, reduce time or intensity",
+        "Tanning beds are an acceptable alternative in low-sun areas or winter",
+        "DIY UVB lamps are also an option for those with limited sun access",
+        "Shower after significant sun/UV exposure to wash off toxins mobilized to skin surface",
+        "People in low-sun areas need sun even MORE than people in high-sun areas — do not use location as an excuse to avoid it"
+      ],
+      "vitamin_d_note": "Sunlight is the preferred and only recommended source of vitamin D in LYL. Vitamin D supplements are strictly avoided — they disrupt calcium metabolism and deplete potassium. Sunlight produces vitamin D safely in the context of the whole photobiological response.",
+      "cross_refs": ["prog_002", "prog_004", "life_001", "life_002", "life_003", "min_006", "clin_001"]
     },
 
+
+
     {
-      "id": "pend_003",
-      "category": "pending_video",
-      "subcategory": "mms_chlorine_dioxide",
-      "title": "MMS / Chlorine Dioxide [PENDING — Video Transcription Required]",
-      "source": "Garrett Smith — MMS Articles/Videos",
-      "tags": ["MMS", "chlorine_dioxide", "candida", "BV", "pending"],
-      "summary": "Used by some LYL members for stubborn candida, bacterial vaginosis (BV). Can be used orally and/or vaginally. Short-term use only — not long-term.",
-      "known_references": ["Women's Health entry: used for BV and/or candida; oral and/or vaginal; short-term only; see MMS e-books for dosing", "Gut Biome entry: used by some members for stubborn candida"],
-      "status": "PENDING — video transcription required"
+      "id": "dtx_002",
+      "category": "detox_tools",
+      "subcategory": "chlorine_dioxide",
+      "title": "Chlorine Dioxide (CD) / MMS",
+      "source": "Garrett Smith — LYL Private Network Post on Chlorine Dioxide; 'Simple Molecular Medicines' e-book (pages 1-59)",
+      "tags": ["MMS", "chlorine_dioxide", "CD", "sodium_chlorite", "detox", "oxidizer", "bile", "candida"],
+      "summary": "Chlorine Dioxide (CD) / MMS is a weak oxidizer that moves vitamin A, bile acids, and other toxins along detox pathways. It is an additional 'detox engine' used in the context of the LYL program after minerals are established. Protocol 1 (unactivated MMS / sodium chlorite in water) is Garrett's preferred method. Key rule: follow the 3 Golden Rules and do NOT get greedy with dosing.",
+      "important_notice": "CD questions are ONLY answered inside the LYL private network. Do NOT ask on YouTube livestreams, social media, or public forums. Answers will only be given from Garrett's personal experience within the network context.",
+      "what_cd_does": {
+        "mechanism": "Weak oxidizer — moves vitamin A, bile acids, and other toxins along their detox pathways by oxidizing them. Does the same general work as ADH and ALDH enzymes but is not those enzymes. Think of it as an additional detox engine that works until it is used up.",
+        "bile_dumping": "At too high a dose for your body's current state, CD will cause excessive bile dumping. Diarrhea and/or vomiting from too high a dose = excessive bile dumping. They still had improvements — they just made themselves unnecessarily suffer.",
+        "other_effects": "Oxidizes acidic material in bloodstream/body tissues. Selectively kills pathogenic bacteria in the gut. Leaves behind oxygen atoms and chloride at the problem site."
+      },
+      "where_it_fits_in_lyl": {
+        "order": [
+          "1. Minerals (molybdenum, zinc, selenium, magnesium, potassium, sodium) — establish these first",
+          "2. Chlorine Dioxide",
+          "3. Lactoferrin",
+          "4. Return to adjusting minerals — repeat as needed in a loop"
+        ],
+        "note": "Minerals come first. Do not jump to CD before establishing mineral foundation."
+      },
+      "protocol_1_unactivated_mms": {
+        "what_it_is": "Sodium chlorite (NaClO2) mixed with water. Also called 'stabilized oxygen' and 'unactivated MMS.' When drunk, stomach acid (HCl) activates it into chlorine dioxide (ClO2) inside the body.",
+        "why_preferred": "Most efficient — no 'gas off' into air; 100% of the ClO2 is produced inside the body. Convenient — no mixing acid activator needed. Tastes like water. Can be pre-bottled.",
+        "potency_note": "1 drop unactivated MMS ≠ 1 drop activated MMS. Unactivated MMS is MORE potent drop-for-drop than activated MMS. Activated MMS is more potent than CDS. Do not assume equivalence.",
+        "startup_protocol": [
+          "Day 1: 1 drop per liter, 2 liters per day",
+          "Day 2: 2 drops per liter, 2 liters per day",
+          "Day 3: 3 drops per liter, 2 liters per day",
+          "Day 4: 4 drops per liter, 2 liters per day",
+          "Day 5: 5 drops per liter, 2 liters per day",
+          "Maximum: 3-5 drops per liter is the target maintenance range"
+        ],
+        "how_taken": "Drink the CD water throughout the day as normal drinking water. Garrett drinks it all day without separating from meals.",
+        "low_stomach_acid_note": "If getting no benefit after 1 month at increasing doses, try adding lemon juice in water or apple cider vinegar alongside the unactivated MMS to replace missing HCl."
+      },
+      "three_golden_rules": {
+        "description": "The decision framework for adjusting CD dosing. Apply consistently throughout use.",
+        "rule_1_no_change": "Symptoms improving? Do NOT change anything. Continue as is.",
+        "rule_2_reduce": "Feeling worse (prolonged nausea or diarrhea)? Reduce intake by 50% — but KEEP TAKING IT.",
+        "rule_3_increase": "Not getting better or worse? Increase to next dosage level. Maximum is still 3 drops for most protocols.",
+        "key_principle": "You will NOT improve faster with larger doses. You WILL induce more detox suffering. Stay at Rule 1 (no change) as long as possible before increasing. Maximize benefit, minimize suffering."
+      },
+      "what_is_ok_to_take_with_cd": {
+        "continue_normally": [
+          "LYL minerals — magnesium, potassium, sodium, zinc, molybdenum, selenium (Garrett does NOT agree with concerns about minerals)",
+          "Meals — Garrett does not separate CD from meals",
+          "Coconut water",
+          "Low-antioxidant foods (LYL diet is already low-antioxidant — problem solved)"
+        ],
+        "separate_by_1_to_2_hours": [
+          "Colloidal silver",
+          "Activated charcoal",
+          "Any other oxidative approaches (hydrogen peroxide, IV ozone, etc.) — don't push too hard in one direction at once"
+        ],
+        "stop_or_avoid": [
+          "Vitamin A supplements — absolutely not",
+          "Vitamin D supplements — absolutely not",
+          "Vitamin E supplements — absolutely not",
+          "Vitamin C supplements — completely undoes CD activity; wean off over time if using",
+          "Multivitamins — should already be off these",
+          "Molecular Hydrogen / Brown's Gas — do NOT use",
+          "Keto diet — do not combine with CD",
+          "Alkaline water — neutralizes stomach acid and prevents unactivated MMS from activating",
+          "Time-release supplements",
+          "Dairy, chocolate, alcohol, coffee, tea — already avoided on LYL; also neutralize CD potency"
+        ],
+        "b_vitamins": "Only take specific individual B-vitamins you feel distinct benefit from — stop all others while using CD."
+      },
+      "herxheimer_reaction": "A temporary worsening of symptoms as toxins are mobilized. Mild stomach cramps or nausea = normal. Reduce dose by 1-2 drops if this occurs. Diarrhea and vomiting = dose is too high — reduce by 50%. These reactions parallel retracing/healing crisis in the LYL framework.",
+      "resources": [
+        "'Simple Molecular Medicines' e-book (read pages 1-59 and mentioned appendices only): https://drive.google.com/file/d/1n87jWO8m0_3wTzcPazNa3-9jIA_OmRa9/view",
+        "Jim Humble's 'MMS Health Recovery Guidebook' (2016) — for various condition-specific protocols",
+        "MMS testimonials: https://mmstestimonials.co/"
+      ],
+      "cross_refs": ["dtx_001", "spc_002", "min_001", "min_002", "min_003", "gut_001", "wom_001", "prog_006"]
     },
+
+
 
     {
       "id": "pend_004",
@@ -1549,11 +1718,11 @@
     "calcium": ["min_006", "test_001", "clin_002", "prog_003"],
     "oas_phases": ["prog_004"],
     "testing": ["prog_005", "test_001", "test_002"],
-    "womens_health": ["wom_001", "clin_002"],
+    "womens_health": ["wom_001", "wom_002", "clin_002"],
     "gut_health": ["gut_001", "prog_004", "spc_002"],
     "food_lists": ["diet_001", "diet_002"],
     "detox_tools": ["spc_002", "nia_004", "dtx_001"],
-    "phase_0": ["life_001", "life_002", "pend_001", "pend_002"],
+    "phase_0": ["life_001", "life_002", "life_003", "life_004"],
     "b_vitamins": ["bvit_001"],
     "lactoferrin": ["spc_001"],
     "retracing": ["prog_006"]
