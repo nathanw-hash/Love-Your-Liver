@@ -656,6 +656,68 @@
     },
 
     {
+      "id": "nia_006",
+      "category": "supplements_niacin",
+      "subcategory": "research_evidence",
+      "title": "Niacin: Research Evidence & Extended Benefits",
+      "source": "Garrett Smith & Kelsey Kenny — Flush Niacin Livestream",
+      "tags": ["niacin", "research", "RBP4", "vitamin_a", "cancer", "bone_health", "neurological", "mitochondria", "methylation"],
+      "summary": "Research backing for niacin's role in vitamin A detox, cancer prevention, neurological health, bone health, and mitochondrial function. Includes RBP4 study, vitamin A / cancer correlation study, and refutation of common anti-niacin claims.",
+      "rbp4_research": {
+        "what_rbp4_is": "Retinol-Binding Protein 4 — binds free retinol in the bloodstream to prevent cellular damage. Lower RBP4 = less free retinol circulating = less vitamin A toxicity.",
+        "study_findings": {
+          "source": "PhD dissertation on pleiotropic effects of niacin (nicotinic acid from Sigma Aldrich)",
+          "result_obese_mice": "Niacin decreased serum RBP4 by 22% in obese wild-type mice",
+          "result_lean_mice": "Niacin decreased serum RBP4 by 16% in lean wild-type mice",
+          "result_humans": "Unpublished studies showed niacin reduces RBP4 in men with metabolic syndrome",
+          "mechanism": "Niacin reduces serum RBP4 through increased clearance (likely kidneys) — NOT by reducing liver's capacity to produce RBP4",
+          "significance": "Lower circulating RBP4 = less free retinol in system. Niacin is actively detoxifying vitamin A from the bloodstream."
+        },
+        "enzyme_connection": "Niacin is also essential for the ADH and ALDH enzyme pathways that break down and excrete vitamin A — operates on multiple levels simultaneously."
+      },
+      "vitamin_a_cancer_research": {
+        "study": "Analysis of 29,000+ adults",
+        "finding_vitamin_a": "Higher dietary vitamin A intake correlated with INCREASED cancer risk",
+        "finding_niacin": "Higher niacin intake was NEGATIVELY correlated with tumor incidence",
+        "proposed_mechanism": "Vitamin A may cause mitochondrial dysfunction by disrupting calcium homeostasis and altering mitochondrial structure",
+        "implication": "Counters the narrative that vitamin A supplements are universally beneficial — supports LYL's vitamin A reduction approach"
+      },
+      "neurological_benefits": [
+        "Multiple sclerosis — niacin supports myelin repair and neurological function",
+        "Parkinson's disease — evidence of niacin benefit in neurodegeneration",
+        "Alzheimer's disease — niacin supports brain health and cognitive function",
+        "Glioblastoma — reduces tumor size and improves survival in animal models"
+      ],
+      "bone_health": {
+        "claim_refuted": "The claim that niacin promotes bone breakdown is not supported by human evidence",
+        "positive_finding": "Positive correlation between niacin intake and bone mineral density in premenopausal women",
+        "note": "The negative claim came from a study with significant limitations"
+      },
+      "mitochondrial_and_metabolic_benefits": [
+        "Improves muscle strength and mitochondrial function in mitochondrial myopathy patients",
+        "Reduces methyl group consumption — improves cellular methylation capacity (relevant to copper-toxic individuals who are overmethylators)",
+        "Reverses fatty liver",
+        "Improves chronic kidney disease markers"
+      ],
+      "debunked_claims": {
+        "cleveland_clinic_metabolite_concern": {
+          "claim": "Niacin produces 2-PY and 4-PY metabolites linked to heart and kidney issues",
+          "rebuttal": "These metabolites are breakdown products of NAD, not nicotinic acid specifically. The Veterans Administration study showed niacin's cardiovascular benefits. Coronary Drug Project showed significant benefits of high-dose niacin over 6 years.",
+          "conflict_of_interest": "Authors of the Cleveland Clinic study had conflicts of interest suggesting bias against niacin"
+        },
+        "liver_toxicity": "Only 8 single case studies suggest liver toxicity — no strong evidence. Time-released niacin (not flush niacin) is the form associated with liver stress.",
+        "allergic_reaction": "The flush is not an allergic reaction — it is a detoxification process. Niacin actually helps with allergic diseases and reduces histamine levels."
+      },
+      "practical_notes": {
+        "ivermectin_interaction": "Users taking ivermectin should start niacin very slowly — niacin can mobilize toxins kicked out of cells, which may intensify reactions",
+        "aspirin_note": "Baby aspirin can stop the flush if it becomes uncomfortable — however, blocking the flush reduces detox benefit",
+        "buffered_products": "Pre-buffered niacin products (buffered with zinc nicotinate) planned in 25mg, 100mg, and 500mg capsules — eliminates need for home buffering",
+        "flush_intensity_factors": "Empty stomach or sugar = stronger/faster flush. Food, protein, or fiber = weaker, slower, more manageable flush."
+      },
+      "cross_refs": ["nia_001", "nia_002", "nia_003", "nia_004", "nia_005", "clin_001", "clin_002", "bvit_001", "min_001"]
+    },
+
+    {
       "id": "spc_001",
       "category": "supplements_specialty",
       "subcategory": "lactoferrin",
@@ -1397,7 +1459,7 @@
     "vitamin_a_toxicity": ["prog_002", "prog_004", "clin_001", "clin_002", "diet_002", "nia_001", "spc_001", "bvit_001"],
     "copper_toxicity": ["prog_002", "prog_003", "clin_001", "clin_002", "wom_001", "min_001", "min_002", "diet_002", "bvit_001"],
     "cholestasis": ["clin_001", "clin_002", "min_005", "nia_001", "spc_001", "spc_002", "gut_001"],
-    "niacin_cluster": ["nia_001", "nia_002", "nia_003", "nia_004", "nia_005"],
+    "niacin_cluster": ["nia_001", "nia_002", "nia_003", "nia_004", "nia_005", "nia_006"],
     "big_minerals": ["min_001", "min_002", "min_003"],
     "electrolytes": ["min_004", "min_005", "top_001"],
     "oas_phases": ["prog_004"],
