@@ -847,7 +847,7 @@ function toggleFlag(el) {
 async function loadProfile() {
   const { data: profileArr } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
   const data = Array.isArray(profileArr) ? profileArr[0] : profileArr;
-  if (!data) return;
+  document.getElementById('p-name').value = data.name || '';
   document.getElementById('p-sex').value    = data.sex    || '';
   document.getElementById('p-weight').value = data.weight_lbs || '';
   document.getElementById('p-type').value   = data.over_under_type || 'unknown';
