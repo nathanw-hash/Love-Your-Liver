@@ -1030,13 +1030,13 @@ function generateRecommendations(labs, profile) {
                       s==='high' ? 'High blood zinc â€” unusual without supplementation. Confirm no excessive zinc supplementation.' : 'Blood zinc within acceptable range.' });
     if (s==='low') {
       const maxDose = Math.min(Math.round(weight * 0.40 / 15) * 15, 60);
-<<<<<<< HEAD
-      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15?30mg and increase slowly. Do not exceed 60mg/day ? doses above 90mg risk zinc toxicity.` });
-      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate ? personalized max dose ${maxDose}mg/day based on your weight. Begin at 15?30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity ? reduce dose or pause until later in the program.` });
-=======
       doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15–30mg and increase slowly. Do not exceed 60mg/day — doses above 90mg risk zinc toxicity.` });
       actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate — personalized max dose ${maxDose}mg/day based on your weight. Begin at 15–30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity — reduce dose or pause until later in the program.` });
->>>>>>> 1d635ccf23df12fd21be5ea069eb6876eca64e8c
+
+
+
+
+
     }
   }
 
