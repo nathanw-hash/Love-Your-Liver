@@ -1329,14 +1329,20 @@ async function importPDF(input) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 1500,
         messages: [{ role: 'user', content: [
           { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
           { type: 'text', text: prompt }
         ]}]
       })
     });
+    console.log('Response status:', response.status);
     const result = await response.json();
+    console.log('Response body:', result);
+    if (result.type === 'error' || !result.content) {
+      const msg = result.error?.message || result.message || 'Unknown API error';
+      throw new Error(msg);
+    }
     const text = result.content[0].text.trim().replace(/```json|```/g, '').trim();
     pdfExtractedData = JSON.parse(text);
     renderPdfModal(pdfExtractedData);
