@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Love Your Liver</title>
-<meta name="description" content="Love Your Liver lab tracker — enter your results and get personalized recommendations">
+<meta name="description" content="Love Your Liver lab tracker � enter your results and get personalized recommendations">
 <meta name="theme-color" content="#2d6a4f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -495,7 +495,7 @@
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="login-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+        <input type="password" id="login-password" placeholder="••••••••">
       </div>
       <button class="btn-primary" onclick="signIn()">Sign in</button>
     </div>
@@ -566,7 +566,7 @@
           </div>
         </div>
 
-        <div class="section-title">Fix These FIRST â€” checklist</div>
+        <div class="section-title">Fix These FIRST — checklist</div>
         <div class="check-grid" id="flags-grid"></div>
 
         <div class="btn-row">
@@ -595,7 +595,7 @@
           <div class="form-field">
             <label>Ferritin (ng/mL)</label>
             <input type="number" step="0.1" id="l-ferritin" placeholder="e.g. 85">
-            <span class="hint">F: 50â€“100 Â· M: 30â€“70</span>
+            <span class="hint">F: 50–100 · M: 30–70</span>
           </div>
           <div class="form-field">
             <label>Blood copper (mcg/dL)</label>
@@ -627,7 +627,7 @@
           <div class="form-field">
             <label>Calcium</label>
             <input type="number" step="0.1" id="l-ca" placeholder="e.g. 38">
-            <span class="hint">Optimal 40â€“42</span>
+            <span class="hint">Optimal 40–42</span>
           </div>
           <div class="form-field">
             <label>Magnesium</label>
@@ -640,17 +640,17 @@
           <div class="form-field">
             <label>Copper</label>
             <input type="number" step="0.01" id="l-cu" placeholder="e.g. 2.8">
-            <span class="hint">Optimal 1.5â€“2.5</span>
+            <span class="hint">Optimal 1.5–2.5</span>
           </div>
           <div class="form-field">
             <label>Zinc</label>
             <input type="number" step="0.1" id="l-zn" placeholder="e.g. 14">
-            <span class="hint">Optimal 17â€“20</span>
+            <span class="hint">Optimal 17–20</span>
           </div>
           <div class="form-field">
             <label>Selenium</label>
             <input type="number" step="0.001" id="l-se" placeholder="e.g. 0.09">
-            <span class="hint">Optimal 0.11â€“0.15</span>
+            <span class="hint">Optimal 0.11–0.15</span>
           </div>
           <div class="form-field">
             <label>Molybdenum</label>
@@ -689,7 +689,7 @@
     <div class="panel" id="panel-history">
       <div class="card">
         <div class="card-title">Lab history</div>
-        <div id="history-list"><div class="loading">Loading historyâ€¦</div></div>
+        <div id="history-list"><div class="loading">Loading history…</div></div>
       </div>
       <div class="card" id="trend-card" style="display:none">
         <div class="card-title">Trends over time</div>
@@ -768,7 +768,7 @@ const FLAGS = [
   { id: 'flag_low_protein',      label: 'Low protein intake' },
 ];
 
-// â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── AUTH ──────────────────────────────────────────────────────
 function switchAuthTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
   document.getElementById('login-form').style.display  = tab==='login'  ? '' : 'none';
@@ -818,7 +818,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-// â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TABS ─────────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -826,7 +826,7 @@ function showTab(name) {
   event.currentTarget.classList.add('active');
 }
 
-// â”€â”€ FLAGS GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── FLAGS GRID ────────────────────────────────────────────────
 function buildFlagsGrid() {
   const grid = document.getElementById('flags-grid');
   grid.innerHTML = FLAGS.map(f => `
@@ -843,11 +843,11 @@ function toggleFlag(el) {
   el.querySelector('input').checked = el.classList.contains('checked');
 }
 
-// â”€â”€ PROFILE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PROFILE ───────────────────────────────────────────────────
 async function loadProfile() {
-  const { data } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
+  const { data: profileArr } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
+  const data = Array.isArray(profileArr) ? profileArr[0] : profileArr;
   if (!data) return;
-  document.getElementById('p-name').value   = data.name   || '';
   document.getElementById('p-sex').value    = data.sex    || '';
   document.getElementById('p-weight').value = data.weight_lbs || '';
   document.getElementById('p-type').value   = data.over_under_type || 'unknown';
@@ -876,7 +876,7 @@ async function saveProfile() {
   else toast('Profile saved');
 }
 
-// â”€â”€ LABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── LABS ──────────────────────────────────────────────────────
 function loadDemo() {
   document.getElementById('l-date').value     = new Date().toISOString().split('T')[0];
   document.getElementById('l-retinol').value  = '72';
@@ -957,7 +957,7 @@ async function saveLabs() {
 
 
 
-// â”€â”€ RECOMMENDATION ENGINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── RECOMMENDATION ENGINE ─────────────────────────────────────
 function generateRecommendations(labs, profile) {
   const findings = [];
   const actions  = [];
@@ -976,8 +976,8 @@ function generateRecommendations(labs, profile) {
   if (labs.serum_retinol !== null) {
     const s = status(labs.serum_retinol, 0, 50);
     findings.push({ marker:'Serum retinol', value: labs.serum_retinol, unit:'mcg/dL', status: s==='high'?'high': s==='low'?'low':'optimal',
-      interpretation: s==='high' ? 'Elevated â€” key driver of cholestasis and liver injury in LYL framework.' :
-                      s==='low'  ? 'Low retinol â€” unusual; ensure no liver storage depletion.' :
+      interpretation: s==='high' ? 'Elevated — key driver of cholestasis and liver injury in LYL framework.' :
+                      s==='low'  ? 'Low retinol — unusual; ensure no liver storage depletion.' :
                                    'Within LYL optimal range.' });
     if (s === 'high') actions.push({ priority:'urgent', title:'Reduce vitamin A intake', body:'Eliminate liver, organ meats, cod liver oil, dairy, and fortified foods. Avoid all vitamin A and fish oil supplements. High retinol is the primary driver of cholestasis.' });
   }
@@ -988,10 +988,10 @@ function generateRecommendations(labs, profile) {
     const optHigh = sex==='male' ? 70 : 100;
     const s = status(labs.ferritin, optLow, optHigh);
     findings.push({ marker:'Ferritin', value: labs.ferritin, unit:'ng/mL', status: s==='high'?'high': s==='low'?'low':'optimal',
-      interpretation: s==='high' ? `High (${sex==='male'?'M':'F'} optimal ${optLow}â€“${optHigh}). Often indicates inflammation and/or copper toxicity, not true iron excess.` :
-                      s==='low'  ? `Low (${sex==='male'?'M':'F'} optimal ${optLow}â€“${optHigh}). True iron deficiency â€” address root cause (copper toxicity, cholestasis) first.` :
-                                   `Within optimal range (${optLow}â€“${optHigh} ng/mL for ${sex==='male'?'males':'females'}).` });
-    if (s==='high') actions.push({ priority:'action', title:'Address elevated ferritin', body:'High ferritin typically reflects inflammation or copper toxicity rather than true iron excess. Work the LYL protocol â€” do not supplement iron. Consider blood donation if consistently above range after confirming with provider.' });
+      interpretation: s==='high' ? `High (${sex==='male'?'M':'F'} optimal ${optLow}–${optHigh}). Often indicates inflammation and/or copper toxicity, not true iron excess.` :
+                      s==='low'  ? `Low (${sex==='male'?'M':'F'} optimal ${optLow}–${optHigh}). True iron deficiency — address root cause (copper toxicity, cholestasis) first.` :
+                                   `Within optimal range (${optLow}–${optHigh} ng/mL for ${sex==='male'?'males':'females'}).` });
+    if (s==='high') actions.push({ priority:'action', title:'Address elevated ferritin', body:'High ferritin typically reflects inflammation or copper toxicity rather than true iron excess. Work the LYL protocol — do not supplement iron. Consider blood donation if consistently above range after confirming with provider.' });
     if (s==='low')  actions.push({ priority:'urgent', title:'Investigate low ferritin', body:'Low ferritin suggests true iron deficiency. Address copper toxicity and cholestasis as root causes before considering iron supplementation.' });
   }
 
@@ -999,9 +999,9 @@ function generateRecommendations(labs, profile) {
   if (labs.ggt !== null) {
     const s = status(labs.ggt, 0, 20);
     findings.push({ marker:'GGT', value: labs.ggt, unit:'U/L', status: s==='high'?'high':'optimal',
-      interpretation: s==='high' ? 'Elevated above LYL optimal (< 20). Most sensitive early marker of cholestasis and glutathione depletion. Conventional "normal" of 60â€“70 U/L is too permissive.' :
+      interpretation: s==='high' ? 'Elevated above LYL optimal (< 20). Most sensitive early marker of cholestasis and glutathione depletion. Conventional "normal" of 60–70 U/L is too permissive.' :
                                    'Within LYL optimal range (< 20 U/L).' });
-    if (s==='high') actions.push({ priority:'urgent', title:'Elevated GGT â€” cholestasis indicator', body:'GGT rises before ALT/AST â€” it is the canary in the coal mine. Prioritize bile flow support: niacin, soluble fiber, adequate hydration, Big 6 Lymph Drainage, and movement. Remove bile-dumping agitators.' });
+    if (s==='high') actions.push({ priority:'urgent', title:'Elevated GGT — cholestasis indicator', body:'GGT rises before ALT/AST — it is the canary in the coal mine. Prioritize bile flow support: niacin, soluble fiber, adequate hydration, Big 6 Lymph Drainage, and movement. Remove bile-dumping agitators.' });
   }
 
   // ALT / AST
@@ -1010,7 +1010,7 @@ function generateRecommendations(labs, profile) {
     if (val !== null && val !== undefined) {
       const s = status(val, 0, 20);
       findings.push({ marker: marker.toUpperCase(), value: val, unit:'U/L', status: s==='high'?'high':'optimal',
-        interpretation: s==='high' ? `${marker.toUpperCase()} elevated above LYL optimal (< 20). Indicates active liver cell stress. May temporarily rise when starting LYL protocols â€” this is expected.` :
+        interpretation: s==='high' ? `${marker.toUpperCase()} elevated above LYL optimal (< 20). Indicates active liver cell stress. May temporarily rise when starting LYL protocols — this is expected.` :
                                      `${marker.toUpperCase()} within LYL optimal range (< 20 U/L).` });
     }
   });
@@ -1018,24 +1018,24 @@ function generateRecommendations(labs, profile) {
   // Blood copper
   if (labs.blood_copper !== null) {
     findings.push({ marker:'Blood copper', value: labs.blood_copper, unit:'mcg/dL', status: labs.blood_copper > 120 ? 'high' : 'optimal',
-      interpretation: labs.blood_copper > 120 ? 'Elevated blood copper â€” synergistic with vitamin A toxicity. Major driver of cholestasis, hormonal dysregulation, and mineral depletion.' : 'Blood copper within acceptable range.' });
-    if (labs.blood_copper > 120) actions.push({ priority:'urgent', title:'Address copper toxicity', body:'Remove copper sources: eliminate chocolate, nuts, seeds, soy. Check water pipes (copper pipes leach into water â€” use RO filtration). Avoid copper cookware. Work the Big Minerals: selenium, molybdenum, and zinc antagonize copper.' });
+      interpretation: labs.blood_copper > 120 ? 'Elevated blood copper — synergistic with vitamin A toxicity. Major driver of cholestasis, hormonal dysregulation, and mineral depletion.' : 'Blood copper within acceptable range.' });
+    if (labs.blood_copper > 120) actions.push({ priority:'urgent', title:'Address copper toxicity', body:'Remove copper sources: eliminate chocolate, nuts, seeds, soy. Check water pipes (copper pipes leach into water — use RO filtration). Avoid copper cookware. Work the Big Minerals: selenium, molybdenum, and zinc antagonize copper.' });
   }
 
   // Blood zinc
   if (labs.blood_zinc !== null) {
     const s = status(labs.blood_zinc, 80, 130);
     findings.push({ marker:'Blood zinc', value: labs.blood_zinc, unit:'mcg/dL', status: s==='low'?'low': s==='high'?'high':'optimal',
-      interpretation: s==='low' ? 'Low blood zinc â€” impairs RBP production (needed to clear vitamin A), reduces ADH enzyme activity, and slows copper displacement from the liver.' :
-                      s==='high' ? 'High blood zinc â€” unusual without supplementation. Confirm no excessive zinc supplementation.' : 'Blood zinc within acceptable range.' });
+      interpretation: s==='low' ? 'Low blood zinc — impairs RBP production (needed to clear vitamin A), reduces ADH enzyme activity, and slows copper displacement from the liver.' :
+                      s==='high' ? 'High blood zinc — unusual without supplementation. Confirm no excessive zinc supplementation.' : 'Blood zinc within acceptable range.' });
     if (s==='low') {
       const maxDose = Math.min(Math.round(weight * 0.40 / 15) * 15, 60);
 <<<<<<< HEAD
-      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15�30mg and increase slowly. Do not exceed 60mg/day � doses above 90mg risk zinc toxicity.` });
-      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate � personalized max dose ${maxDose}mg/day based on your weight. Begin at 15�30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity � reduce dose or pause until later in the program.` });
+      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15?30mg and increase slowly. Do not exceed 60mg/day ? doses above 90mg risk zinc toxicity.` });
+      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate ? personalized max dose ${maxDose}mg/day based on your weight. Begin at 15?30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity ? reduce dose or pause until later in the program.` });
 =======
-      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15–30mg and increase slowly. Do not exceed 60mg/day — doses above 90mg risk zinc toxicity.` });
-      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate — personalized max dose ${maxDose}mg/day based on your weight. Begin at 15–30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity — reduce dose or pause until later in the program.` });
+      doses.push({ supplement:'Zinc picolinate', dose: maxDose + 'mg/day', instructions:`Calculated from body weight (40% of ${weight} lbs, capped at 60mg). Start at 15�30mg and increase slowly. Do not exceed 60mg/day � doses above 90mg risk zinc toxicity.` });
+      actions.push({ priority:'action', title:'Support zinc levels', body:`Start zinc picolinate � personalized max dose ${maxDose}mg/day based on your weight. Begin at 15�30mg and increase gradually. Strong reactions to even low doses suggest significant copper toxicity � reduce dose or pause until later in the program.` });
 >>>>>>> 1d635ccf23df12fd21be5ea069eb6876eca64e8c
     }
   }
@@ -1044,19 +1044,19 @@ function generateRecommendations(labs, profile) {
   if (labs.hair_calcium !== null) {
     const s = status(labs.hair_calcium, 40, 42);
     findings.push({ marker:'Hair Ca', value: labs.hair_calcium, unit:'', status: s==='low'?'low': s==='high'?'watch':'optimal',
-      interpretation: s==='low'  ? 'Hair calcium below optimal (40â€“42). May indicate calcium dysregulation or magnesium deficiency.' :
+      interpretation: s==='low'  ? 'Hair calcium below optimal (40–42). May indicate calcium dysregulation or magnesium deficiency.' :
                       s==='high' ? 'High hair calcium often indicates biounavailable calcium depositing in soft tissues rather than bones. Associated with vitamin D dysregulation, vitamin A toxicity, and magnesium deficiency.' :
-                                   'Hair calcium within optimal range (40â€“42).' });
-    if (s==='high') actions.push({ priority:'watch', title:'High hair calcium â€” biounavailability', body:'Address with topical magnesium (keeps calcium in correct locations), reduce vitamin A, get vitamin D from sunlight not supplements, and consider vitamin K2 MK-4 (directs calcium to bones). Do not supplement calcium.' });
+                                   'Hair calcium within optimal range (40–42).' });
+    if (s==='high') actions.push({ priority:'watch', title:'High hair calcium — biounavailability', body:'Address with topical magnesium (keeps calcium in correct locations), reduce vitamin A, get vitamin D from sunlight not supplements, and consider vitamin K2 MK-4 (directs calcium to bones). Do not supplement calcium.' });
   }
 
   // Hair copper
   if (labs.hair_copper !== null) {
     const s = status(labs.hair_copper, 1.5, 2.5);
     findings.push({ marker:'Hair Cu', value: labs.hair_copper, unit:'', status: s==='high'?'high': s==='low'?'low':'optimal',
-      interpretation: s==='high' ? 'Hair copper elevated above optimal (1.5â€“2.5). Confirms copper accumulation in tissues.' :
-                      s==='low'  ? 'Low hair copper â€” may reflect copper dumping out of tissues (a positive sign during detox) or true deficiency.' :
-                                   'Hair copper within optimal range (1.5â€“2.5).' });
+      interpretation: s==='high' ? 'Hair copper elevated above optimal (1.5–2.5). Confirms copper accumulation in tissues.' :
+                      s==='low'  ? 'Low hair copper — may reflect copper dumping out of tissues (a positive sign during detox) or true deficiency.' :
+                                   'Hair copper within optimal range (1.5–2.5).' });
     if (s==='high') actions.push({ priority:'action', title:'Elevated hair copper', body:'Work the copper detox protocol: zinc picolinate, selenium, molybdenum, flush niacin, and soluble fiber. Eliminate high-copper foods: chocolate, nuts, seeds, soy. Check for copper pipes in your water supply.' });
   }
 
@@ -1064,20 +1064,20 @@ function generateRecommendations(labs, profile) {
   if (labs.hair_zinc !== null) {
     const s = status(labs.hair_zinc, 17, 20);
     findings.push({ marker:'Hair Zn', value: labs.hair_zinc, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
-      interpretation: s==='low'  ? 'Hair zinc below optimal (17â€“20). Indicates zinc deficiency in tissues â€” impairs vitamin A detox pathway and copper clearance.' :
-                      s==='high' ? 'Hair zinc above range â€” confirm no excessive supplementation.' :
-                                   'Hair zinc within optimal range (17â€“20).' });
+      interpretation: s==='low'  ? 'Hair zinc below optimal (17–20). Indicates zinc deficiency in tissues — impairs vitamin A detox pathway and copper clearance.' :
+                      s==='high' ? 'Hair zinc above range — confirm no excessive supplementation.' :
+                                   'Hair zinc within optimal range (17–20).' });
   }
 
   // Hair selenium
   if (labs.hair_selenium !== null) {
     const s = status(labs.hair_selenium, 0.11, 0.15);
     findings.push({ marker:'Hair Se', value: labs.hair_selenium, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
-      interpretation: s==='low'  ? 'Hair selenium below optimal (0.11â€“0.15). Selenium is required for ALDH enzyme (vitamin A detox pathway) and protects the liver against vitamin A toxicity.' :
+      interpretation: s==='low'  ? 'Hair selenium below optimal (0.11–0.15). Selenium is required for ALDH enzyme (vitamin A detox pathway) and protects the liver against vitamin A toxicity.' :
                       s==='high' ? 'Hair selenium above optimal range.' :
-                                   'Hair selenium within optimal range (0.11â€“0.15).' });
+                                   'Hair selenium within optimal range (0.11–0.15).' });
     if (s==='low') {
-      doses.push({ supplement:'Selenium glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3â€“7 days, reduce dose or stop temporarily.' });
+      doses.push({ supplement:'Selenium glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3–7 days, reduce dose or stop temporarily.' });
       actions.push({ priority:'action', title:'Support selenium levels', body:'Start selenium glycinate 150mcg/day. Selenium protects the liver, supports ALDH (vitamin A detox), and is a copper and mercury antagonist. Start at lower dose if sensitive.' });
     }
   }
@@ -1086,10 +1086,10 @@ function generateRecommendations(labs, profile) {
   if (labs.hair_molybdenum !== null) {
     const s = status(labs.hair_molybdenum, 0.004, 999);
     findings.push({ marker:'Hair Mo', value: labs.hair_molybdenum, unit:'', status: s==='low'?'low':'optimal',
-      interpretation: s==='low'  ? 'Hair molybdenum below 0.004 â€” indicates deficiency. Molybdenum is required for ALDH and aldehyde oxidase enzymes critical to vitamin A detox.' :
+      interpretation: s==='low'  ? 'Hair molybdenum below 0.004 — indicates deficiency. Molybdenum is required for ALDH and aldehyde oxidase enzymes critical to vitamin A detox.' :
                                    'Hair molybdenum above deficiency threshold (0.004).' });
     if (s==='low') {
-      doses.push({ supplement:'Molybdenum glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3â€“7 days, reduce dose or stop temporarily.' });
+      doses.push({ supplement:'Molybdenum glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3–7 days, reduce dose or stop temporarily.' });
       actions.push({ priority:'action', title:'Address molybdenum deficiency', body:'Molybdenum deficiency impairs the ALDH enzyme pathway needed to process and eliminate vitamin A. Signs include sensitivity to alcohol, wine, caffeine, or high-sulfur foods.' });
     }
   }
@@ -1097,12 +1097,12 @@ function generateRecommendations(labs, profile) {
   // Toxic elements
   const toxics = labs.hair_toxics || {};
   const toxicFlags = [];
-  if (toxics.mercury  > 0.05)  toxicFlags.push('Mercury (Hg) elevated â€” remove amalgam fillings via IAOMT-trained dentist only. Minimize all fish intake.');
-  if (toxics.lead     > 0.15)  toxicFlags.push('Lead (Pb) elevated â€” identify environmental sources. Avoid clay supplements (may contain bioavailable lead).');
-  if (toxics.cadmium  > 0.05)  toxicFlags.push('Cadmium (Cd) elevated â€” common from cigarette smoke and contaminated foods.');
-  if (toxics.arsenic  > 0.06)  toxicFlags.push('Arsenic (As) elevated â€” check drinking water source. Avoid rice-heavy diet if confirmed.');
-  if (toxics.aluminum > 3.0)   toxicFlags.push('Aluminum (Al) elevated â€” eliminate aluminum cookware and foil contact with food.');
-  if (toxics.uranium  > 0.01)  toxicFlags.push('Uranium (U) elevated â€” check well water if applicable.');
+  if (toxics.mercury  > 0.05)  toxicFlags.push('Mercury (Hg) elevated — remove amalgam fillings via IAOMT-trained dentist only. Minimize all fish intake.');
+  if (toxics.lead     > 0.15)  toxicFlags.push('Lead (Pb) elevated — identify environmental sources. Avoid clay supplements (may contain bioavailable lead).');
+  if (toxics.cadmium  > 0.05)  toxicFlags.push('Cadmium (Cd) elevated — common from cigarette smoke and contaminated foods.');
+  if (toxics.arsenic  > 0.06)  toxicFlags.push('Arsenic (As) elevated — check drinking water source. Avoid rice-heavy diet if confirmed.');
+  if (toxics.aluminum > 3.0)   toxicFlags.push('Aluminum (Al) elevated — eliminate aluminum cookware and foil contact with food.');
+  if (toxics.uranium  > 0.01)  toxicFlags.push('Uranium (U) elevated — check well water if applicable.');
   if (toxicFlags.length > 0) {
     actions.push({ priority:'urgent', title:'Toxic element burden detected', body: toxicFlags.join('\n') });
     findings.push({ marker:'Toxic elements', value:'Elevated', unit:'', status:'high', interpretation: toxicFlags.join(' ') });
@@ -1110,21 +1110,21 @@ function generateRecommendations(labs, profile) {
 
   // Fix These FIRST warnings
   const fixFirst = [];
-  if (profile.flag_mercury_fillings) fixFirst.push('Mercury fillings present â€” stop the exposure before detoxing. Use only an IAOMT-trained dentist for removal (iaomt.org).');
-  if (profile.flag_mold_exposure)    fixFirst.push('Mold exposure flagged â€” detoxing while still exposed is pointless. Identify and eliminate the mold source first.');
-  if (profile.flag_copper_pipes)     fixFirst.push('Copper pipes flagged â€” install RO filtration for drinking/cooking water. Standard shower filters do not remove copper.');
-  if (profile.flag_low_protein)      fixFirst.push('Low protein intake flagged â€” minimum 50g total protein per day from all sources combined.');
-  if (fixFirst.length > 0) actions.unshift({ priority:'urgent', title:'Fix These FIRST â€” blocking recovery', body: fixFirst.join('\n') });
+  if (profile.flag_mercury_fillings) fixFirst.push('Mercury fillings present — stop the exposure before detoxing. Use only an IAOMT-trained dentist for removal (iaomt.org).');
+  if (profile.flag_mold_exposure)    fixFirst.push('Mold exposure flagged — detoxing while still exposed is pointless. Identify and eliminate the mold source first.');
+  if (profile.flag_copper_pipes)     fixFirst.push('Copper pipes flagged — install RO filtration for drinking/cooking water. Standard shower filters do not remove copper.');
+  if (profile.flag_low_protein)      fixFirst.push('Low protein intake flagged — minimum 50g total protein per day from all sources combined.');
+  if (fixFirst.length > 0) actions.unshift({ priority:'urgent', title:'Fix These FIRST — blocking recovery', body: fixFirst.join('\n') });
 
   // Women's hormonal
   if (sex==='female' && profile.flag_hormonal_issues) {
-    actions.push({ priority:'action', title:'Women\'s hormonal support', body:'Consider vitamin K2 (MK-4 form, 3â€“5mg/day) for heavy menstrual bleeding. Topical magnesium over abdomen helps with cramps and copper detox. Always start probiotics with Lactobacillus first. Eliminate high-copper foods: chocolate, nuts, seeds.' });
+    actions.push({ priority:'action', title:'Women\'s hormonal support', body:'Consider vitamin K2 (MK-4 form, 3–5mg/day) for heavy menstrual bleeding. Topical magnesium over abdomen helps with cramps and copper detox. Always start probiotics with Lactobacillus first. Eliminate high-copper foods: chocolate, nuts, seeds.' });
   }
 
   return { findings, priority_actions: actions, supplement_doses: doses };
 }
 
-// â”€â”€ RENDER REPORT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── RENDER REPORT ─────────────────────────────────────────────
 function renderReport(labs, rec, profile) {
   const container = document.getElementById('report-content');
   document.getElementById('report-empty').style.display = 'none';
@@ -1152,7 +1152,7 @@ function renderReport(labs, rec, profile) {
       <div class="card-title">Personalized supplement doses</div>
       ${rec.supplement_doses.map(d => `
         <div style="padding:14px 0;border-bottom:1px solid var(--border);">
-          <div style="font-weight:600;font-size:15px;margin-bottom:4px">${d.supplement} â€” ${d.dose}</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:4px">${d.supplement} — ${d.dose}</div>
           <div style="font-size:13px;color:var(--text2)">${d.instructions}</div>
         </div>
       `).join('')}
@@ -1161,25 +1161,25 @@ function renderReport(labs, rec, profile) {
 
   container.innerHTML = `
     <div class="card">
-      <div class="card-title">Lab findings â€” ${labs.test_date}</div>
+      <div class="card-title">Lab findings — ${labs.test_date}</div>
       <div class="metric-grid">${metricsHtml}</div>
     </div>
     <div class="card">
       <div class="card-title">Recommendations</div>
-      ${actionsHtml || '<p style="color:var(--text3);font-size:14px">No specific actions flagged â€” all markers within range.</p>'}
+      ${actionsHtml || '<p style="color:var(--text3);font-size:14px">No specific actions flagged — all markers within range.</p>'}
     </div>
     ${dosesHtml}
     <div class="card" style="background:var(--accent-light);border-color:#a3d9be">
       <div style="font-size:13px;color:var(--accent);line-height:1.7">
         <strong>Remember:</strong> This report is a tool, not a diagnosis. Work with a knowledgeable provider.
-        This is a long-term process â€” months to years. Salt your food. Poop every day.
-        Test, don't guess, then address. The body wants to heal â€” we are removing obstacles.
+        This is a long-term process — months to years. Salt your food. Poop every day.
+        Test, don't guess, then address. The body wants to heal — we are removing obstacles.
       </div>
     </div>
   `;
 }
 
-// â”€â”€ HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── HISTORY ───────────────────────────────────────────────────
 async function loadHistory() {
   const { data, error } = await dbSelect('lab_results', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
 
@@ -1196,14 +1196,14 @@ async function loadHistory() {
   list.innerHTML = allLabResults.map(r => {
     const pills = [];
     const sex = r.sex || 'unknown';
-    if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol â†‘</span>');
-    if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin â†‘</span>');
-    if (r.ferritin < 50)      pills.push('<span class="pill low">Ferritin â†“</span>');
-    if (r.hair_zinc < 17)     pills.push('<span class="pill low">Zn â†“</span>');
-    if (r.hair_copper > 2.5)  pills.push('<span class="pill high">Cu â†‘</span>');
-    if (r.hair_selenium < 0.11) pills.push('<span class="pill low">Se â†“</span>');
-    if (r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo â†“</span>');
-    if (r.ggt > 20)           pills.push('<span class="pill high">GGT â†‘</span>');
+    if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol ↑</span>');
+    if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin ↑</span>');
+    if (r.ferritin < 50)      pills.push('<span class="pill low">Ferritin ↓</span>');
+    if (r.hair_zinc < 17)     pills.push('<span class="pill low">Zn ↓</span>');
+    if (r.hair_copper > 2.5)  pills.push('<span class="pill high">Cu ↑</span>');
+    if (r.hair_selenium < 0.11) pills.push('<span class="pill low">Se ↓</span>');
+    if (r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓</span>');
+    if (r.ggt > 20)           pills.push('<span class="pill high">GGT ↑</span>');
     if (pills.length === 0)   pills.push('<span class="pill optimal">All optimal</span>');
     return `
       <div class="history-item" onclick="viewHistoryItem('${r.id}')">
@@ -1265,7 +1265,7 @@ function renderTrend() {
   });
 }
 
-// â”€â”€ TOAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TOAST ─────────────────────────────────────────────────────
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -1273,7 +1273,7 @@ function toast(msg) {
   setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-// â”€â”€ INIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── INIT ──────────────────────────────────────────────────────
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
