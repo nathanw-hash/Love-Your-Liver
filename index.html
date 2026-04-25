@@ -1312,60 +1312,44 @@ function toast(msg) {
 let pdfExtractedData = {};
 
 async function importPDF(input) {
-  console.log('importPDF called');
   const file = input.files[0];
-  if (!file) {
-    console.log('No file selected');
-    return;
-  }
-  console.log('File:', file.name, file.size, 'bytes');
+  if (!file) return;
   input.value = '';
   document.getElementById('pdf-modal').style.display = 'block';
   document.getElementById('pdf-modal-body').style.display = 'none';
   const status = document.getElementById('pdf-modal-status');
-  status.textContent = 'Reading PDF — this may take 10–20 seconds...';
+  status.textContent = 'Reading PDF — this may take 10-20 seconds...';
   status.style.background = '#e8f4ee';
   status.style.color = '#2d6a4f';
   try {
-    console.log('Converting to base64...');
     const base64 = await fileToBase64(file);
-    console.log('Base64 length:', base64.length);
     const prompt = `Extract lab values from this medical PDF. Return ONLY valid JSON with this structure (null for missing values):\n{"lab_type":"labcorp or tei","date":"YYYY-MM-DD or null","serum_retinol":null,"ferritin":null,"blood_copper":null,"blood_zinc":null,"hair_calcium":null,"hair_magnesium":null,"hair_phosphorus":null,"hair_copper":null,"hair_zinc":null,"hair_selenium":null,"hair_molybdenum":null,"hair_mercury":null,"hair_lead":null,"hair_cadmium":null,"hair_arsenic":null,"hair_aluminum":null,"hair_uranium":null}\nFor LabCorp: find Vitamin A/Retinol, Copper, Zinc, Ferritin values.\nFor Trace Elements Lab: read numeric values at bottom of each bar chart column. Ca=calcium, Mg=magnesium, P=phosphorus, Cu=copper, Zn=zinc, Se=selenium, Mo=molybdenum, Hg=mercury, Pb=lead, Cd=cadmium, As=arsenic, Al=aluminum, U=uranium.`;
-    console.log('Sending to /api/claude...');
     const response = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
+        max_tokens: 1000,
         messages: [{ role: 'user', content: [
           { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
           { type: 'text', text: prompt }
         ]}]
       })
     });
-    console.log('Response status:', response.status);
     const result = await response.json();
-    console.log('Response body:', result);
-
-    if (result.type === 'error' || !result.content) {
-      const msg = result.error?.message || result.message || 'Unknown API error';
-      throw new Error(msg);
-    }
-
     const text = result.content[0].text.trim().replace(/```json|```/g, '').trim();
-    console.log('Extracted text:', text);
     pdfExtractedData = JSON.parse(text);
     renderPdfModal(pdfExtractedData);
     document.getElementById('pdf-modal-body').style.display = 'block';
     status.textContent = 'Detected: ' + (pdfExtractedData.lab_type === 'labcorp' ? 'LabCorp/Quest blood work' : pdfExtractedData.lab_type === 'tei' ? 'Trace Elements Lab hair analysis' : 'Lab report') + '. Review values below.';
   } catch(err) {
-    console.error('Import error:', err);
     status.textContent = 'Error: ' + err.message;
     status.style.background = '#fef2f2';
     status.style.color = '#b91c1c';
   }
 }
+
+function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result.split(',')[1]);
