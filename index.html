@@ -608,7 +608,11 @@
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-accent" onclick="saveBloodTest()">Save blood test</button>
+          <button class="btn btn-accent" id="blood-save-btn" onclick="saveBloodTest()">Save blood test</button>
+        </div>
+        <div id="blood-edit-row" style="display:none;gap:12px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="cancelEdit()">Cancel edit</button>
+          <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="deleteLabEntry()">Delete this test</button>
         </div>
       </div>
 
@@ -668,7 +672,11 @@
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-accent" onclick="saveHairTest()">Save hair test</button>
+          <button class="btn btn-accent" id="hair-save-btn" onclick="saveHairTest()">Save hair test</button>
+        </div>
+        <div id="hair-edit-row" style="display:none;gap:12px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="cancelEdit()">Cancel edit</button>
+          <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="deleteLabEntry()">Delete this test</button>
         </div>
       </div>
 
@@ -774,6 +782,24 @@ async function dbSelect(table, filters) {
   return { data, error: res.ok ? null : data };
 }
 
+async function dbUpdate(table, id, payload) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + getToken(), 'Prefer': 'return=representation' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  return { data: Array.isArray(data) ? data[0] : data, error: res.ok ? null : data };
+}
+
+async function dbDelete(table, id) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + getToken() }
+  });
+  return { error: res.ok ? null : await res.json() };
+}
+
 async function dbUpsert(table, payload, onConflict) {
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?on_conflict=' + onConflict, {
     method: 'POST',
@@ -787,6 +813,7 @@ async function dbUpsert(table, payload, onConflict) {
 let currentUser = null;
 let allLabResults = [];
 let trendChart = null;
+let editingTest = null; // { id, kind } when editing, null otherwise
 
 const FLAGS = [
   { id: 'flag_mercury_fillings', label: 'Mercury fillings' },
@@ -977,9 +1004,16 @@ async function saveBloodTest() {
   if (!blood.test_date) { toast('Please enter a blood test date'); return; }
   const hasValues = blood.serum_retinol !== null || blood.ferritin !== null || blood.blood_copper !== null || blood.blood_zinc !== null;
   if (!hasValues) { toast('Please enter at least one blood value'); return; }
-  const { error } = await dbInsert('blood_tests', { user_id: currentUser.id, ...blood });
-  if (error) { toast('Error saving blood test: ' + error.message); return; }
-  toast('Blood test saved');
+  if (editingTest && editingTest.kind === 'blood') {
+    const { error } = await dbUpdate('blood_tests', editingTest.id, blood);
+    if (error) { toast('Error updating: ' + (error.message || 'unknown')); return; }
+    toast('Blood test updated');
+    cancelEdit();
+  } else {
+    const { error } = await dbInsert('blood_tests', { user_id: currentUser.id, ...blood });
+    if (error) { toast('Error saving blood test: ' + error.message); return; }
+    toast('Blood test saved');
+  }
   await generateAndShowReport();
 }
 
@@ -989,10 +1023,97 @@ async function saveHairTest() {
   const fields = ['hair_calcium','hair_magnesium','hair_phosphorus','hair_copper','hair_zinc','hair_selenium','hair_molybdenum'];
   const hasValues = fields.some(f => hair[f] !== null) || Object.values(hair.hair_toxics).some(v => v !== null);
   if (!hasValues) { toast('Please enter at least one hair value'); return; }
-  const { error } = await dbInsert('hair_tests', { user_id: currentUser.id, ...hair });
-  if (error) { toast('Error saving hair test: ' + error.message); return; }
-  toast('Hair test saved');
+  if (editingTest && editingTest.kind === 'hair') {
+    const { error } = await dbUpdate('hair_tests', editingTest.id, hair);
+    if (error) { toast('Error updating: ' + (error.message || 'unknown')); return; }
+    toast('Hair test updated');
+    cancelEdit();
+  } else {
+    const { error } = await dbInsert('hair_tests', { user_id: currentUser.id, ...hair });
+    if (error) { toast('Error saving hair test: ' + error.message); return; }
+    toast('Hair test saved');
+  }
   await generateAndShowReport();
+}
+
+function editLabEntry(id, kind) {
+  const record = allLabResults.find(x => x.id === id && x._kind === kind);
+  if (!record) return;
+  editingTest = { id, kind };
+  showTab('labs');
+  if (kind === 'blood') {
+    document.getElementById('b-date').value     = record.test_date || '';
+    document.getElementById('b-retinol').value  = record.serum_retinol ?? '';
+    document.getElementById('b-ferritin').value = record.ferritin ?? '';
+    document.getElementById('b-copper').value   = record.blood_copper ?? '';
+    document.getElementById('b-zinc').value     = record.blood_zinc ?? '';
+  } else {
+    document.getElementById('h-date').value = record.test_date || '';
+    document.getElementById('h-ca').value   = record.hair_calcium ?? '';
+    document.getElementById('h-mg').value   = record.hair_magnesium ?? '';
+    document.getElementById('h-p').value    = record.hair_phosphorus ?? '';
+    document.getElementById('h-cu').value   = record.hair_copper ?? '';
+    document.getElementById('h-zn').value   = record.hair_zinc ?? '';
+    document.getElementById('h-se').value   = record.hair_selenium ?? '';
+    document.getElementById('h-mo').value   = record.hair_molybdenum ?? '';
+    const t = record.hair_toxics || {};
+    document.getElementById('h-hg').value = t.mercury ?? '';
+    document.getElementById('h-pb').value = t.lead ?? '';
+    document.getElementById('h-cd').value = t.cadmium ?? '';
+    document.getElementById('h-as').value = t.arsenic ?? '';
+    document.getElementById('h-al').value = t.aluminum ?? '';
+    document.getElementById('h-ur').value = t.uranium ?? '';
+  }
+  updateEditModeUI();
+  const card = kind === 'blood' ? document.querySelector('#panel-labs .card:nth-of-type(1)') : document.querySelector('#panel-labs .card:nth-of-type(2)');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEdit() {
+  editingTest = null;
+  ['b-date','b-retinol','b-ferritin','b-copper','b-zinc','h-date','h-ca','h-mg','h-p','h-cu','h-zn','h-se','h-mo','h-hg','h-pb','h-cd','h-as','h-al','h-ur'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('b-date').value = today;
+  document.getElementById('h-date').value = today;
+  updateEditModeUI();
+}
+
+async function deleteLabEntry() {
+  if (!editingTest) return;
+  if (!confirm('Permanently delete this ' + editingTest.kind + ' test? This cannot be undone.')) return;
+  const table = editingTest.kind === 'blood' ? 'blood_tests' : 'hair_tests';
+  const { error } = await dbDelete(table, editingTest.id);
+  if (error) { toast('Error deleting: ' + (error.message || 'unknown')); return; }
+  toast(editingTest.kind.charAt(0).toUpperCase() + editingTest.kind.slice(1) + ' test deleted');
+  cancelEdit();
+  await loadHistory();
+  await generateAndShowReport();
+}
+
+function updateEditModeUI() {
+  const bloodSaveBtn = document.getElementById('blood-save-btn');
+  const hairSaveBtn  = document.getElementById('hair-save-btn');
+  const bloodEditRow = document.getElementById('blood-edit-row');
+  const hairEditRow  = document.getElementById('hair-edit-row');
+  if (editingTest && editingTest.kind === 'blood') {
+    if (bloodSaveBtn) bloodSaveBtn.textContent = 'Update blood test';
+    if (bloodEditRow) bloodEditRow.style.display = 'flex';
+    if (hairSaveBtn)  hairSaveBtn.textContent = 'Save hair test';
+    if (hairEditRow)  hairEditRow.style.display = 'none';
+  } else if (editingTest && editingTest.kind === 'hair') {
+    if (hairSaveBtn) hairSaveBtn.textContent = 'Update hair test';
+    if (hairEditRow) hairEditRow.style.display = 'flex';
+    if (bloodSaveBtn) bloodSaveBtn.textContent = 'Save blood test';
+    if (bloodEditRow) bloodEditRow.style.display = 'none';
+  } else {
+    if (bloodSaveBtn) bloodSaveBtn.textContent = 'Save blood test';
+    if (hairSaveBtn)  hairSaveBtn.textContent  = 'Save hair test';
+    if (bloodEditRow) bloodEditRow.style.display = 'none';
+    if (hairEditRow)  hairEditRow.style.display = 'none';
+  }
 }
 
 async function generateAndShowReport() {
@@ -1297,9 +1418,12 @@ async function loadHistory() {
     }
     if (pills.length === 1) pills.push('<span class="pill optimal">All optimal</span>');
     return `
-      <div class="history-item" onclick="viewHistoryItem('${r.id}','${r._kind}')">
-        <div class="history-date">${r.test_date}</div>
-        <div class="history-pills">${pills.join('')}</div>
+      <div class="history-item">
+        <div style="display:flex;align-items:center;gap:16px;flex:1;cursor:pointer;" onclick="viewHistoryItem('${r.id}','${r._kind}')">
+          <div class="history-date">${r.test_date}</div>
+          <div class="history-pills">${pills.join('')}</div>
+        </div>
+        <button onclick="editLabEntry('${r.id}','${r._kind}')" title="Edit" style="background:none;border:none;cursor:pointer;padding:8px;color:var(--text3);font-size:16px;border-radius:6px;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">✎</button>
       </div>
     `;
   }).join('');
