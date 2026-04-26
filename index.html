@@ -1007,8 +1007,6 @@ async function generateAndShowReport() {
   const rec = generateRecommendations(combined, profile);
   renderReport(combined, rec, profile, blood, hair);
   await loadHistory();
-  showTab('report');
-  document.querySelectorAll('.tab')[2].classList.add('active');
 }
 
 function combineLabs(blood, hair) {
