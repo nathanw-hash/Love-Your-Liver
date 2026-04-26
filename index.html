@@ -580,97 +580,101 @@
       <div class="card">
         <div class="card-title">Enter lab results</div>
 
+        <div class="section-title" style="margin-top:0">Blood test</div>
+
         <div class="form-field" style="margin-bottom:16px">
           <label>Test date</label>
-          <input type="date" id="l-date">
+          <input type="date" id="b-date">
         </div>
-
-        <div class="section-title">Blood markers</div>
-        <div class="form-grid-3">
+        <div class="form-grid">
           <div class="form-field">
             <label>Serum retinol (mcg/dL)</label>
-            <input type="number" step="0.1" id="l-retinol" placeholder="e.g. 62">
+            <input type="number" step="0.1" id="b-retinol" placeholder="e.g. 62">
             <span class="hint">Optimal &lt; 50</span>
           </div>
           <div class="form-field">
             <label>Ferritin (ng/mL)</label>
-            <input type="number" step="0.1" id="l-ferritin" placeholder="e.g. 85">
+            <input type="number" step="0.1" id="b-ferritin" placeholder="e.g. 85">
             <span class="hint">F: 50–100 · M: 30–70</span>
           </div>
           <div class="form-field">
             <label>Blood copper (mcg/dL)</label>
-            <input type="number" step="0.1" id="l-bcopper" placeholder="e.g. 118">
+            <input type="number" step="0.1" id="b-copper" placeholder="e.g. 118">
           </div>
           <div class="form-field">
             <label>Blood zinc (mcg/dL)</label>
-            <input type="number" step="0.1" id="l-bzinc" placeholder="e.g. 74">
-          </div>
-          <div class="form-field">
-            <label>GGT (U/L)</label>
-            <input type="number" step="0.1" id="l-ggt" placeholder="e.g. 28">
-            <span class="hint">Optimal &lt; 20</span>
-          </div>
-          <div class="form-field">
-            <label>ALT (U/L)</label>
-            <input type="number" step="0.1" id="l-alt" placeholder="e.g. 22">
-            <span class="hint">Optimal &lt; 20</span>
-          </div>
-          <div class="form-field">
-            <label>AST (U/L)</label>
-            <input type="number" step="0.1" id="l-ast" placeholder="e.g. 19">
-            <span class="hint">Optimal &lt; 20</span>
+            <input type="number" step="0.1" id="b-zinc" placeholder="e.g. 74">
           </div>
         </div>
 
-        <div class="section-title">Hair mineral analysis (Trace Elements Lab)</div>
+        <div class="btn-row">
+          <button class="btn btn-accent" onclick="saveBloodTest()">Save blood test</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Hair test (Trace Elements Lab)</div>
+
+        <div class="form-field" style="margin-bottom:16px">
+          <label>Test date</label>
+          <input type="date" id="h-date">
+        </div>
+
+        <div class="section-title" style="margin-top:0">Minerals</div>
         <div class="form-grid-3">
           <div class="form-field">
             <label>Calcium</label>
-            <input type="number" step="0.1" id="l-ca" placeholder="e.g. 38">
+            <input type="number" step="0.1" id="h-ca" placeholder="e.g. 38">
             <span class="hint">Optimal 40–42</span>
           </div>
           <div class="form-field">
             <label>Magnesium</label>
-            <input type="number" step="0.1" id="l-mg" placeholder="e.g. 4.2">
+            <input type="number" step="0.1" id="h-mg" placeholder="e.g. 4.2">
           </div>
           <div class="form-field">
             <label>Phosphorus</label>
-            <input type="number" step="0.1" id="l-p" placeholder="e.g. 14">
+            <input type="number" step="0.1" id="h-p" placeholder="e.g. 14">
           </div>
           <div class="form-field">
             <label>Copper</label>
-            <input type="number" step="0.01" id="l-cu" placeholder="e.g. 2.8">
+            <input type="number" step="0.01" id="h-cu" placeholder="e.g. 2.8">
             <span class="hint">Optimal 1.5–2.5</span>
           </div>
           <div class="form-field">
             <label>Zinc</label>
-            <input type="number" step="0.1" id="l-zn" placeholder="e.g. 14">
+            <input type="number" step="0.1" id="h-zn" placeholder="e.g. 14">
             <span class="hint">Optimal 17–20</span>
           </div>
           <div class="form-field">
             <label>Selenium</label>
-            <input type="number" step="0.001" id="l-se" placeholder="e.g. 0.09">
+            <input type="number" step="0.001" id="h-se" placeholder="e.g. 0.09">
             <span class="hint">Optimal 0.11–0.15</span>
           </div>
           <div class="form-field">
             <label>Molybdenum</label>
-            <input type="number" step="0.001" id="l-mo" placeholder="e.g. 0.003">
+            <input type="number" step="0.001" id="h-mo" placeholder="e.g. 0.003">
             <span class="hint">Deficient < 0.004</span>
           </div>
         </div>
 
         <div class="section-title">Toxic elements</div>
         <div class="form-grid-3">
-          <div class="form-field"><label>Mercury (Hg)</label><input type="number" step="0.001" id="l-hg" placeholder="e.g. 0.04"></div>
-          <div class="form-field"><label>Lead (Pb)</label><input type="number" step="0.001" id="l-pb" placeholder="e.g. 0.12"></div>
-          <div class="form-field"><label>Cadmium (Cd)</label><input type="number" step="0.001" id="l-cd" placeholder="e.g. 0.01"></div>
-          <div class="form-field"><label>Arsenic (As)</label><input type="number" step="0.001" id="l-as" placeholder="e.g. 0.02"></div>
-          <div class="form-field"><label>Aluminum (Al)</label><input type="number" step="0.01" id="l-al" placeholder="e.g. 2.1"></div>
-          <div class="form-field"><label>Uranium (U)</label><input type="number" step="0.001" id="l-ur" placeholder="e.g. 0.005"></div>
+          <div class="form-field"><label>Mercury (Hg)</label><input type="number" step="0.001" id="h-hg" placeholder="e.g. 0.04"></div>
+          <div class="form-field"><label>Lead (Pb)</label><input type="number" step="0.001" id="h-pb" placeholder="e.g. 0.12"></div>
+          <div class="form-field"><label>Cadmium (Cd)</label><input type="number" step="0.001" id="h-cd" placeholder="e.g. 0.01"></div>
+          <div class="form-field"><label>Arsenic (As)</label><input type="number" step="0.001" id="h-as" placeholder="e.g. 0.02"></div>
+          <div class="form-field"><label>Aluminum (Al)</label><input type="number" step="0.01" id="h-al" placeholder="e.g. 2.1"></div>
+          <div class="form-field"><label>Uranium (U)</label><input type="number" step="0.001" id="h-ur" placeholder="e.g. 0.005"></div>
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-accent" onclick="saveLabs()">Save &amp; generate report</button>
+          <button class="btn btn-accent" onclick="saveHairTest()">Save hair test</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Tools</div>
+        <div class="btn-row">
           <button class="btn btn-outline" onclick="loadDemo()">Load demo values</button>
           <button class="btn btn-outline" onclick="document.getElementById('pdf-import-input').click()">&#8679; Import PDF</button>
           <input type="file" id="pdf-import-input" accept=".pdf" style="display:none" onchange="importPDF(this)">
@@ -905,77 +909,116 @@ async function saveProfile() {
 
 // â”€â”€ LABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function loadDemo() {
-  document.getElementById('l-date').value     = new Date().toISOString().split('T')[0];
-  document.getElementById('l-retinol').value  = '72';
-  document.getElementById('l-ferritin').value = '142';
-  document.getElementById('l-bcopper').value  = '128';
-  document.getElementById('l-bzinc').value    = '68';
-  document.getElementById('l-ggt').value      = '34';
-  document.getElementById('l-alt').value      = '26';
-  document.getElementById('l-ast').value      = '22';
-  document.getElementById('l-ca').value       = '36';
-  document.getElementById('l-mg').value       = '3.8';
-  document.getElementById('l-p').value        = '13';
-  document.getElementById('l-cu').value       = '3.1';
-  document.getElementById('l-zn').value       = '12';
-  document.getElementById('l-se').value       = '0.08';
-  document.getElementById('l-mo').value       = '0.002';
-  document.getElementById('l-hg').value       = '0.06';
-  document.getElementById('l-pb').value       = '0.18';
-  document.getElementById('l-cd').value       = '0.02';
-  document.getElementById('l-as').value       = '0.03';
-  document.getElementById('l-al').value       = '3.2';
-  document.getElementById('l-ur').value       = '0.008';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('b-date').value    = today;
+  document.getElementById('b-retinol').value = '72';
+  document.getElementById('b-ferritin').value= '142';
+  document.getElementById('b-copper').value  = '128';
+  document.getElementById('b-zinc').value    = '68';
+  document.getElementById('h-date').value    = today;
+  document.getElementById('h-ca').value      = '36';
+  document.getElementById('h-mg').value      = '3.8';
+  document.getElementById('h-p').value       = '13';
+  document.getElementById('h-cu').value      = '3.1';
+  document.getElementById('h-zn').value      = '12';
+  document.getElementById('h-se').value      = '0.08';
+  document.getElementById('h-mo').value      = '0.002';
+  document.getElementById('h-hg').value      = '0.06';
+  document.getElementById('h-pb').value      = '0.18';
+  document.getElementById('h-cd').value      = '0.02';
+  document.getElementById('h-as').value      = '0.03';
+  document.getElementById('h-al').value      = '3.2';
+  document.getElementById('h-ur').value      = '0.008';
   toast('Demo values loaded');
 }
 
-function getLabValues() {
-  const v = id => { const el=document.getElementById(id); return el&&el.value!==''? parseFloat(el.value) : null; };
+const v = id => { const el=document.getElementById(id); return el&&el.value!==''? parseFloat(el.value) : null; };
+
+function getBloodValues() {
   return {
-    test_date:       document.getElementById('l-date').value || new Date().toISOString().split('T')[0],
-    serum_retinol:   v('l-retinol'),
-    ferritin:        v('l-ferritin'),
-    blood_copper:    v('l-bcopper'),
-    blood_zinc:      v('l-bzinc'),
-    ggt:             v('l-ggt'),
-    alt:             v('l-alt'),
-    ast:             v('l-ast'),
-    hair_calcium:    v('l-ca'),
-    hair_magnesium:  v('l-mg'),
-    hair_phosphorus: v('l-p'),
-    hair_copper:     v('l-cu'),
-    hair_zinc:       v('l-zn'),
-    hair_selenium:   v('l-se'),
-    hair_molybdenum: v('l-mo'),
+    test_date:     document.getElementById('b-date').value,
+    serum_retinol: v('b-retinol'),
+    ferritin:      v('b-ferritin'),
+    blood_copper:  v('b-copper'),
+    blood_zinc:    v('b-zinc'),
+  };
+}
+
+function getHairValues() {
+  return {
+    test_date:       document.getElementById('h-date').value,
+    hair_calcium:    v('h-ca'),
+    hair_magnesium:  v('h-mg'),
+    hair_phosphorus: v('h-p'),
+    hair_copper:     v('h-cu'),
+    hair_zinc:       v('h-zn'),
+    hair_selenium:   v('h-se'),
+    hair_molybdenum: v('h-mo'),
     hair_toxics: {
-      mercury:  v('l-hg'),
-      lead:     v('l-pb'),
-      cadmium:  v('l-cd'),
-      arsenic:  v('l-as'),
-      aluminum: v('l-al'),
-      uranium:  v('l-ur'),
+      mercury:  v('h-hg'),
+      lead:     v('h-pb'),
+      cadmium:  v('h-cd'),
+      arsenic:  v('h-as'),
+      aluminum: v('h-al'),
+      uranium:  v('h-ur'),
     }
   };
 }
 
-async function saveLabs() {
-  const labs = getLabValues();
-  if (!labs.test_date) { toast('Please enter a test date'); return; }
-  const payload = { user_id: currentUser.id, ...labs };
-  const { data: labData, error } = await dbInsert('lab_results', payload);
-  if (error) { toast('Error saving: ' + error.message); return; }
+async function saveBloodTest() {
+  const blood = getBloodValues();
+  if (!blood.test_date) { toast('Please enter a blood test date'); return; }
+  const hasValues = blood.serum_retinol !== null || blood.ferritin !== null || blood.blood_copper !== null || blood.blood_zinc !== null;
+  if (!hasValues) { toast('Please enter at least one blood value'); return; }
+  const { error } = await dbInsert('blood_tests', { user_id: currentUser.id, ...blood });
+  if (error) { toast('Error saving blood test: ' + error.message); return; }
+  toast('Blood test saved');
+  await generateAndShowReport();
+}
+
+async function saveHairTest() {
+  const hair = getHairValues();
+  if (!hair.test_date) { toast('Please enter a hair test date'); return; }
+  const fields = ['hair_calcium','hair_magnesium','hair_phosphorus','hair_copper','hair_zinc','hair_selenium','hair_molybdenum'];
+  const hasValues = fields.some(f => hair[f] !== null) || Object.values(hair.hair_toxics).some(v => v !== null);
+  if (!hasValues) { toast('Please enter at least one hair value'); return; }
+  const { error } = await dbInsert('hair_tests', { user_id: currentUser.id, ...hair });
+  if (error) { toast('Error saving hair test: ' + error.message); return; }
+  toast('Hair test saved');
+  await generateAndShowReport();
+}
+
+async function generateAndShowReport() {
+  const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc', limit: '1' });
+  const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + currentUser.id, order: 'test_date.desc', limit: '1' });
+  const blood = Array.isArray(bloodArr) && bloodArr[0] ? bloodArr[0] : null;
+  const hair  = Array.isArray(hairArr)  && hairArr[0]  ? hairArr[0]  : null;
   const { data: profileData } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
   const profile = Array.isArray(profileData) ? profileData[0] : profileData || {};
-  const rec = generateRecommendations(labs, profile);
-  await dbInsert('recommendations', { user_id: currentUser.id, lab_result_id: labData.id, findings: rec.findings, priority_actions: rec.priority_actions, supplement_doses: rec.supplement_doses, engine_version: '1.0' });
-  renderReport(labs, rec, profile);
-
-
-
-
+  const combined = combineLabs(blood, hair);
+  const rec = generateRecommendations(combined, profile);
+  renderReport(combined, rec, profile, blood, hair);
   await loadHistory();
   showTab('report');
   document.querySelectorAll('.tab')[2].classList.add('active');
+}
+
+function combineLabs(blood, hair) {
+  return {
+    test_date:       blood?.test_date || hair?.test_date || null,
+    serum_retinol:   blood?.serum_retinol ?? null,
+    ferritin:        blood?.ferritin ?? null,
+    blood_copper:    blood?.blood_copper ?? null,
+    blood_zinc:      blood?.blood_zinc ?? null,
+    hair_calcium:    hair?.hair_calcium ?? null,
+    hair_magnesium:  hair?.hair_magnesium ?? null,
+    hair_phosphorus: hair?.hair_phosphorus ?? null,
+    hair_copper:     hair?.hair_copper ?? null,
+    hair_zinc:       hair?.hair_zinc ?? null,
+    hair_selenium:   hair?.hair_selenium ?? null,
+    hair_molybdenum: hair?.hair_molybdenum ?? null,
+    hair_toxics:     hair?.hair_toxics || {}
+  };
 }
 
 
@@ -1152,12 +1195,37 @@ function generateRecommendations(labs, profile) {
 }
 
 // â”€â”€ RENDER REPORT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function renderReport(labs, rec, profile) {
+function renderReport(labs, rec, profile, blood, hair) {
   const container = document.getElementById('report-content');
   document.getElementById('report-empty').style.display = 'none';
   container.style.display = 'block';
 
   const priorityColor = p => p==='urgent'?'urgent': p==='action'?'action': p==='watch'?'watch':'info';
+
+  let dateHeader = labs.test_date || '';
+  if (blood && hair) {
+    dateHeader = 'Blood: ' + blood.test_date + ' · Hair: ' + hair.test_date;
+  } else if (blood) {
+    dateHeader = 'Blood test: ' + blood.test_date;
+  } else if (hair) {
+    dateHeader = 'Hair test: ' + hair.test_date;
+  }
+
+  let warningHtml = '';
+  if (blood && hair) {
+    const bDate = new Date(blood.test_date);
+    const hDate = new Date(hair.test_date);
+    const monthsApart = Math.abs(bDate - hDate) / (1000 * 60 * 60 * 24 * 30.44);
+    if (monthsApart > 6) {
+      warningHtml = `
+        <div class="card" style="background:#fef3e2;border-color:#f8c97a">
+          <div style="font-size:13px;color:#b5560a;line-height:1.6">
+            <strong>⚠ Test dates are ${Math.round(monthsApart)} months apart.</strong>
+            Recommendations may be less reliable when blood and hair tests aren't from the same time period. Consider re-testing the older one.
+          </div>
+        </div>`;
+    }
+  }
 
   const metricsHtml = rec.findings.map(f => `
     <div class="metric-card ${f.status}">
@@ -1179,7 +1247,7 @@ function renderReport(labs, rec, profile) {
       <div class="card-title">Personalized supplement doses</div>
       ${rec.supplement_doses.map(d => `
         <div style="padding:14px 0;border-bottom:1px solid var(--border);">
-          <div style="font-weight:600;font-size:15px;margin-bottom:4px">${d.supplement} â€” ${d.dose}</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:4px">${d.supplement} — ${d.dose}</div>
           <div style="font-size:13px;color:var(--text2)">${d.instructions}</div>
         </div>
       `).join('')}
@@ -1187,20 +1255,21 @@ function renderReport(labs, rec, profile) {
   ` : '';
 
   container.innerHTML = `
+    ${warningHtml}
     <div class="card">
-      <div class="card-title">Lab findings â€” ${labs.test_date}</div>
+      <div class="card-title">Lab findings — ${dateHeader}</div>
       <div class="metric-grid">${metricsHtml}</div>
     </div>
     <div class="card">
       <div class="card-title">Recommendations</div>
-      ${actionsHtml || '<p style="color:var(--text3);font-size:14px">No specific actions flagged â€” all markers within range.</p>'}
+      ${actionsHtml || '<p style="color:var(--text3);font-size:14px">No specific actions flagged — all markers within range.</p>'}
     </div>
     ${dosesHtml}
     <div class="card" style="background:var(--accent-light);border-color:#a3d9be">
       <div style="font-size:13px;color:var(--accent);line-height:1.7">
         <strong>Remember:</strong> This report is a tool, not a diagnosis. Work with a knowledgeable provider.
-        This is a long-term process â€” months to years. Salt your food. Poop every day.
-        Test, don't guess, then address. The body wants to heal â€” we are removing obstacles.
+        This is a long-term process — months to years. Salt your food. Poop every day.
+        Test, don't guess, then address. The body wants to heal — we are removing obstacles.
       </div>
     </div>
   `;
@@ -1208,10 +1277,11 @@ function renderReport(labs, rec, profile) {
 
 // â”€â”€ HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadHistory() {
-  const { data, error } = await dbSelect('lab_results', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
-
-  if (error) { document.getElementById('history-list').innerHTML = '<div class="loading">Error loading history.</div>'; return; }
-  allLabResults = data || [];
+  const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
+  const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
+  const bloodTests = Array.isArray(bloodArr) ? bloodArr.map(r => ({ ...r, _kind: 'blood' })) : [];
+  const hairTests  = Array.isArray(hairArr)  ? hairArr.map(r  => ({ ...r, _kind: 'hair' }))  : [];
+  allLabResults = [...bloodTests, ...hairTests].sort((a, b) => (a.test_date < b.test_date ? 1 : -1));
 
   const list = document.getElementById('history-list');
   if (allLabResults.length === 0) {
@@ -1222,18 +1292,25 @@ async function loadHistory() {
 
   list.innerHTML = allLabResults.map(r => {
     const pills = [];
-    const sex = r.sex || 'unknown';
-    if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol â†‘</span>');
-    if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin â†‘</span>');
-    if (r.ferritin < 50)      pills.push('<span class="pill low">Ferritin â†“</span>');
-    if (r.hair_zinc < 17)     pills.push('<span class="pill low">Zn â†“</span>');
-    if (r.hair_copper > 2.5)  pills.push('<span class="pill high">Cu â†‘</span>');
-    if (r.hair_selenium < 0.11) pills.push('<span class="pill low">Se â†“</span>');
-    if (r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo â†“</span>');
-    if (r.ggt > 20)           pills.push('<span class="pill high">GGT â†‘</span>');
-    if (pills.length === 0)   pills.push('<span class="pill optimal">All optimal</span>');
+    const kindPill = r._kind === 'blood'
+      ? '<span class="pill" style="background:#eff6ff;color:#1d4ed8">Blood</span>'
+      : '<span class="pill" style="background:#fef3e2;color:#b5560a">Hair</span>';
+    pills.push(kindPill);
+    if (r._kind === 'blood') {
+      if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol ↑</span>');
+      if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin ↑</span>');
+      if (r.ferritin !== null && r.ferritin < 50) pills.push('<span class="pill low">Ferritin ↓</span>');
+      if (r.blood_copper > 120) pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.blood_zinc !== null && r.blood_zinc < 80) pills.push('<span class="pill low">Zn ↓</span>');
+    } else {
+      if (r.hair_zinc !== null && r.hair_zinc < 17)     pills.push('<span class="pill low">Zn ↓</span>');
+      if (r.hair_copper > 2.5)                          pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.hair_selenium !== null && r.hair_selenium < 0.11)   pills.push('<span class="pill low">Se ↓</span>');
+      if (r.hair_molybdenum !== null && r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓</span>');
+    }
+    if (pills.length === 1) pills.push('<span class="pill optimal">All optimal</span>');
     return `
-      <div class="history-item" onclick="viewHistoryItem('${r.id}')">
+      <div class="history-item" onclick="viewHistoryItem('${r.id}','${r._kind}')">
         <div class="history-date">${r.test_date}</div>
         <div class="history-pills">${pills.join('')}</div>
       </div>
@@ -1246,11 +1323,16 @@ async function loadHistory() {
   }
 }
 
-function viewHistoryItem(id) {
-  const r = allLabResults.find(x => x.id === id);
-  if (!r) return;
-  const rec = generateRecommendations(r, {});
-  renderReport(r, rec, {});
+function viewHistoryItem(id, kind) {
+  const selected = allLabResults.find(x => x.id === id && x._kind === kind);
+  if (!selected) return;
+  const otherKind = kind === 'blood' ? 'hair' : 'blood';
+  const otherMostRecent = allLabResults.find(x => x._kind === otherKind);
+  const blood = kind === 'blood' ? selected : otherMostRecent;
+  const hair  = kind === 'hair'  ? selected : otherMostRecent;
+  const combined = combineLabs(blood, hair);
+  const rec = generateRecommendations(combined, {});
+  renderReport(combined, rec, {}, blood, hair);
   showTab('report');
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===2));
 }
@@ -1306,7 +1388,9 @@ function toast(msg) {
   if (!session) {
     document.getElementById('auth-screen').style.display = 'flex';
   }
-  document.getElementById('l-date').value = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('b-date').value = today;
+  document.getElementById('h-date').value = today;
 })();
 // PDF IMPORT
 let pdfExtractedData = {};
@@ -1365,7 +1449,7 @@ function fileToBase64(file) {
 }
 
 const PDF_FIELD_LABELS = { date:'Test date', serum_retinol:'Serum retinol (mcg/dL)', ferritin:'Ferritin (ng/mL)', blood_copper:'Blood copper (mcg/dL)', blood_zinc:'Blood zinc (mcg/dL)', hair_calcium:'Hair calcium', hair_magnesium:'Hair magnesium', hair_phosphorus:'Hair phosphorus', hair_copper:'Hair copper', hair_zinc:'Hair zinc', hair_selenium:'Hair selenium', hair_molybdenum:'Hair molybdenum', hair_mercury:'Mercury (Hg)', hair_lead:'Lead (Pb)', hair_cadmium:'Cadmium (Cd)', hair_arsenic:'Arsenic (As)', hair_aluminum:'Aluminum (Al)', hair_uranium:'Uranium (U)' };
-const PDF_FIELD_MAP = { date:'l-date', serum_retinol:'l-retinol', ferritin:'l-ferritin', blood_copper:'l-bcopper', blood_zinc:'l-bzinc', hair_calcium:'l-ca', hair_magnesium:'l-mg', hair_phosphorus:'l-p', hair_copper:'l-cu', hair_zinc:'l-zn', hair_selenium:'l-se', hair_molybdenum:'l-mo', hair_mercury:'l-hg', hair_lead:'l-pb', hair_cadmium:'l-cd', hair_arsenic:'l-as', hair_aluminum:'l-al', hair_uranium:'l-ur' };
+const PDF_FIELD_MAP = { serum_retinol:'b-retinol', ferritin:'b-ferritin', blood_copper:'b-copper', blood_zinc:'b-zinc', hair_calcium:'h-ca', hair_magnesium:'h-mg', hair_phosphorus:'h-p', hair_copper:'h-cu', hair_zinc:'h-zn', hair_selenium:'h-se', hair_molybdenum:'h-mo', hair_mercury:'h-hg', hair_lead:'h-pb', hair_cadmium:'h-cd', hair_arsenic:'h-as', hair_aluminum:'h-al', hair_uranium:'h-ur' };
 
 function renderPdfModal(data) {
   let extractedHtml = '', editHtml = '';
@@ -1386,6 +1470,14 @@ function applyPdfValues() {
     const formEl = document.getElementById(fieldId);
     if (formEl) formEl.value = editEl.value;
   });
+  const dateEl = document.getElementById('pdf-edit-date');
+  if (dateEl && dateEl.value) {
+    if (pdfExtractedData.lab_type === 'labcorp') {
+      document.getElementById('b-date').value = dateEl.value;
+    } else if (pdfExtractedData.lab_type === 'tei') {
+      document.getElementById('h-date').value = dateEl.value;
+    }
+  }
   closePdfModal();
   toast('Lab values applied — review and save when ready');
 }
