@@ -703,7 +703,6 @@
             <option value="serum_retinol">Serum retinol</option>
             <option value="blood_zinc">Blood zinc</option>
             <option value="blood_copper">Blood copper</option>
-            <option value="ggt">GGT</option>
             <option value="hair_zinc">Hair zinc</option>
             <option value="hair_copper">Hair copper</option>
             <option value="hair_selenium">Hair selenium</option>
@@ -1071,25 +1070,7 @@ function generateRecommendations(labs, profile) {
     if (s==='low')  actions.push({ priority:'urgent', title:'Investigate low ferritin', body:'Low ferritin suggests true iron deficiency. Address copper toxicity and cholestasis as root causes before considering iron supplementation.' });
   }
 
-  // GGT
-  if (labs.ggt !== null) {
-    const s = status(labs.ggt, 0, 20);
-    findings.push({ marker:'GGT', value: labs.ggt, unit:'U/L', status: s==='high'?'high':'optimal',
-      interpretation: s==='high' ? 'Elevated above LYL optimal (< 20). Most sensitive early marker of cholestasis and glutathione depletion. Conventional "normal" of 60â€“70 U/L is too permissive.' :
-                                   'Within LYL optimal range (< 20 U/L).' });
-    if (s==='high') actions.push({ priority:'urgent', title:'Elevated GGT â€” cholestasis indicator', body:'GGT rises before ALT/AST â€” it is the canary in the coal mine. Prioritize bile flow support: niacin, soluble fiber, adequate hydration, Big 6 Lymph Drainage, and movement. Remove bile-dumping agitators.' });
-  }
-
-  // ALT / AST
-  ['alt','ast'].forEach(marker => {
-    const val = labs[marker];
-    if (val !== null && val !== undefined) {
-      const s = status(val, 0, 20);
-      findings.push({ marker: marker.toUpperCase(), value: val, unit:'U/L', status: s==='high'?'high':'optimal',
-        interpretation: s==='high' ? `${marker.toUpperCase()} elevated above LYL optimal (< 20). Indicates active liver cell stress. May temporarily rise when starting LYL protocols â€” this is expected.` :
-                                     `${marker.toUpperCase()} within LYL optimal range (< 20 U/L).` });
-    }
-  });
+  
 
   // Blood copper
   if (labs.blood_copper !== null) {
