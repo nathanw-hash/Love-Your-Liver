@@ -185,22 +185,6 @@
     margin-right: 32px;
     padding: 16px 0;
     white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .topbar-logo-img {
-    height: 32px;
-    width: auto;
-    display: block;
-  }
-
-  .auth-logo-img {
-    display: block;
-    width: 120px;
-    height: auto;
-    margin: 0 auto 16px;
   }
 
   .tabs {
@@ -529,10 +513,6 @@
   @media (max-width: 600px) {
     .form-grid, .form-grid-3, .check-grid { grid-template-columns: 1fr; }
     .topbar { padding: 0 16px; }
-    .topbar-logo { font-size: 17px; gap: 8px; }
-    .topbar-logo-img { height: 26px; }
-    .topbar-logo { font-size: 17px; gap: 8px; }
-    .topbar-logo-img { height: 26px; }
     .main { padding: 20px 16px 88px; }
     .auth-card { padding: 32px 24px; }
     .user-email { display: none; }
@@ -548,7 +528,6 @@
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
   <div class="auth-card">
-    <img src="/Nutrition_Detective_Green_Logo_New.png" alt="Nutrition Detective" class="auth-logo-img">
     <div class="auth-logo">Love Your Liver</div>
     <div class="auth-tagline">Lab tracking &amp; personalized recommendations</div>
 
@@ -588,7 +567,7 @@
 <!-- MAIN APP -->
 <div id="app">
   <div class="topbar">
-    <div class="topbar-logo"><img src="/nd-icon.png" alt="Nutrition Detective" class="topbar-logo-img">Love Your Liver</div>
+    <div class="topbar-logo">Love Your Liver</div>
     <div class="tabs">
       <button class="tab active" onclick="showTab('profile')">Profile</button>
       <button class="tab" onclick="showTab('labs')">Enter Labs</button>
@@ -660,7 +639,7 @@
           <div class="form-field">
             <label>Serum retinol (mcg/dL)</label>
             <input type="number" step="0.1" id="b-retinol" placeholder="e.g. 62">
-            <span class="hint">Optimal &lt; 20</span>
+            <span class="hint">Optimal &lt; 50</span>
           </div>
           <div class="form-field">
             <label>Ferritin (ng/mL)</label>
@@ -670,12 +649,10 @@
           <div class="form-field">
             <label>Blood copper (mcg/dL)</label>
             <input type="number" step="0.1" id="b-copper" placeholder="e.g. 118">
-            <span class="hint">Optimal &lt; 90</span>
           </div>
           <div class="form-field">
             <label>Blood zinc (mcg/dL)</label>
             <input type="number" step="0.1" id="b-zinc" placeholder="e.g. 74">
-            <span class="hint">Optimal 100–135</span>
           </div>
         </div>
 
@@ -706,32 +683,30 @@
           <div class="form-field">
             <label>Magnesium</label>
             <input type="number" step="0.1" id="h-mg" placeholder="e.g. 4.2">
-            <span class="hint">Ca:Mg ratio 3–11</span>
           </div>
           <div class="form-field">
             <label>Phosphorus</label>
             <input type="number" step="0.1" id="h-p" placeholder="e.g. 14">
-            <span class="hint">Optimal ≥ 15</span>
           </div>
           <div class="form-field">
             <label>Copper</label>
             <input type="number" step="0.01" id="h-cu" placeholder="e.g. 2.8">
-            <span class="hint">Optimal 0.5–1.5</span>
+            <span class="hint">Optimal 1.5–2.5</span>
           </div>
           <div class="form-field">
             <label>Zinc</label>
             <input type="number" step="0.1" id="h-zn" placeholder="e.g. 14">
-            <span class="hint">Zn:Cu ratio 18–22</span>
+            <span class="hint">Optimal 17–20</span>
           </div>
           <div class="form-field">
             <label>Selenium</label>
             <input type="number" step="0.001" id="h-se" placeholder="e.g. 0.09">
-            <span class="hint">Optimal 0.10–0.15</span>
+            <span class="hint">Optimal 0.11–0.15</span>
           </div>
           <div class="form-field">
             <label>Molybdenum</label>
             <input type="number" step="0.001" id="h-mo" placeholder="e.g. 0.003">
-            <span class="hint">Optimal 0.004–0.008</span>
+            <span class="hint">Deficient < 0.004</span>
           </div>
         </div>
 
@@ -1322,41 +1297,37 @@ function generateRecommendations(labs, profile) {
 
   // Hair phosphorus
   if (labs.hair_phosphorus !== null) {
-    var sP = labs.hair_phosphorus < 15 ? 'low' : 'optimal';
-    findings.push({ marker:'Hair P', value: labs.hair_phosphorus, unit:'', status: sP,
-      interpretation: sP==='low' ? 'Hair phosphorus below 15 - indicates deficiency.' : 'Hair phosphorus within optimal range (>= 15).' });
+    const s = labs.hair_phosphorus < 15 ? 'low' : 'optimal';
+    findings.push({ marker:'Hair P', value: labs.hair_phosphorus, unit:'', status: s,
+      interpretation: s==='low' ? 'Hair phosphorus below 15 — indicates deficiency.' : 'Hair phosphorus within optimal range (≥ 15).' });
   }
 
-  // Hair magnesium - evaluated as Ca:Mg ratio (target 3-11)
+  // Hair magnesium — evaluated as Ca:Mg ratio (target 3-11)
   if (labs.hair_magnesium !== null && labs.hair_calcium !== null && labs.hair_magnesium > 0) {
-    var caMgRatio = labs.hair_calcium / labs.hair_magnesium;
-    var caMgStr = caMgRatio.toFixed(1);
-    var sMg = caMgRatio < 3 ? 'high' : caMgRatio > 11 ? 'low' : 'optimal';
-    findings.push({ marker:'Hair Mg', value: labs.hair_magnesium, unit:'', status: sMg,
-      interpretation: sMg==='low'  ? 'Hair magnesium low relative to calcium (Ca:Mg ratio ' + caMgStr + ', target 3-11). Magnesium deficiency impairs many enzymes and contributes to calcium dysregulation.' :
-                      sMg==='high' ? 'Hair magnesium high relative to calcium (Ca:Mg ratio ' + caMgStr + ', target 3-11).' :
-                                     'Hair magnesium balanced with calcium (Ca:Mg ratio ' + caMgStr + ', target 3-11).' });
+    const ratio = labs.hair_calcium / labs.hair_magnesium;
+    const s = ratio < 3 ? 'high' : ratio > 11 ? 'low' : 'optimal';
+    findings.push({ marker:'Hair Mg', value: labs.hair_magnesium, unit:'', status: s,
+      interpretation: s==='low'  ? `Hair magnesium low relative to calcium (Ca:Mg ratio ${ratio.toFixed(1)}, target 3-11). Magnesium deficiency impairs many enzymes and contributes to calcium dysregulation.` :
+                      s==='high' ? `Hair magnesium high relative to calcium (Ca:Mg ratio ${ratio.toFixed(1)}, target 3-11).` :
+                                   `Hair magnesium balanced with calcium (Ca:Mg ratio ${ratio.toFixed(1)}, target 3-11).` });
   }
 
   // Hair copper
   if (labs.hair_copper !== null) {
     const s = status(labs.hair_copper, 0.5, 1.5);
     findings.push({ marker:'Hair Cu', value: labs.hair_copper, unit:'', status: s==='high'?'high': s==='low'?'low':'optimal',
-      interpretation: s==='high' ? 'Hair copper elevated above optimal (1.5â€“2.5). Confirms copper accumulation in tissues.' :
-                      s==='low'  ? 'Low hair copper â€” may reflect copper dumping out of tissues (a positive sign during detox) or true deficiency.' :
-                                   'Hair copper within optimal range (1.5â€“2.5).' });
-    if (s==='high') actions.push({ priority:'action', title:'Elevated hair copper', body:'Work the copper detox protocol: zinc picolinate, selenium, molybdenum, flush niacin, and soluble fiber. Eliminate high-copper foods: chocolate, nuts, seeds, soy. Check for copper pipes in your water supply.' });
-  }
+      interpretation: s==='high' ? 'Hair copper elevated above normal (0.5–1.5). Confirms copper accumulation in tissues.' :
+                      s==='low'  ? 'Low hair copper — may reflect copper dumping out of tissues (a positive sign during detox) or true deficiency.' :
+                                   'Hair copper within normal range (0.5–1.5).' });
 
-  // Hair zinc - evaluated as ratio with hair copper (target 20:1, +/- 10% = 18-22)
+  // Hair zinc — evaluated as ratio with hair copper (target 20:1, ±10% = 18-22)
   if (labs.hair_zinc !== null && labs.hair_copper !== null && labs.hair_copper > 0) {
-    var znCuRatio = labs.hair_zinc / labs.hair_copper;
-    var znRatioStr = znCuRatio.toFixed(1);
-    var s = znCuRatio < 18 ? 'low' : znCuRatio > 22 ? 'high' : 'optimal';
+    const ratio = labs.hair_zinc / labs.hair_copper;
+    const s = ratio < 18 ? 'low' : ratio > 22 ? 'high' : 'optimal';
     findings.push({ marker:'Hair Zn', value: labs.hair_zinc, unit:'', status: s,
-      interpretation: s==='low'  ? 'Hair zinc low relative to copper (Zn:Cu ratio ' + znRatioStr + ':1, target 18-22:1). Insufficient zinc impairs vitamin A detox and copper clearance.' :
-                      s==='high' ? 'Hair zinc high relative to copper (Zn:Cu ratio ' + znRatioStr + ':1, target 18-22:1). Confirm no excessive supplementation.' :
-                                   'Hair zinc balanced with copper (Zn:Cu ratio ' + znRatioStr + ':1, target 18-22:1).' });
+      interpretation: s==='low'  ? `Hair zinc low relative to copper (Zn:Cu ratio ${ratio.toFixed(1)}:1, target 18-22:1). Insufficient zinc impairs vitamin A detox and copper clearance.` :
+                      s==='high' ? `Hair zinc high relative to copper (Zn:Cu ratio ${ratio.toFixed(1)}:1, target 18-22:1). Confirm no excessive supplementation.` :
+                                   `Hair zinc balanced with copper (Zn:Cu ratio ${ratio.toFixed(1)}:1, target 18-22:1).` });
   }
 
   // Hair selenium
@@ -1376,12 +1347,9 @@ function generateRecommendations(labs, profile) {
   if (labs.hair_molybdenum !== null) {
     const s = status(labs.hair_molybdenum, 0.004, 0.008);
     findings.push({ marker:'Hair Mo', value: labs.hair_molybdenum, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
-      interpretation: s==='low'  ? 'Hair molybdenum below 0.004 â€” indicates deficiency. Molybdenum is required for ALDH and aldehyde oxidase enzymes critical to vitamin A detox.' :
-                                   'Hair molybdenum above deficiency threshold (0.004).' });
-    if (s==='low') {
-      doses.push({ supplement:'Molybdenum glycinate', dose:'150mcg/day', instructions:'Big Minerals rule: if it causes negative reactions within 3â€“7 days, reduce dose or stop temporarily.' });
-      actions.push({ priority:'action', title:'Address molybdenum deficiency', body:'Molybdenum deficiency impairs the ALDH enzyme pathway needed to process and eliminate vitamin A. Signs include sensitivity to alcohol, wine, caffeine, or high-sulfur foods.' });
-    }
+      interpretation: s==='low'  ? 'Hair molybdenum below 0.004 — indicates deficiency. Molybdenum is required for ALDH and aldehyde oxidase enzymes critical to vitamin A detox.' :
+                      s==='high' ? 'Hair molybdenum above 0.008 — possible accumulation.' :
+                                   'Hair molybdenum within optimal range (0.004–0.008).' });
   }
 
   // Toxic elements
@@ -1517,30 +1485,16 @@ async function loadHistory() {
       : '<span class="pill" style="background:#fef3e2;color:#b5560a">Hair</span>';
     pills.push(kindPill);
     if (r._kind === 'blood') {
-      if (r.serum_retinol >= 20) pills.push('<span class="pill high">Retinol ↑</span>');
-      if (r.ferritin > 100)      pills.push('<span class="pill high">Ferritin ↑</span>');
+      if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol ↑</span>');
+      if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin ↑</span>');
       if (r.ferritin !== null && r.ferritin < 50) pills.push('<span class="pill low">Ferritin ↓</span>');
-      if (r.blood_copper >= 90)  pills.push('<span class="pill high">Cu ↑</span>');
-      if (r.blood_zinc !== null && r.blood_zinc < 100) pills.push('<span class="pill low">Zn ↓</span>');
-      if (r.blood_zinc !== null && r.blood_zinc > 135) pills.push('<span class="pill high">Zn ↑</span>');
+      if (r.blood_copper > 120) pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.blood_zinc !== null && r.blood_zinc < 80) pills.push('<span class="pill low">Zn ↓</span>');
     } else {
-      if (r.hair_copper !== null && r.hair_copper < 0.5) pills.push('<span class="pill low">Cu ↓</span>');
-      if (r.hair_copper > 1.5)                           pills.push('<span class="pill high">Cu ↑</span>');
-      if (r.hair_zinc !== null && r.hair_copper !== null && r.hair_copper > 0) {
-        var hzRatio = r.hair_zinc / r.hair_copper;
-        if (hzRatio < 18) pills.push('<span class="pill low">Zn ↓</span>');
-        if (hzRatio > 22) pills.push('<span class="pill high">Zn ↑</span>');
-      }
-      if (r.hair_phosphorus !== null && r.hair_phosphorus < 15) pills.push('<span class="pill low">P ↓</span>');
-      if (r.hair_magnesium !== null && r.hair_calcium !== null && r.hair_magnesium > 0) {
-        var hmRatio = r.hair_calcium / r.hair_magnesium;
-        if (hmRatio > 11) pills.push('<span class="pill low">Mg ↓</span>');
-        if (hmRatio < 3)  pills.push('<span class="pill high">Mg ↑</span>');
-      }
-      if (r.hair_selenium !== null && r.hair_selenium < 0.10) pills.push('<span class="pill low">Se ↓</span>');
-      if (r.hair_selenium !== null && r.hair_selenium > 0.15) pills.push('<span class="pill high">Se ↑</span>');
+      if (r.hair_zinc !== null && r.hair_zinc < 17)     pills.push('<span class="pill low">Zn ↓</span>');
+      if (r.hair_copper > 2.5)                          pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.hair_selenium !== null && r.hair_selenium < 0.11)   pills.push('<span class="pill low">Se ↓</span>');
       if (r.hair_molybdenum !== null && r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓</span>');
-      if (r.hair_molybdenum !== null && r.hair_molybdenum > 0.008) pills.push('<span class="pill high">Mo ↑</span>');
     }
     if (pills.length === 1) pills.push('<span class="pill optimal">All optimal</span>');
     return `
