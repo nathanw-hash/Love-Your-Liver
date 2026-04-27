@@ -1586,22 +1586,61 @@ function renderTrend() {
     return r[marker] ?? null;
   });
 
+  const sexVal = (document.getElementById('p-sex')||{}).value || 'female';
+  const RANGES = {
+    serum_retinol:   { low: 0,     high: 20    },
+    ferritin:        sexVal === 'male' ? { low: 30, high: 70 } : { low: 50, high: 100 },
+    blood_copper:    { low: 0,     high: 90    },
+    blood_zinc:      { low: 100,   high: 135   },
+    hair_copper:     { low: 0.5,   high: 1.5   },
+    hair_selenium:   { low: 0.10,  high: 0.15  },
+    hair_molybdenum: { low: 0.004, high: 0.008 }
+  };
+  const range = RANGES[marker];
+  const datasets = [];
+  if (range) {
+    datasets.push({
+      label: 'Optimal range',
+      data: labels.map(function(){return range.high;}),
+      borderColor: 'rgba(45,106,79,0.25)',
+      backgroundColor: 'rgba(45,106,79,0.10)',
+      borderWidth: 1,
+      borderDash: [4,4],
+      pointRadius: 0,
+      fill: '+1',
+      tension: 0,
+      order: 2
+    });
+    datasets.push({
+      label: 'Optimal min',
+      data: labels.map(function(){return range.low;}),
+      borderColor: 'rgba(45,106,79,0.25)',
+      borderWidth: 1,
+      borderDash: [4,4],
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
+      order: 2
+    });
+  }
+  datasets.push({
+    label: marker.replace(/_/g,' '),
+    data: values,
+    borderColor: '#2d6a4f',
+    backgroundColor: 'rgba(45,106,79,0.08)',
+    tension: 0.3,
+    pointBackgroundColor: '#2d6a4f',
+    pointRadius: 5,
+    fill: false,
+    order: 1
+  });
   const ctx = document.getElementById('trend-chart').getContext('2d');
   if (trendChart) trendChart.destroy();
   trendChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
-      datasets: [{
-        label: marker.replace(/_/g,' '),
-        data: values,
-        borderColor: '#2d6a4f',
-        backgroundColor: 'rgba(45,106,79,0.08)',
-        tension: 0.3,
-        pointBackgroundColor: '#2d6a4f',
-        pointRadius: 5,
-        fill: true,
-      }]
+      datasets: datasets
     },
     options: {
       responsive: true,
