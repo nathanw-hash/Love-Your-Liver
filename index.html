@@ -1628,10 +1628,13 @@ function renderTrend() {
     data: values,
     borderColor: '#2d6a4f',
     backgroundColor: 'rgba(45,106,79,0.08)',
+    borderWidth: 2.5,
     tension: 0.3,
     pointBackgroundColor: '#2d6a4f',
     pointRadius: 5,
     fill: false,
+    showLine: true,
+    spanGaps: true,
     order: 1
   });
   const ctx = document.getElementById('trend-chart').getContext('2d');
