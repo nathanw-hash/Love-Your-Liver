@@ -1517,30 +1517,32 @@ async function loadHistory() {
       : '<span class="pill" style="background:#fef3e2;color:#b5560a">Hair</span>';
     pills.push(kindPill);
     if (r._kind === 'blood') {
-      if (r.serum_retinol >= 20) pills.push('<span class="pill high">Retinol ↑</span>');
-      if (r.ferritin > 100)      pills.push('<span class="pill high">Ferritin ↑</span>');
-      if (r.ferritin !== null && r.ferritin < 50) pills.push('<span class="pill low">Ferritin ↓</span>');
-      if (r.blood_copper >= 90)  pills.push('<span class="pill high">Cu ↑</span>');
-      if (r.blood_zinc !== null && r.blood_zinc < 100) pills.push('<span class="pill low">Zn ↓</span>');
-      if (r.blood_zinc !== null && r.blood_zinc > 135) pills.push('<span class="pill high">Zn ↑</span>');
+      if (r.serum_retinol >= 20) pills.push('<span class="pill high">Retinol ↑ ' + r.serum_retinol + '</span>');
+      if (r.ferritin > 100)      pills.push('<span class="pill high">Ferritin ↑ ' + r.ferritin + '</span>');
+      if (r.ferritin !== null && r.ferritin < 50) pills.push('<span class="pill low">Ferritin ↓ ' + r.ferritin + '</span>');
+      if (r.blood_copper >= 90)  pills.push('<span class="pill high">Cu ↑ ' + r.blood_copper + '</span>');
+      if (r.blood_zinc !== null && r.blood_zinc < 100) pills.push('<span class="pill low">Zn ↓ ' + r.blood_zinc + '</span>');
+      if (r.blood_zinc !== null && r.blood_zinc > 135) pills.push('<span class="pill high">Zn ↑ ' + r.blood_zinc + '</span>');
     } else {
-      if (r.hair_copper !== null && r.hair_copper < 0.5) pills.push('<span class="pill low">Cu ↓</span>');
-      if (r.hair_copper > 1.5)                           pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.hair_copper !== null && r.hair_copper < 0.5) pills.push('<span class="pill low">Cu ↓ ' + r.hair_copper + '</span>');
+      if (r.hair_copper > 1.5)                           pills.push('<span class="pill high">Cu ↑ ' + r.hair_copper + '</span>');
       if (r.hair_zinc !== null && r.hair_copper !== null && r.hair_copper > 0) {
         var hzRatio = r.hair_zinc / r.hair_copper;
-        if (hzRatio < 18) pills.push('<span class="pill low">Zn ↓</span>');
-        if (hzRatio > 22) pills.push('<span class="pill high">Zn ↑</span>');
+        var hzStr = hzRatio.toFixed(1);
+        if (hzRatio < 18) pills.push('<span class="pill low">Zn ↓ ' + hzStr + ':1</span>');
+        if (hzRatio > 22) pills.push('<span class="pill high">Zn ↑ ' + hzStr + ':1</span>');
       }
-      if (r.hair_phosphorus !== null && r.hair_phosphorus < 15) pills.push('<span class="pill low">P ↓</span>');
+      if (r.hair_phosphorus !== null && r.hair_phosphorus < 15) pills.push('<span class="pill low">P ↓ ' + r.hair_phosphorus + '</span>');
       if (r.hair_magnesium !== null && r.hair_calcium !== null && r.hair_magnesium > 0) {
         var hmRatio = r.hair_calcium / r.hair_magnesium;
-        if (hmRatio > 11) pills.push('<span class="pill low">Mg ↓</span>');
-        if (hmRatio < 3)  pills.push('<span class="pill high">Mg ↑</span>');
+        var hmStr = hmRatio.toFixed(1);
+        if (hmRatio > 11) pills.push('<span class="pill low">Mg ↓ ' + hmStr + '</span>');
+        if (hmRatio < 3)  pills.push('<span class="pill high">Mg ↑ ' + hmStr + '</span>');
       }
-      if (r.hair_selenium !== null && r.hair_selenium < 0.10) pills.push('<span class="pill low">Se ↓</span>');
-      if (r.hair_selenium !== null && r.hair_selenium > 0.15) pills.push('<span class="pill high">Se ↑</span>');
-      if (r.hair_molybdenum !== null && r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓</span>');
-      if (r.hair_molybdenum !== null && r.hair_molybdenum > 0.008) pills.push('<span class="pill high">Mo ↑</span>');
+      if (r.hair_selenium !== null && r.hair_selenium < 0.10) pills.push('<span class="pill low">Se ↓ ' + r.hair_selenium + '</span>');
+      if (r.hair_selenium !== null && r.hair_selenium > 0.15) pills.push('<span class="pill high">Se ↑ ' + r.hair_selenium + '</span>');
+      if (r.hair_molybdenum !== null && r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓ ' + r.hair_molybdenum + '</span>');
+      if (r.hair_molybdenum !== null && r.hair_molybdenum > 0.008) pills.push('<span class="pill high">Mo ↑ ' + r.hair_molybdenum + '</span>');
     }
     if (pills.length === 1) pills.push('<span class="pill optimal">All optimal</span>');
     return `
