@@ -1237,7 +1237,7 @@ function generateRecommendations(labs, profile) {
 
   // Serum retinol
   if (labs.serum_retinol !== null) {
-    const s = status(labs.serum_retinol, 0, 50);
+    const s = status(labs.serum_retinol, 0, 20);
     findings.push({ marker:'Serum retinol', value: labs.serum_retinol, unit:'mcg/dL', status: s==='high'?'high': s==='low'?'low':'optimal',
       interpretation: s==='high' ? 'Elevated â€” key driver of cholestasis and liver injury in LYL framework.' :
                       s==='low'  ? 'Low retinol â€” unusual; ensure no liver storage depletion.' :
@@ -1262,14 +1262,14 @@ function generateRecommendations(labs, profile) {
 
   // Blood copper
   if (labs.blood_copper !== null) {
-    findings.push({ marker:'Blood copper', value: labs.blood_copper, unit:'mcg/dL', status: labs.blood_copper > 120 ? 'high' : 'optimal',
-      interpretation: labs.blood_copper > 120 ? 'Elevated blood copper â€” synergistic with vitamin A toxicity. Major driver of cholestasis, hormonal dysregulation, and mineral depletion.' : 'Blood copper within acceptable range.' });
-    if (labs.blood_copper > 120) actions.push({ priority:'urgent', title:'Address copper toxicity', body:'Remove copper sources: eliminate chocolate, nuts, seeds, soy. Check water pipes (copper pipes leach into water â€” use RO filtration). Avoid copper cookware. Work the Big Minerals: selenium, molybdenum, and zinc antagonize copper.' });
+    findings.push({ marker:'Blood copper', value: labs.blood_copper, unit:'mcg/dL', status: labs.blood_copper >= 90 ? 'high' : 'optimal',
+      interpretation: labs.blood_copper >= 90 ? 'Elevated blood copper â€” synergistic with vitamin A toxicity. Major driver of cholestasis, hormonal dysregulation, and mineral depletion.' : 'Blood copper within optimal range (< 90 mcg/dL).' });
+    if (labs.blood_copper >= 90) actions.push({ priority:'urgent', title:'Address copper toxicity', body:'Remove copper sources: eliminate chocolate, nuts, seeds, soy. Check water pipes (copper pipes leach into water â€” use RO filtration). Avoid copper cookware. Work the Big Minerals: selenium, molybdenum, and zinc antagonize copper.' });
   }
 
   // Blood zinc
   if (labs.blood_zinc !== null) {
-    const s = status(labs.blood_zinc, 80, 130);
+    const s = status(labs.blood_zinc, 100, 135);
     findings.push({ marker:'Blood zinc', value: labs.blood_zinc, unit:'mcg/dL', status: s==='low'?'low': s==='high'?'high':'optimal',
       interpretation: s==='low' ? 'Low blood zinc â€” impairs RBP production (needed to clear vitamin A), reduces ADH enzyme activity, and slows copper displacement from the liver.' :
                       s==='high' ? 'High blood zinc â€” unusual without supplementation. Confirm no excessive zinc supplementation.' : 'Blood zinc within acceptable range.' });
@@ -1295,9 +1295,27 @@ function generateRecommendations(labs, profile) {
     if (s==='high') actions.push({ priority:'watch', title:'High hair calcium â€” biounavailability', body:'Address with topical magnesium (keeps calcium in correct locations), reduce vitamin A, get vitamin D from sunlight not supplements, and consider vitamin K2 MK-4 (directs calcium to bones). Do not supplement calcium.' });
   }
 
+  // Hair phosphorus
+  if (labs.hair_phosphorus !== null) {
+    var sP = labs.hair_phosphorus < 15 ? 'low' : 'optimal';
+    findings.push({ marker:'Hair P', value: labs.hair_phosphorus, unit:'', status: sP,
+      interpretation: sP==='low' ? 'Hair phosphorus below 15 - indicates deficiency.' : 'Hair phosphorus within optimal range (>= 15).' });
+  }
+
+  // Hair magnesium - evaluated as Ca:Mg ratio (target 3-11)
+  if (labs.hair_magnesium !== null && labs.hair_calcium !== null && labs.hair_magnesium > 0) {
+    var caMgRatio = labs.hair_calcium / labs.hair_magnesium;
+    var caMgStr = caMgRatio.toFixed(1);
+    var sMg = caMgRatio < 3 ? 'high' : caMgRatio > 11 ? 'low' : 'optimal';
+    findings.push({ marker:'Hair Mg', value: labs.hair_magnesium, unit:'', status: sMg,
+      interpretation: sMg==='low'  ? 'Hair magnesium low relative to calcium (Ca:Mg ratio ' + caMgStr + ', target 3-11). Magnesium deficiency impairs many enzymes and contributes to calcium dysregulation.' :
+                      sMg==='high' ? 'Hair magnesium high relative to calcium (Ca:Mg ratio ' + caMgStr + ', target 3-11).' :
+                                     'Hair magnesium balanced with calcium (Ca:Mg ratio ' + caMgStr + ', target 3-11).' });
+  }
+
   // Hair copper
   if (labs.hair_copper !== null) {
-    const s = status(labs.hair_copper, 1.5, 2.5);
+    const s = status(labs.hair_copper, 0.5, 1.5);
     findings.push({ marker:'Hair Cu', value: labs.hair_copper, unit:'', status: s==='high'?'high': s==='low'?'low':'optimal',
       interpretation: s==='high' ? 'Hair copper elevated above optimal (1.5â€“2.5). Confirms copper accumulation in tissues.' :
                       s==='low'  ? 'Low hair copper â€” may reflect copper dumping out of tissues (a positive sign during detox) or true deficiency.' :
@@ -1305,18 +1323,20 @@ function generateRecommendations(labs, profile) {
     if (s==='high') actions.push({ priority:'action', title:'Elevated hair copper', body:'Work the copper detox protocol: zinc picolinate, selenium, molybdenum, flush niacin, and soluble fiber. Eliminate high-copper foods: chocolate, nuts, seeds, soy. Check for copper pipes in your water supply.' });
   }
 
-  // Hair zinc
-  if (labs.hair_zinc !== null) {
-    const s = status(labs.hair_zinc, 17, 20);
-    findings.push({ marker:'Hair Zn', value: labs.hair_zinc, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
-      interpretation: s==='low'  ? 'Hair zinc below optimal (17â€“20). Indicates zinc deficiency in tissues â€” impairs vitamin A detox pathway and copper clearance.' :
-                      s==='high' ? 'Hair zinc above range â€” confirm no excessive supplementation.' :
-                                   'Hair zinc within optimal range (17â€“20).' });
+  // Hair zinc - evaluated as ratio with hair copper (target 20:1, +/- 10% = 18-22)
+  if (labs.hair_zinc !== null && labs.hair_copper !== null && labs.hair_copper > 0) {
+    var znCuRatio = labs.hair_zinc / labs.hair_copper;
+    var znRatioStr = znCuRatio.toFixed(1);
+    var s = znCuRatio < 18 ? 'low' : znCuRatio > 22 ? 'high' : 'optimal';
+    findings.push({ marker:'Hair Zn', value: labs.hair_zinc, unit:'', status: s,
+      interpretation: s==='low'  ? 'Hair zinc low relative to copper (Zn:Cu ratio ' + znRatioStr + ':1, target 18-22:1). Insufficient zinc impairs vitamin A detox and copper clearance.' :
+                      s==='high' ? 'Hair zinc high relative to copper (Zn:Cu ratio ' + znRatioStr + ':1, target 18-22:1). Confirm no excessive supplementation.' :
+                                   'Hair zinc balanced with copper (Zn:Cu ratio ' + znRatioStr + ':1, target 18-22:1).' });
   }
 
   // Hair selenium
   if (labs.hair_selenium !== null) {
-    const s = status(labs.hair_selenium, 0.11, 0.15);
+    const s = status(labs.hair_selenium, 0.10, 0.15);
     findings.push({ marker:'Hair Se', value: labs.hair_selenium, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
       interpretation: s==='low'  ? 'Hair selenium below optimal (0.11â€“0.15). Selenium is required for ALDH enzyme (vitamin A detox pathway) and protects the liver against vitamin A toxicity.' :
                       s==='high' ? 'Hair selenium above optimal range.' :
@@ -1329,8 +1349,8 @@ function generateRecommendations(labs, profile) {
 
   // Hair molybdenum
   if (labs.hair_molybdenum !== null) {
-    const s = status(labs.hair_molybdenum, 0.004, 999);
-    findings.push({ marker:'Hair Mo', value: labs.hair_molybdenum, unit:'', status: s==='low'?'low':'optimal',
+    const s = status(labs.hair_molybdenum, 0.004, 0.008);
+    findings.push({ marker:'Hair Mo', value: labs.hair_molybdenum, unit:'', status: s==='low'?'low': s==='high'?'high':'optimal',
       interpretation: s==='low'  ? 'Hair molybdenum below 0.004 â€” indicates deficiency. Molybdenum is required for ALDH and aldehyde oxidase enzymes critical to vitamin A detox.' :
                                    'Hair molybdenum above deficiency threshold (0.004).' });
     if (s==='low') {
@@ -1472,16 +1492,30 @@ async function loadHistory() {
       : '<span class="pill" style="background:#fef3e2;color:#b5560a">Hair</span>';
     pills.push(kindPill);
     if (r._kind === 'blood') {
-      if (r.serum_retinol > 50) pills.push('<span class="pill high">Retinol ↑</span>');
-      if (r.ferritin > 100)     pills.push('<span class="pill high">Ferritin ↑</span>');
+      if (r.serum_retinol >= 20) pills.push('<span class="pill high">Retinol ↑</span>');
+      if (r.ferritin > 100)      pills.push('<span class="pill high">Ferritin ↑</span>');
       if (r.ferritin !== null && r.ferritin < 50) pills.push('<span class="pill low">Ferritin ↓</span>');
-      if (r.blood_copper > 120) pills.push('<span class="pill high">Cu ↑</span>');
-      if (r.blood_zinc !== null && r.blood_zinc < 80) pills.push('<span class="pill low">Zn ↓</span>');
+      if (r.blood_copper >= 90)  pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.blood_zinc !== null && r.blood_zinc < 100) pills.push('<span class="pill low">Zn ↓</span>');
+      if (r.blood_zinc !== null && r.blood_zinc > 135) pills.push('<span class="pill high">Zn ↑</span>');
     } else {
-      if (r.hair_zinc !== null && r.hair_zinc < 17)     pills.push('<span class="pill low">Zn ↓</span>');
-      if (r.hair_copper > 2.5)                          pills.push('<span class="pill high">Cu ↑</span>');
-      if (r.hair_selenium !== null && r.hair_selenium < 0.11)   pills.push('<span class="pill low">Se ↓</span>');
+      if (r.hair_copper !== null && r.hair_copper < 0.5) pills.push('<span class="pill low">Cu ↓</span>');
+      if (r.hair_copper > 1.5)                           pills.push('<span class="pill high">Cu ↑</span>');
+      if (r.hair_zinc !== null && r.hair_copper !== null && r.hair_copper > 0) {
+        var hzRatio = r.hair_zinc / r.hair_copper;
+        if (hzRatio < 18) pills.push('<span class="pill low">Zn ↓</span>');
+        if (hzRatio > 22) pills.push('<span class="pill high">Zn ↑</span>');
+      }
+      if (r.hair_phosphorus !== null && r.hair_phosphorus < 15) pills.push('<span class="pill low">P ↓</span>');
+      if (r.hair_magnesium !== null && r.hair_calcium !== null && r.hair_magnesium > 0) {
+        var hmRatio = r.hair_calcium / r.hair_magnesium;
+        if (hmRatio > 11) pills.push('<span class="pill low">Mg ↓</span>');
+        if (hmRatio < 3)  pills.push('<span class="pill high">Mg ↑</span>');
+      }
+      if (r.hair_selenium !== null && r.hair_selenium < 0.10) pills.push('<span class="pill low">Se ↓</span>');
+      if (r.hair_selenium !== null && r.hair_selenium > 0.15) pills.push('<span class="pill high">Se ↑</span>');
       if (r.hair_molybdenum !== null && r.hair_molybdenum < 0.004) pills.push('<span class="pill low">Mo ↓</span>');
+      if (r.hair_molybdenum !== null && r.hair_molybdenum > 0.008) pills.push('<span class="pill high">Mo ↑</span>');
     }
     if (pills.length === 1) pills.push('<span class="pill optimal">All optimal</span>');
     return `
