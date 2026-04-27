@@ -981,6 +981,8 @@ function showTab(name) {
   }
   const bnavBtn = document.querySelector('.bnav-tab[data-tab="' + name + '"]');
   if (bnavBtn) bnavBtn.classList.add('active');
+  if (name === 'history' && currentUser) loadHistory();
+  if (name === 'report' && currentUser) generateAndShowReport();
 }
 
 // â”€â”€ FLAGS GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
