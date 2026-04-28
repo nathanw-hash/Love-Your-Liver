@@ -443,6 +443,28 @@
   .pill.optimal { background: var(--accent-light); color: var(--accent); }
   .pill.low { background: var(--amber-light); color: var(--amber); }
   .pill.high { background: var(--red-light); color: var(--red); }
+  /* TIMELINE EVENTS */
+  .event-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-top: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .event-row:first-child { border-top: none; }
+  .event-row:hover { background: var(--surface2); }
+  .event-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .event-dot.protocol   { background: #2d6a4f; }
+  .event-dot.supplement { background: #1d4ed8; }
+  .event-dot.lifestyle  { background: #7c3aed; }
+  .event-dot.symptom    { background: #c2410c; }
+  .event-dot.other      { background: #6b7280; }
+  .event-content { flex: 1; min-width: 0; }
+  .event-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+  .event-title { font-weight: 600; font-size: 14px; color: var(--text); }
+  .event-date { font-size: 12px; color: var(--text3); white-space: nowrap; }
+  .event-category-tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-left: 8px; }
+  .event-category-tag.protocol   { background: #d4edda; color: #2d6a4f; }
+  .event-category-tag.supplement { background: #dbeafe; color: #1d4ed8; }
+  .event-category-tag.lifestyle  { background: #ede9fe; color: #7c3aed; }
+  .event-category-tag.symptom    { background: #ffedd5; color: #c2410c; }
+  .event-category-tag.other      { background: #f3f4f6; color: #6b7280; }
+  .event-description { font-size: 13px; color: var(--text2); line-height: 1.5; margin-top: 4px; }
+  .event-empty { padding: 24px 12px; text-align: center; color: var(--text3); font-size: 13px; }
 
   /* CHART */
   .chart-wrap { position: relative; height: 220px; margin-bottom: 8px; }
@@ -787,6 +809,45 @@
         <div class="card-title">Lab history</div>
         <div id="history-list"><div class="loading">Loading historyâ€¦</div></div>
       </div>
+      <div class="card" id="timeline-card" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div class="card-title" style="margin:0;">Timeline</div>
+          <button class="btn btn-outline" id="timeline-add-btn" onclick="showEventForm()" style="padding:6px 14px;font-size:13px;">+ Add event</button>
+        </div>
+        <div id="event-form" style="display:none;background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;">
+          <input type="hidden" id="event-id">
+          <div class="form-grid" style="margin-bottom:12px;">
+            <div class="form-field">
+              <label>Date</label>
+              <input type="date" id="event-date">
+            </div>
+            <div class="form-field">
+              <label>Category</label>
+              <select id="event-category" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);color:var(--text);outline:none;">
+                <option value="protocol">Protocol</option>
+                <option value="supplement">Supplement</option>
+                <option value="lifestyle">Lifestyle</option>
+                <option value="symptom">Symptom</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label>Title</label>
+            <input type="text" id="event-title" placeholder="e.g. Started 30mg zinc daily" maxlength="100">
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label>Description (optional)</label>
+            <textarea id="event-description" rows="2" placeholder="Optional details" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-accent" onclick="saveEvent()" style="padding:8px 16px;font-size:13px;">Save</button>
+            <button class="btn btn-outline" onclick="hideEventForm()" style="padding:8px 16px;font-size:13px;">Cancel</button>
+            <button class="btn btn-outline" id="event-delete-btn" onclick="deleteEvent()" style="padding:8px 16px;font-size:13px;color:var(--red);border-color:var(--red);display:none;">Delete</button>
+          </div>
+        </div>
+        <div id="event-list"></div>
+      </div>
       <div class="card" id="trend-card" style="display:none">
         <div class="card-title">Trends over time</div>
         <div style="margin-bottom:12px">
@@ -975,6 +1036,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     buildFlagsGrid();
     await loadProfile();
     await loadHistory();
+    await loadEvents();
   }
 });
 
@@ -991,7 +1053,7 @@ function showTab(name) {
   }
   const bnavBtn = document.querySelector('.bnav-tab[data-tab="' + name + '"]');
   if (bnavBtn) bnavBtn.classList.add('active');
-  if (name === 'history' && currentUser) loadHistory();
+  if (name === 'history' && currentUser) { loadHistory(); loadEvents(); }
   if (name === 'report' && currentUser) generateAndShowReport();
 }
 
@@ -1516,6 +1578,108 @@ function renderReport(labs, rec, profile, blood, hair) {
 }
 
 // â”€â”€ HISTORY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let allEvents = [];
+
+async function loadEvents() {
+  const { data } = await dbSelect('events', { user_id: 'eq.' + currentUser.id, order: 'event_date.desc' });
+  allEvents = Array.isArray(data) ? data : [];
+  renderEventList();
+}
+
+function renderEventList() {
+  const list = document.getElementById('event-list');
+  if (!list) return;
+  if (allEvents.length === 0) {
+    list.innerHTML = '<div class="event-empty">No events yet. Add one to mark a protocol change, supplement adjustment, or other notable moment.</div>';
+    return;
+  }
+  list.innerHTML = allEvents.map(e =>
+    '<div class="event-row" onclick="editEvent(\'' + e.id + '\')">' +
+      '<div class="event-dot ' + (e.category || 'other') + '"></div>' +
+      '<div class="event-content">' +
+        '<div class="event-header">' +
+          '<div><span class="event-title">' + escapeHtml(e.title) + '</span>' +
+            '<span class="event-category-tag ' + (e.category || 'other') + '">' + (e.category || 'other') + '</span>' +
+          '</div>' +
+          '<span class="event-date">' + e.event_date + '</span>' +
+        '</div>' +
+        (e.description ? '<div class="event-description">' + escapeHtml(e.description) + '</div>' : '') +
+      '</div>' +
+    '</div>'
+  ).join('');
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showEventForm(eventId) {
+  const form = document.getElementById('event-form');
+  const deleteBtn = document.getElementById('event-delete-btn');
+  if (eventId) {
+    const e = allEvents.find(x => x.id === eventId);
+    if (!e) return;
+    document.getElementById('event-id').value = e.id;
+    document.getElementById('event-date').value = e.event_date;
+    document.getElementById('event-category').value = e.category || 'other';
+    document.getElementById('event-title').value = e.title || '';
+    document.getElementById('event-description').value = e.description || '';
+    deleteBtn.style.display = 'inline-block';
+  } else {
+    document.getElementById('event-id').value = '';
+    document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('event-category').value = 'protocol';
+    document.getElementById('event-title').value = '';
+    document.getElementById('event-description').value = '';
+    deleteBtn.style.display = 'none';
+  }
+  form.style.display = 'block';
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideEventForm() {
+  document.getElementById('event-form').style.display = 'none';
+}
+
+function editEvent(eventId) {
+  showEventForm(eventId);
+}
+
+async function saveEvent() {
+  const id    = document.getElementById('event-id').value;
+  const date  = document.getElementById('event-date').value;
+  const cat   = document.getElementById('event-category').value;
+  const title = document.getElementById('event-title').value.trim();
+  const desc  = document.getElementById('event-description').value.trim();
+  if (!date)  { toast('Please enter a date'); return; }
+  if (!title) { toast('Please enter a title'); return; }
+  const payload = { event_date: date, category: cat, title: title, description: desc || null };
+  if (id) {
+    const { error } = await dbUpdate('events', id, payload);
+    if (error) { toast('Error updating event'); return; }
+    toast('Event updated');
+  } else {
+    const { error } = await dbInsert('events', { user_id: currentUser.id, ...payload });
+    if (error) { toast('Error saving event'); return; }
+    toast('Event saved');
+  }
+  hideEventForm();
+  await loadEvents();
+  if (typeof renderTrend === 'function' && trendChart) renderTrend();
+}
+
+async function deleteEvent() {
+  const id = document.getElementById('event-id').value;
+  if (!id) return;
+  if (!confirm('Delete this event?')) return;
+  const { error } = await dbDelete('events', id);
+  if (error) { toast('Error deleting event'); return; }
+  toast('Event deleted');
+  hideEventForm();
+  await loadEvents();
+  if (typeof renderTrend === 'function' && trendChart) renderTrend();
+}
+
 async function loadHistory() {
   const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
   const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
@@ -1579,6 +1743,7 @@ async function loadHistory() {
     `;
   }).join('');
 
+  document.getElementById('timeline-card').style.display = 'block';
   if (allLabResults.length >= 2) {
     document.getElementById('trend-card').style.display = 'block';
     renderTrend();
