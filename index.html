@@ -679,6 +679,11 @@
           </div>
         </div>
 
+        <div class="form-field" style="margin-top:16px">
+          <label>Notes (optional)</label>
+          <textarea id="b-notes" rows="2" placeholder="e.g. Started 30mg zinc 2 weeks before this test" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;"></textarea>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-accent" id="blood-save-btn" onclick="saveBloodTest()">Save blood test</button>
         </div>
@@ -743,6 +748,11 @@
           <div class="form-field"><label>Arsenic (As)</label><input type="number" step="0.001" id="h-as" placeholder="e.g. 0.02"></div>
           <div class="form-field"><label>Aluminum (Al)</label><input type="number" step="0.01" id="h-al" placeholder="e.g. 2.1"></div>
           <div class="form-field"><label>Uranium (U)</label><input type="number" step="0.001" id="h-ur" placeholder="e.g. 0.005"></div>
+        </div>
+
+        <div class="form-field" style="margin-top:16px">
+          <label>Notes (optional)</label>
+          <textarea id="h-notes" rows="2" placeholder="e.g. First test after 6 months on the protocol" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;"></textarea>
         </div>
 
         <div class="btn-row">
@@ -1063,16 +1073,21 @@ function loadDemo() {
 const v = id => { const el=document.getElementById(id); return el&&el.value!==''? parseFloat(el.value) : null; };
 
 function getBloodValues() {
+  const notesEl = document.getElementById('b-notes');
+  const notes = notesEl ? notesEl.value.trim() : '';
   return {
     test_date:     document.getElementById('b-date').value,
     serum_retinol: v('b-retinol'),
     ferritin:      v('b-ferritin'),
     blood_copper:  v('b-copper'),
     blood_zinc:    v('b-zinc'),
+    notes:         notes || null,
   };
 }
 
 function getHairValues() {
+  const notesEl = document.getElementById('h-notes');
+  const notes = notesEl ? notesEl.value.trim() : '';
   return {
     test_date:       document.getElementById('h-date').value,
     hair_calcium:    v('h-ca'),
@@ -1082,6 +1097,7 @@ function getHairValues() {
     hair_zinc:       v('h-zn'),
     hair_selenium:   v('h-se'),
     hair_molybdenum: v('h-mo'),
+    notes:           notes || null,
     hair_toxics: {
       mercury:  v('h-hg'),
       lead:     v('h-pb'),
@@ -1141,6 +1157,7 @@ function editLabEntry(id, kind) {
     document.getElementById('b-ferritin').value = record.ferritin ?? '';
     document.getElementById('b-copper').value   = record.blood_copper ?? '';
     document.getElementById('b-zinc').value     = record.blood_zinc ?? '';
+    document.getElementById('b-notes').value    = record.notes ?? '';
   } else {
     document.getElementById('h-date').value = record.test_date || '';
     document.getElementById('h-ca').value   = record.hair_calcium ?? '';
@@ -1150,6 +1167,7 @@ function editLabEntry(id, kind) {
     document.getElementById('h-zn').value   = record.hair_zinc ?? '';
     document.getElementById('h-se').value   = record.hair_selenium ?? '';
     document.getElementById('h-mo').value   = record.hair_molybdenum ?? '';
+    document.getElementById('h-notes').value = record.notes ?? '';
     const t = record.hair_toxics || {};
     document.getElementById('h-hg').value = t.mercury ?? '';
     document.getElementById('h-pb').value = t.lead ?? '';
@@ -1165,7 +1183,7 @@ function editLabEntry(id, kind) {
 
 function cancelEdit() {
   editingTest = null;
-  ['b-date','b-retinol','b-ferritin','b-copper','b-zinc','h-date','h-ca','h-mg','h-p','h-cu','h-zn','h-se','h-mo','h-hg','h-pb','h-cd','h-as','h-al','h-ur'].forEach(id => {
+  ['b-date','b-retinol','b-ferritin','b-copper','b-zinc','b-notes','h-date','h-ca','h-mg','h-p','h-cu','h-zn','h-se','h-mo','h-notes','h-hg','h-pb','h-cd','h-as','h-al','h-ur'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1548,12 +1566,15 @@ async function loadHistory() {
     }
     if (pills.length === 1) pills.push('<span class="pill optimal">All optimal</span>');
     return `
-      <div class="history-item">
-        <div style="display:flex;align-items:center;gap:16px;flex:1;cursor:pointer;" onclick="viewHistoryItem('${r.id}','${r._kind}')">
-          <div class="history-date">${r.test_date}</div>
-          <div class="history-pills">${pills.join('')}</div>
+      <div class="history-item" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;align-items:center;gap:16px;width:100%;">
+          <div style="display:flex;align-items:center;gap:16px;flex:1;cursor:pointer;" onclick="viewHistoryItem('${r.id}','${r._kind}')">
+            <div class="history-date">${r.test_date}</div>
+            <div class="history-pills">${pills.join('')}</div>
+          </div>
+          <button onclick="editLabEntry('${r.id}','${r._kind}')" title="Edit" style="background:none;border:none;cursor:pointer;padding:8px;color:var(--text3);font-size:16px;border-radius:6px;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">✎</button>
         </div>
-        <button onclick="editLabEntry('${r.id}','${r._kind}')" title="Edit" style="background:none;border:none;cursor:pointer;padding:8px;color:var(--text3);font-size:16px;border-radius:6px;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">✎</button>
+        ${r.notes ? `<div style="margin-top:10px;margin-left:0;padding:10px 14px;background:var(--surface2);border-left:3px solid var(--accent);border-radius:6px;font-size:13px;color:var(--text2);line-height:1.5;font-style:italic;">${r.notes}</div>` : ''}
       </div>
     `;
   }).join('');
