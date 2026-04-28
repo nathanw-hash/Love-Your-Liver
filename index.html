@@ -1856,16 +1856,18 @@ function renderTrend() {
         borderWidth: 2,
         borderDash: [5,4],
         label: {
-          display: true,
+          display: false,
           content: ev.title,
           position: 'start',
           backgroundColor: color,
           color: '#fff',
-          font: { family: 'DM Sans', size: 10, weight: '600' },
-          padding: { top: 3, bottom: 3, left: 6, right: 6 },
+          font: { family: 'DM Sans', size: 11, weight: '600' },
+          padding: { top: 4, bottom: 4, left: 8, right: 8 },
           borderRadius: 4,
           yAdjust: -2
-        }
+        },
+        enter: function(ctx) { ctx.element.options.label.display = true; ctx.chart.update(); },
+        leave: function(ctx) { ctx.element.options.label.display = false; ctx.chart.update(); }
       };
     });
   }
