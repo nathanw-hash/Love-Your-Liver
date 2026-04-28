@@ -1857,7 +1857,7 @@ function renderTrend() {
         borderDash: [5,4],
         label: {
           display: true,
-          content: ev.title,
+          content: ev.title.length > 25 ? ev.title.slice(0, 24) + '…' : ev.title,
           position: 'center',
           backgroundColor: color,
           color: '#fff',
