@@ -1855,6 +1855,23 @@ function renderTrend() {
         borderColor: color,
         borderWidth: 2,
         borderDash: [5,4],
+        borderShadowColor: 'transparent',
+        shadowBlur: 0,
+        click: function(ctx) {
+          var lbl = ctx.element.options.label;
+          lbl.display = !lbl.display;
+          ctx.chart.update();
+        },
+        enter: function(ctx) {
+          ctx.element.options.borderWidth = 4;
+          ctx.element.options.label.display = true;
+          ctx.chart.update();
+        },
+        leave: function(ctx) {
+          ctx.element.options.borderWidth = 2;
+          ctx.element.options.label.display = false;
+          ctx.chart.update();
+        },
         label: {
           display: false,
           content: ev.title,
@@ -1865,9 +1882,7 @@ function renderTrend() {
           padding: { top: 4, bottom: 4, left: 8, right: 8 },
           borderRadius: 4,
           yAdjust: -2
-        },
-        enter: function(ctx) { ctx.element.options.label.display = true; ctx.chart.update(); },
-        leave: function(ctx) { ctx.element.options.label.display = false; ctx.chart.update(); }
+        }
       };
     });
   }
@@ -1882,6 +1897,7 @@ function renderTrend() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { intersect: false, mode: 'nearest' },
       plugins: {
         legend: { display: false },
         annotation: { annotations: eventAnnotations }
