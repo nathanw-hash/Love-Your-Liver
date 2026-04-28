@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -1823,6 +1824,51 @@ function renderTrend() {
     spanGaps: true,
     order: 1
   });
+  const eventAnnotations = {};
+  if (Array.isArray(allEvents) && allEvents.length > 0 && labels.length > 0) {
+    const CATEGORY_COLORS = {
+      protocol:   '#2d6a4f',
+      supplement: '#1d4ed8',
+      lifestyle:  '#7c3aed',
+      symptom:    '#c2410c',
+      other:      '#6b7280'
+    };
+    function dateToPosition(eventDate) {
+      const t = new Date(eventDate).getTime();
+      const dates = labels.map(function(d){return new Date(d).getTime();});
+      if (t <= dates[0]) return 0;
+      if (t >= dates[dates.length - 1]) return dates.length - 1;
+      for (var i = 0; i < dates.length - 1; i++) {
+        if (t >= dates[i] && t <= dates[i+1]) {
+          var frac = (t - dates[i]) / (dates[i+1] - dates[i]);
+          return i + frac;
+        }
+      }
+      return 0;
+    }
+    allEvents.forEach(function(ev, idx) {
+      var color = CATEGORY_COLORS[ev.category] || CATEGORY_COLORS.other;
+      eventAnnotations['ev_' + idx] = {
+        type: 'line',
+        xMin: dateToPosition(ev.event_date),
+        xMax: dateToPosition(ev.event_date),
+        borderColor: color,
+        borderWidth: 2,
+        borderDash: [5,4],
+        label: {
+          display: true,
+          content: ev.title,
+          position: 'start',
+          backgroundColor: color,
+          color: '#fff',
+          font: { family: 'DM Sans', size: 10, weight: '600' },
+          padding: { top: 3, bottom: 3, left: 6, right: 6 },
+          borderRadius: 4,
+          yAdjust: -2
+        }
+      };
+    });
+  }
   const ctx = document.getElementById('trend-chart').getContext('2d');
   if (trendChart) trendChart.destroy();
   trendChart = new Chart(ctx, {
@@ -1834,9 +1880,12 @@ function renderTrend() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        annotation: { annotations: eventAnnotations }
+      },
       scales: {
-        x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans', size: 12 } } },
+        x: { type: 'linear', min: 0, max: labels.length - 1, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans', size: 12 }, stepSize: 1, callback: function(v){return labels[Math.round(v)]||'';} } },
         y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { family: 'DM Sans', size: 12 } } }
       }
     }
