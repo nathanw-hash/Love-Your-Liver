@@ -1788,7 +1788,7 @@ function renderTrend() {
   if (range) {
     datasets.push({
       label: 'Optimal range',
-      data: labels.map(function(){return range.high;}),
+      data: labels.map(function(_, i){return {x: i, y: range.high};}),
       borderColor: 'rgba(45,106,79,0.25)',
       backgroundColor: 'rgba(45,106,79,0.10)',
       borderWidth: 1,
@@ -1800,7 +1800,7 @@ function renderTrend() {
     });
     datasets.push({
       label: 'Optimal min',
-      data: labels.map(function(){return range.low;}),
+      data: labels.map(function(_, i){return {x: i, y: range.low};}),
       borderColor: 'rgba(45,106,79,0.25)',
       borderWidth: 1,
       borderDash: [4,4],
@@ -1812,7 +1812,7 @@ function renderTrend() {
   }
   datasets.push({
     label: marker.replace(/_/g,' '),
-    data: values,
+    data: values.map(function(v, i){return {x: i, y: v};}),
     borderColor: '#2d6a4f',
     backgroundColor: 'rgba(45,106,79,0.08)',
     borderWidth: 2.5,
