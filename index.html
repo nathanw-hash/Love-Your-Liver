@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Love Your Liver</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <meta name="description" content="Love Your Liver lab tracker — enter your results and get personalized recommendations">
 <meta name="theme-color" content="#2d6a4f">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1753,17 +1754,45 @@ async function loadHistory() {
 }
 
 function viewHistoryItem(id, kind) {
-  const selected = allLabResults.find(x => x.id === id && x._kind === kind);
-  if (!selected) return;
-  const otherKind = kind === 'blood' ? 'hair' : 'blood';
-  const otherMostRecent = allLabResults.find(x => x._kind === otherKind);
-  const blood = kind === 'blood' ? selected : otherMostRecent;
-  const hair  = kind === 'hair'  ? selected : otherMostRecent;
-  const combined = combineLabs(blood, hair);
-  const rec = generateRecommendations(combined, {});
-  renderReport(combined, rec, {}, blood, hair);
-  showTab('report');
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===2));
+  try {
+    // Guard: data not loaded yet (e.g., user clicks before history finishes loading)
+    if (!Array.isArray(allLabResults) || allLabResults.length === 0) {
+      toast('Lab data still loading — please try again in a moment');
+      return;
+    }
+    // Guard: arguments missing
+    if (!id || !kind) {
+      console.error('viewHistoryItem called with invalid arguments:', { id, kind });
+      toast('Could not open this entry — invalid reference');
+      return;
+    }
+    // Guard: entry not found in current dataset
+    const selected = allLabResults.find(x => x.id === id && x._kind === kind);
+    if (!selected) {
+      toast('This entry could not be found. It may have been deleted — try refreshing.');
+      return;
+    }
+
+    const otherKind = kind === 'blood' ? 'hair' : 'blood';
+    const otherMostRecent = allLabResults.find(x => x._kind === otherKind);
+    const blood = kind === 'blood' ? selected : otherMostRecent;
+    const hair  = kind === 'hair'  ? selected : otherMostRecent;
+
+    // Build the report — combineLabs and generateRecommendations are the riskiest
+    // call sites because they touch nested fields. Guard against unexpected throws.
+    const combined = combineLabs(blood, hair);
+    if (!combined) throw new Error('Could not combine lab data');
+    const rec = generateRecommendations(combined, {});
+    if (!rec) throw new Error('Could not generate recommendations');
+
+    renderReport(combined, rec, {}, blood, hair);
+    showTab('report');
+    // showTab('report') already sets the report tab to active — the manual class
+    // toggle that used to be here was redundant and brittle (hard-coded i===2).
+  } catch (err) {
+    console.error('viewHistoryItem failed:', err);
+    toast('Something went wrong opening this entry. Check the console for details.');
+  }
 }
 
 function renderTrend() {
