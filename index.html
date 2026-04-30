@@ -1982,9 +1982,26 @@ async function importPDF(input) {
     document.getElementById('pdf-modal-body').style.display = 'block';
     status.textContent = 'Detected: ' + (pdfExtractedData.lab_type === 'labcorp' ? 'LabCorp/Quest blood work' : pdfExtractedData.lab_type === 'tei' ? 'Trace Elements Lab hair analysis' : 'Lab report') + '. Review values below.';
   } catch(err) {
-    status.textContent = 'Error: ' + err.message;
-    status.style.background = '#fef2f2';
-    status.style.color = '#b91c1c';
+    const errMsg = String(err.message || '');
+    const isPasswordProtected = /password\s*protected/i.test(errMsg);
+    status.style.background = '#fef3e2';
+    status.style.color = '#b5560a';
+    if (isPasswordProtected) {
+      status.innerHTML =
+        '<div style="font-weight:600;margin-bottom:8px;">This PDF is password-protected</div>' +
+        '<div style="font-weight:400;margin-bottom:10px;">Trace Elements Lab protects their reports for security. To import:</div>' +
+        '<ol style="margin:0 0 10px 18px;padding:0;font-weight:400;line-height:1.6;">' +
+          '<li>Open the PDF in your usual reader (Adobe Reader, Preview, etc.)</li>' +
+          '<li>Enter the password TEI sent with your report</li>' +
+          '<li>Save an unprotected copy (File &rarr; Save As, uncheck password options)</li>' +
+          '<li>Try the import again with the unprotected version</li>' +
+        '</ol>' +
+        '<div style="font-weight:400;font-size:12px;font-style:italic;opacity:0.85;">Automatic password handling is coming in a future update.</div>';
+    } else {
+      status.style.background = '#fef2f2';
+      status.style.color = '#b91c1c';
+      status.textContent = 'Error: ' + errMsg;
+    }
   }
 }
 
