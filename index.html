@@ -1951,29 +1951,173 @@ function toast(msg) {
 // PDF IMPORT
 let pdfExtractedData = {};
 
-async function importPDF(input) {
-  const file = input.files[0];
-  if (!file) return;
+// Stash for password-retry: holds the PDF bytes between the first failed attempt and
+// the user submitting a password in the modal. Reset on close.
+let _pendingPdfBytes = null;
+
+function openPdfPasswordModal(isWrongPassword) {
+  const modal = document.getElementById('pdf-password-modal');
+  const errEl = document.getElementById('pdf-password-error');
+  const input = document.getElementById('pdf-password-input');
+  if (!modal || !input) return;
   input.value = '';
-  document.getElementById('pdf-modal').style.display = 'block';
-  document.getElementById('pdf-modal-body').style.display = 'none';
+  if (isWrongPassword) {
+    errEl.textContent = 'Incorrect password. Please try again.';
+    errEl.style.display = 'block';
+  } else {
+    errEl.textContent = '';
+    errEl.style.display = 'none';
+  }
+  modal.style.display = 'block';
+  // Focus after a tick so the browser has finished rendering the modal
+  setTimeout(() => input.focus(), 50);
+}
+
+function closePdfPasswordModal() {
+  const modal = document.getElementById('pdf-password-modal');
+  if (modal) modal.style.display = 'none';
+  // If the user cancels, also close the main pdf-modal so they're not stuck on "Waiting for password..."
+  closePdfModal();
+  _pendingPdfBytes = null;
+}
+
+async function submitPdfPassword() {
+  const input = document.getElementById('pdf-password-input');
+  const errEl = document.getElementById('pdf-password-error');
+  const password = (input.value || '').trim();
+  if (!password) {
+    errEl.textContent = 'Please enter the PDF password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!_pendingPdfBytes) {
+    errEl.textContent = 'Upload session expired. Please close this and try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Hide the password modal — the main modal will show progress
+  document.getElementById('pdf-password-modal').style.display = 'none';
   const status = document.getElementById('pdf-modal-status');
-  status.textContent = 'Reading PDF — this may take 10-20 seconds...';
+  status.textContent = 'Unlocking and rendering PDF pages...';
   status.style.background = '#e8f4ee';
   status.style.color = '#2d6a4f';
+
   try {
-    const base64 = await fileToBase64(file);
+    const images = await renderPdfPagesToImages(_pendingPdfBytes, password);
+    status.textContent = 'Analyzing ' + images.length + ' page' + (images.length === 1 ? '' : 's') + ' — this may take 10-20 seconds...';
     const prompt = `Extract lab values from this medical PDF. Return ONLY valid JSON with this structure (null for missing values):\n{"lab_type":"labcorp or tei","date":"YYYY-MM-DD or null","serum_retinol":null,"ferritin":null,"blood_copper":null,"blood_zinc":null,"hair_calcium":null,"hair_magnesium":null,"hair_phosphorus":null,"hair_copper":null,"hair_zinc":null,"hair_selenium":null,"hair_molybdenum":null,"hair_mercury":null,"hair_lead":null,"hair_cadmium":null,"hair_arsenic":null,"hair_aluminum":null,"hair_uranium":null}\nFor LabCorp: find Vitamin A/Retinol, Copper, Zinc, Ferritin values.\nFor Trace Elements Lab: read numeric values at bottom of each bar chart column. Ca=calcium, Mg=magnesium, P=phosphorus, Cu=copper, Zn=zinc, Se=selenium, Mo=molybdenum, Hg=mercury, Pb=lead, Cd=cadmium, As=arsenic, Al=aluminum, U=uranium.`;
+    const content = images.map(b64 => ({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/png', data: b64 }
+    }));
+    content.push({ type: 'text', text: prompt });
     const response = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1500,
-        messages: [{ role: 'user', content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
-          { type: 'text', text: prompt }
-        ]}]
+        messages: [{ role: 'user', content: content }]
+      })
+    });
+    const result = await response.json();
+    if (result.type === 'error' || !result.content) {
+      const msg = result.error?.message || result.message || 'Unknown API error';
+      throw new Error(msg);
+    }
+    const text = result.content[0].text.trim().replace(/```json|```/g, '').trim();
+    pdfExtractedData = JSON.parse(text);
+    renderPdfModal(pdfExtractedData);
+    document.getElementById('pdf-modal-body').style.display = 'block';
+    document.getElementById('pdf-modal-title').textContent = 'Review extracted values';
+    status.textContent = 'Detected: ' + (pdfExtractedData.lab_type === 'labcorp' ? 'LabCorp/Quest blood work' : pdfExtractedData.lab_type === 'tei' ? 'Trace Elements Lab hair analysis' : 'Lab report') + '. Review values below.';
+    _pendingPdfBytes = null;  // success — clear the retry buffer
+  } catch(err) {
+    const errMsg = String(err.message || '');
+    const errName = String(err.name || '');
+    const isPdfJsPasswordError = errName === 'PasswordException' || /password|incorrect|invalid/i.test(errMsg);
+    if (isPdfJsPasswordError) {
+      // Wrong password — re-open the password modal with an error message.
+      // Don't clear _pendingPdfBytes; user will retry.
+      openPdfPasswordModal(true);
+      status.textContent = 'Waiting for password...';
+      status.style.background = '#fef3e2';
+      status.style.color = '#b5560a';
+    } else {
+      // Some other error during retry — show in main modal
+      status.style.background = '#fef2f2';
+      status.style.color = '#b91c1c';
+      status.textContent = 'Error: ' + errMsg;
+      _pendingPdfBytes = null;
+    }
+  }
+}
+
+async function renderPdfPagesToImages(fileBytes, password) {
+  // Render each page of a PDF to a base64-encoded PNG image.
+  // password is optional — pass it to unlock encrypted PDFs.
+  // Returns: array of base64 strings (no data:image/png;base64, prefix).
+  const loadOpts = { data: fileBytes };
+  if (password) loadOpts.password = password;
+  const loadingTask = window.pdfjsLib.getDocument(loadOpts);
+  const pdf = await loadingTask.promise;
+
+  const MAX_PAGES = 12;        // safety cap; TEI reports are usually 9-12 pages
+  const RENDER_SCALE = 2.0;    // 2x is a good balance between quality and payload size
+  const numPages = Math.min(pdf.numPages, MAX_PAGES);
+  const images = [];
+
+  for (let i = 1; i <= numPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: RENDER_SCALE });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    // toDataURL returns "data:image/png;base64,iVBOR...". Strip the prefix.
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64 = dataUrl.split(',')[1];
+    images.push(base64);
+    // Free the canvas immediately to keep memory in check on long reports
+    canvas.width = 0;
+    canvas.height = 0;
+  }
+  return images;
+}
+
+async function importPDF(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  document.getElementById('pdf-modal').style.display = 'block';
+  document.getElementById('pdf-modal-body').style.display = 'none';
+  document.getElementById('pdf-modal-title').textContent = 'Import PDF';
+  const status = document.getElementById('pdf-modal-status');
+  status.textContent = 'Reading PDF — this may take 10-20 seconds...';
+  status.style.background = '#e8f4ee';
+  status.style.color = '#2d6a4f';
+  try {
+    if (!window.pdfjsLib) throw new Error('PDF library failed to load. Refresh the page and try again.');
+    const fileBytes = await file.arrayBuffer();
+    status.textContent = 'Rendering PDF pages...';
+    const images = await renderPdfPagesToImages(fileBytes);
+    status.textContent = 'Analyzing ' + images.length + ' page' + (images.length === 1 ? '' : 's') + ' — this may take 10-20 seconds...';
+    const prompt = `Extract lab values from this medical PDF. Return ONLY valid JSON with this structure (null for missing values):\n{"lab_type":"labcorp or tei","date":"YYYY-MM-DD or null","serum_retinol":null,"ferritin":null,"blood_copper":null,"blood_zinc":null,"hair_calcium":null,"hair_magnesium":null,"hair_phosphorus":null,"hair_copper":null,"hair_zinc":null,"hair_selenium":null,"hair_molybdenum":null,"hair_mercury":null,"hair_lead":null,"hair_cadmium":null,"hair_arsenic":null,"hair_aluminum":null,"hair_uranium":null}\nFor LabCorp: find Vitamin A/Retinol, Copper, Zinc, Ferritin values.\nFor Trace Elements Lab: read numeric values at bottom of each bar chart column. Ca=calcium, Mg=magnesium, P=phosphorus, Cu=copper, Zn=zinc, Se=selenium, Mo=molybdenum, Hg=mercury, Pb=lead, Cd=cadmium, As=arsenic, Al=aluminum, U=uranium.`;
+    // Build multi-image content array — one image block per rendered page, then the prompt
+    const content = images.map(b64 => ({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/png', data: b64 }
+    }));
+    content.push({ type: 'text', text: prompt });
+    const response = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: content }]
       })
     });
     console.log('Response status:', response.status);
@@ -1991,20 +2135,21 @@ async function importPDF(input) {
     status.textContent = 'Detected: ' + (pdfExtractedData.lab_type === 'labcorp' ? 'LabCorp/Quest blood work' : pdfExtractedData.lab_type === 'tei' ? 'Trace Elements Lab hair analysis' : 'Lab report') + '. Review values below.';
   } catch(err) {
     const errMsg = String(err.message || '');
-    const isPasswordProtected = /password\s*protected/i.test(errMsg);
-    status.style.background = '#fef3e2';
-    status.style.color = '#b5560a';
-    if (isPasswordProtected) {
-      status.innerHTML =
-        '<div style="font-weight:600;margin-bottom:8px;">This PDF is password-protected</div>' +
-        '<div style="font-weight:400;margin-bottom:10px;">Trace Elements Lab protects their reports for security. To import:</div>' +
-        '<ol style="margin:0 0 10px 18px;padding:0;font-weight:400;line-height:1.6;">' +
-          '<li>Open the PDF in your usual reader (Adobe Reader, Preview, etc.)</li>' +
-          '<li>Enter the password TEI sent with your report</li>' +
-          '<li>Save an unprotected copy (File &rarr; Save As, uncheck password options)</li>' +
-          '<li>Try the import again with the unprotected version</li>' +
-        '</ol>' +
-        '<div style="font-weight:400;font-size:12px;font-style:italic;opacity:0.85;">Automatic password handling is coming in a future update.</div>';
+    const errName = String(err.name || '');
+    // PDF.js throws PasswordException for encrypted PDFs.
+    //   code 1 = password needed (no password supplied)
+    //   code 2 = password incorrect (wrong password supplied on retry)
+    const isPdfJsPasswordError = errName === 'PasswordException' || /password/i.test(errMsg);
+    if (isPdfJsPasswordError) {
+      // Stash the file bytes for retry with a password
+      _pendingPdfBytes = await file.arrayBuffer();
+      // Show the password modal layered on top of the main modal
+      const isWrongPassword = err.code === 2 || /incorrect|invalid/i.test(errMsg);
+      openPdfPasswordModal(isWrongPassword);
+      // Reset the main modal status so it doesn't say "Analyzing..." behind the password prompt
+      status.textContent = 'Waiting for password...';
+      status.style.background = '#fef3e2';
+      status.style.color = '#b5560a';
     } else {
       status.style.background = '#fef2f2';
       status.style.color = '#b91c1c';
