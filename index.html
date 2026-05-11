@@ -1093,12 +1093,23 @@ function showTab(name) {
 function buildFlagsGrid() {
   const grid = document.getElementById('flags-grid');
   grid.innerHTML = FLAGS.map(f => `
-    <label class="check-item" id="ci-${f.id}" onclick="toggleFlag(this)">
+    <label class="check-item" id="ci-${f.id}">
       <input type="checkbox" id="${f.id}">
       <span class="check-box"></span>
       <span>${f.label}</span>
     </label>
   `).join('');
+  // Attach click handlers programmatically — inline onclick attributes can be blocked
+  // by Vercel's default Content Security Policy on certain element types.
+  FLAGS.forEach(f => {
+    const label = document.getElementById('ci-' + f.id);
+    if (label) {
+      label.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleFlag(label);
+      });
+    }
+  });
 }
 
 function toggleFlag(el) {
