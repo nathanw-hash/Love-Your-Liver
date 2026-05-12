@@ -959,6 +959,19 @@
 
 <div id="toast"></div>
 
+<!-- Compare picker modal -->
+<div id="compare-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:2000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border-radius:14px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+      <h3 id="compare-modal-title" style="font-family:'DM Serif Display',serif;font-size:20px;margin:0;flex:1;">Compare to...</h3>
+      <button onclick="closeComparePicker()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--text3);padding:4px 10px;border-radius:6px;line-height:1;">×</button>
+    </div>
+    <div style="padding:8px 0;">
+      <div id="compare-modal-list"><div style="padding:20px;color:var(--text3);">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://pkootwezezmqwopveigu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrb290d2V6ZXptcXdvcHZlaWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMjAxNTIsImV4cCI6MjA5MTU5NjE1Mn0.OKeSR5NQMON7_hIEqpKtQmUW1jTId3BkOM9hteGhtzY';
@@ -1801,6 +1814,7 @@ async function loadHistory() {
             <div class="history-date">${r.test_date}</div>
             <div class="history-pills">${pills.join('')}</div>
           </div>
+          <button onclick="openComparePicker('${r.id}','${r._kind}')" title="Compare to another ${r._kind} test" style="background:none;border:none;cursor:pointer;padding:8px;color:var(--text3);font-size:16px;border-radius:6px;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">⇄</button>
           <button onclick="editLabEntry('${r.id}','${r._kind}')" title="Edit" style="background:none;border:none;cursor:pointer;padding:8px;color:var(--text3);font-size:16px;border-radius:6px;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)';this.style.color='var(--accent)'" onmouseout="this.style.background='none';this.style.color='var(--text3)'">✎</button>
         </div>
         ${r.notes ? `<div style="margin-top:10px;margin-left:0;padding:10px 14px;background:var(--surface2);border-left:3px solid var(--accent);border-radius:6px;font-size:13px;color:var(--text2);line-height:1.5;font-style:italic;">${r.notes}</div>` : ''}
@@ -1837,6 +1851,86 @@ function wireHistoryFilterButtons() {
       loadHistory();  // Re-render with new filter
     });
   });
+}
+
+// ===== COMPARE PICKER MODAL =====
+let _compareSourceId = null;
+let _compareSourceKind = null;
+
+function openComparePicker(id, kind) {
+  if (!Array.isArray(allLabResults) || !allLabResults.length) {
+    toast('Lab data still loading — please try again in a moment');
+    return;
+  }
+  _compareSourceId = id;
+  _compareSourceKind = kind;
+  const sourceEntry = allLabResults.find(x => x.id === id && x._kind === kind);
+  if (!sourceEntry) {
+    toast('Could not find that test — try refreshing');
+    return;
+  }
+  // Same-kind, excluding the source itself
+  const candidates = allLabResults.filter(x => x._kind === kind && x.id !== id);
+  document.getElementById('compare-modal-title').textContent =
+    'Compare ' + sourceEntry.test_date + ' ' + (kind === 'blood' ? 'blood test' : 'hair test') + ' to...';
+  const listEl = document.getElementById('compare-modal-list');
+  if (!candidates.length) {
+    listEl.innerHTML = '<div style="padding:24px;color:var(--text3);text-align:center;">No other ' + kind + ' tests to compare with yet. Submit another ' + kind + ' test first.</div>';
+  } else {
+    listEl.innerHTML = candidates.map(c => {
+      const pills = buildPillsForEntry(c);
+      return `
+        <div class="compare-candidate" data-id="${c.id}" style="padding:14px 24px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:14px;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+          <div style="font-weight:600;font-size:15px;color:var(--text);min-width:100px;">${c.test_date}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;flex:1;">${pills}</div>
+        </div>
+      `;
+    }).join('');
+    listEl.querySelectorAll('.compare-candidate').forEach(row => {
+      row.addEventListener('click', () => {
+        const targetId = row.getAttribute('data-id');
+        closeComparePicker();
+        viewComparison(_compareSourceId, targetId, _compareSourceKind);
+      });
+    });
+  }
+  const modal = document.getElementById('compare-modal');
+  modal.style.display = 'flex';
+}
+
+function closeComparePicker() {
+  document.getElementById('compare-modal').style.display = 'none';
+  _compareSourceId = null;
+  _compareSourceKind = null;
+}
+
+// Build pill HTML for one entry — extracted so picker and history list can share
+function buildPillsForEntry(r) {
+  const pills = [];
+  if (r._kind === 'blood') {
+    if (r.serum_retinol >= 20) pills.push('<span class="pill high">Retinol ↑ ' + r.serum_retinol + '</span>');
+    if (r.ferritin > 100)      pills.push('<span class="pill high">Ferritin ↑ ' + r.ferritin + '</span>');
+    if (r.ferritin !== null && r.ferritin < 50) pills.push('<span class="pill low">Ferritin ↓ ' + r.ferritin + '</span>');
+    if (r.blood_copper >= 90)  pills.push('<span class="pill high">Cu ↑ ' + r.blood_copper + '</span>');
+    if (r.blood_zinc !== null && r.blood_zinc < 100) pills.push('<span class="pill low">Zn ↓ ' + r.blood_zinc + '</span>');
+    if (r.blood_zinc !== null && r.blood_zinc > 135) pills.push('<span class="pill high">Zn ↑ ' + r.blood_zinc + '</span>');
+  } else {
+    if (r.hair_copper !== null && r.hair_copper < 0.5) pills.push('<span class="pill low">Cu ↓ ' + r.hair_copper + '</span>');
+    if (r.hair_copper > 1.5)                           pills.push('<span class="pill high">Cu ↑ ' + r.hair_copper + '</span>');
+    if (r.hair_zinc !== null && r.hair_copper !== null && r.hair_copper > 0) {
+      var hzRatio = r.hair_zinc / r.hair_copper;
+      var hzStr = hzRatio.toFixed(1);
+      if (hzRatio < 18) pills.push('<span class="pill low">Zn ↓ ' + hzStr + ':1</span>');
+      if (hzRatio > 22) pills.push('<span class="pill high">Zn ↑ ' + hzStr + ':1</span>');
+    }
+  }
+  if (!pills.length) pills.push('<span class="pill optimal">All optimal</span>');
+  return pills.join('');
+}
+
+// Stub — full implementation in Chunk D
+function viewComparison(idA, idB, kind) {
+  alert('Comparison view coming in Chunk D. Selected: ' + idA + ' vs ' + idB + ' (' + kind + ')');
 }
 
 function viewHistoryItem(id, kind) {
