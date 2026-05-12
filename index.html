@@ -820,6 +820,13 @@
     <div class="panel" id="panel-history">
       <div class="card">
         <div class="card-title">Lab history</div>
+        <div id="history-filter-bar" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="history-filter-btn active" data-filter="all" style="padding:7px 14px;font-size:13px;font-weight:600;border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;">All</button>
+          <button class="history-filter-btn" data-filter="blood" style="padding:7px 14px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;">Blood</button>
+          <button class="history-filter-btn" data-filter="hair" style="padding:7px 14px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;">Hair</button>
+          <span style="flex:1;"></span>
+          <span id="history-result-count" style="font-size:12px;color:var(--text3);align-self:center;"></span>
+        </div>
         <div id="history-list"><div class="loading">Loading history…</div></div>
       </div>
       <div class="card" id="timeline-card" style="display:none">
@@ -1011,6 +1018,7 @@ async function dbUpsert(table, payload, onConflict) {
 
 let currentUser = null;
 let allLabResults = [];
+let _historyFilter = 'all';  // 'all' | 'blood' | 'hair'
 let trendChart = null;
 let editingTest = null; // { id, kind } when editing, null otherwise
 
@@ -1740,7 +1748,18 @@ async function loadHistory() {
     return;
   }
 
-  list.innerHTML = allLabResults.map(r => {
+  const filtered = _historyFilter === 'all' ? allLabResults : allLabResults.filter(r => r._kind === _historyFilter);
+  const countEl = document.getElementById('history-result-count');
+  if (countEl) {
+    countEl.textContent = filtered.length + ' of ' + allLabResults.length + ' result' + (allLabResults.length === 1 ? '' : 's');
+  }
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:30px;"><p style="color:var(--text3);">No ' + _historyFilter + ' tests yet.</p></div>';
+    // Still wire up filter buttons even when list is empty
+    wireHistoryFilterButtons();
+    return;
+  }
+  list.innerHTML = filtered.map(r => {
     const pills = [];
     const kindPill = r._kind === 'blood'
       ? '<span class="pill" style="background:#eff6ff;color:#1d4ed8">Blood</span>'
@@ -1794,6 +1813,30 @@ async function loadHistory() {
     document.getElementById('trend-card').style.display = 'block';
     renderTrend();
   }
+  wireHistoryFilterButtons();
+}
+
+function wireHistoryFilterButtons() {
+  document.querySelectorAll('.history-filter-btn').forEach(btn => {
+    // Remove old listener by cloning (idempotent — safe to call multiple times)
+    const fresh = btn.cloneNode(true);
+    btn.parentNode.replaceChild(fresh, btn);
+  });
+  document.querySelectorAll('.history-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _historyFilter = btn.getAttribute('data-filter');
+      // Update active styling on all filter buttons
+      document.querySelectorAll('.history-filter-btn').forEach(b => {
+        const isActive = b.getAttribute('data-filter') === _historyFilter;
+        b.classList.toggle('active', isActive);
+        b.style.background = isActive ? 'var(--accent)' : 'var(--surface)';
+        b.style.color = isActive ? '#fff' : 'var(--text)';
+        b.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+        b.style.fontWeight = isActive ? '600' : '500';
+      });
+      loadHistory();  // Re-render with new filter
+    });
+  });
 }
 
 function viewHistoryItem(id, kind) {
