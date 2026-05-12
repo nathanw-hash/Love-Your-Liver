@@ -1889,8 +1889,10 @@ function openComparePicker(id, kind) {
     listEl.querySelectorAll('.compare-candidate').forEach(row => {
       row.addEventListener('click', () => {
         const targetId = row.getAttribute('data-id');
+        const srcId = _compareSourceId;
+        const srcKind = _compareSourceKind;
         closeComparePicker();
-        viewComparison(_compareSourceId, targetId, _compareSourceKind);
+        viewComparison(srcId, targetId, srcKind);
       });
     });
   }
