@@ -886,6 +886,17 @@
       </div>
     </div>
 
+    <!-- COMPARISON TAB — reached only via "Compare to..." picker, not in main nav -->
+    <div class="panel" id="panel-comparison">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="showTab('history')" style="padding:8px 14px;font-size:13px;">← Back to history</button>
+          <div class="card-title" id="comparison-heading" style="margin:0;flex:1;">Comparison</div>
+        </div>
+        <div id="comparison-content"><div class="loading">Loading comparison…</div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 <!-- PDF IMPORT MODAL -->
@@ -1111,6 +1122,22 @@ function showTab(name) {
   if (bnavBtn) bnavBtn.classList.add('active');
   if (name === 'history' && currentUser) { loadHistory(); loadEvents(); }
   if (name === 'report' && currentUser) generateAndShowReport();
+  if (name === 'comparison' && _comparisonContext) renderComparison();
+}
+
+// Stub — full implementation in Chunk D
+function renderComparison() {
+  const el = document.getElementById('comparison-content');
+  const ctx = _comparisonContext;
+  if (!ctx) {
+    el.innerHTML = '<div class="empty-state"><p>No comparison loaded. Open one from the History tab.</p></div>';
+    return;
+  }
+  document.getElementById('comparison-heading').textContent =
+    (ctx.kind === 'blood' ? 'Blood test' : 'Hair test') + ' comparison: ' + ctx.older.test_date + ' → ' + ctx.newer.test_date;
+  el.innerHTML = '<div style="padding:20px;background:var(--surface2);border-radius:10px;color:var(--text2);font-size:14px;">' +
+    'Comparison render coming in Chunk D. Context loaded: ' + ctx.older.test_date + ' (older) vs ' + ctx.newer.test_date + ' (newer), kind: ' + ctx.kind +
+    '</div>';
 }
 
 // â”€â”€ FLAGS GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1930,9 +1957,24 @@ function buildPillsForEntry(r) {
   return pills.join('');
 }
 
-// Stub — full implementation in Chunk D
+// Currently-displayed comparison context — used by Chunk D's render
+let _comparisonContext = null;
+
 function viewComparison(idA, idB, kind) {
-  alert('Comparison view coming in Chunk D. Selected: ' + idA + ' vs ' + idB + ' (' + kind + ')');
+  if (!Array.isArray(allLabResults) || !allLabResults.length) {
+    toast('Lab data still loading — try again in a moment');
+    return;
+  }
+  const a = allLabResults.find(x => x.id === idA && x._kind === kind);
+  const b = allLabResults.find(x => x.id === idB && x._kind === kind);
+  if (!a || !b) {
+    toast('Could not find one of the tests — try refreshing');
+    return;
+  }
+  // Order chronologically: older = "before", newer = "after"
+  const [older, newer] = a.test_date <= b.test_date ? [a, b] : [b, a];
+  _comparisonContext = { older, newer, kind };
+  showTab('comparison');
 }
 
 function viewHistoryItem(id, kind) {
