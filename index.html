@@ -573,6 +573,9 @@
     .bottom-nav { display: flex; }
     .mobile-only-signout { display: inline-block; }
   }
+.toast{position:fixed;bottom:24px;right:24px;z-index:1000;background:var(--text);color:var(--bg);padding:14px 20px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.18);opacity:0;transform:translateY(12px);transition:opacity 0.2s,transform 0.2s;pointer-events:none;max-width:360px;}
+.toast.show{opacity:1;transform:translateY(0);}
+@media (max-width:600px){.toast{left:16px;right:16px;bottom:16px;max-width:none;}}
 </style>
 </head>
 <body>
