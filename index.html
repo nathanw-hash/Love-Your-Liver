@@ -1125,7 +1125,32 @@ function showTab(name) {
   if (name === 'comparison' && _comparisonContext) renderComparison();
 }
 
-// Stub — full implementation in Chunk D
+// Field definitions per kind — label + threshold logic shared with loadHistory pills
+const COMPARISON_FIELDS = {
+  blood: [
+    { key: 'serum_retinol', label: 'Serum retinol',  unit: '',     classify: v => v == null ? 'none' : (v >= 20 ? 'high' : 'optimal') },
+    { key: 'ferritin',      label: 'Ferritin',       unit: '',     classify: v => v == null ? 'none' : (v > 100 ? 'high' : v < 50 ? 'low' : 'optimal') },
+    { key: 'blood_copper',  label: 'Blood copper',   unit: '',     classify: v => v == null ? 'none' : (v >= 90 ? 'high' : 'optimal') },
+    { key: 'blood_zinc',    label: 'Blood zinc',     unit: '',     classify: v => v == null ? 'none' : (v < 100 ? 'low' : v > 135 ? 'high' : 'optimal') },
+  ],
+  hair: [
+    { key: 'hair_copper',     label: 'Hair copper',     unit: '',  classify: v => v == null ? 'none' : (v < 0.5 ? 'low' : v > 1.5 ? 'high' : 'optimal') },
+    { key: 'hair_zinc',       label: 'Hair zinc',       unit: '',  classify: () => 'optimal' },
+    { key: 'hair_calcium',    label: 'Hair calcium',    unit: '',  classify: () => 'optimal' },
+    { key: 'hair_magnesium',  label: 'Hair magnesium',  unit: '',  classify: () => 'optimal' },
+    { key: 'hair_phosphorus', label: 'Hair phosphorus', unit: '',  classify: v => v == null ? 'none' : (v < 15 ? 'low' : 'optimal') },
+    { key: 'hair_selenium',   label: 'Hair selenium',   unit: '',  classify: v => v == null ? 'none' : (v < 0.10 ? 'low' : v > 0.15 ? 'high' : 'optimal') },
+    { key: 'hair_molybdenum', label: 'Hair molybdenum', unit: '',  classify: v => v == null ? 'none' : (v < 0.004 ? 'low' : v > 0.008 ? 'high' : 'optimal') },
+  ]
+};
+
+function classifyToColor(c) {
+  if (c === 'high') return '#b91c1c';
+  if (c === 'low') return '#b5560a';
+  if (c === 'optimal') return '#2d6a4f';
+  return 'var(--text3)';
+}
+
 function renderComparison() {
   const el = document.getElementById('comparison-content');
   const ctx = _comparisonContext;
@@ -1135,9 +1160,125 @@ function renderComparison() {
   }
   document.getElementById('comparison-heading').textContent =
     (ctx.kind === 'blood' ? 'Blood test' : 'Hair test') + ' comparison: ' + ctx.older.test_date + ' → ' + ctx.newer.test_date;
-  el.innerHTML = '<div style="padding:20px;background:var(--surface2);border-radius:10px;color:var(--text2);font-size:14px;">' +
-    'Comparison render coming in Chunk D. Context loaded: ' + ctx.older.test_date + ' (older) vs ' + ctx.newer.test_date + ' (newer), kind: ' + ctx.kind +
-    '</div>';
+
+  const fields = COMPARISON_FIELDS[ctx.kind] || [];
+
+  // Build field rows
+  const fieldRows = fields.map(f => {
+    const oldVal = ctx.older[f.key];
+    const newVal = ctx.newer[f.key];
+    return buildComparisonRow(f.label, oldVal, newVal, f.classify);
+  }).join('');
+
+  // For hair: also build toxics rows (any toxic present in either test)
+  let toxicRows = '';
+  if (ctx.kind === 'hair') {
+    const oldToxics = ctx.older.hair_toxics || {};
+    const newToxics = ctx.newer.hair_toxics || {};
+    const toxicKeys = Array.from(new Set([...Object.keys(oldToxics), ...Object.keys(newToxics)])).sort();
+    if (toxicKeys.length) {
+      toxicRows = '<div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);"><div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Toxic metals</div>' +
+        toxicKeys.map(k => {
+          const oldV = oldToxics[k];
+          const newV = newToxics[k];
+          // Toxics: any value > 0 is "high" (presence is bad), null/zero is "optimal"
+          const classify = v => (v == null || v === 0) ? 'optimal' : 'high';
+          const label = k.charAt(0).toUpperCase() + k.slice(1);
+          return buildComparisonRow(label, oldV, newV, classify);
+        }).join('') +
+        '</div>';
+    }
+  }
+
+  // Notes section
+  const oldNotes = ctx.older.notes || '';
+  const newNotes = ctx.newer.notes || '';
+  const notesSection = (oldNotes || newNotes) ? `
+    <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Notes</div>
+      <div class="comparison-notes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="padding:12px 14px;background:var(--surface2);border-left:3px solid var(--accent);border-radius:6px;font-size:13px;color:var(--text2);line-height:1.5;font-style:italic;min-height:40px;">${oldNotes ? escapeHtmlSafe(oldNotes) : '<span style="color:var(--text3);font-style:normal;">No notes</span>'}</div>
+        <div style="padding:12px 14px;background:var(--surface2);border-left:3px solid var(--accent);border-radius:6px;font-size:13px;color:var(--text2);line-height:1.5;font-style:italic;min-height:40px;">${newNotes ? escapeHtmlSafe(newNotes) : '<span style="color:var(--text3);font-style:normal;">No notes</span>'}</div>
+      </div>
+    </div>` : '';
+
+  el.innerHTML = `
+    <div class="comparison-header-row" style="display:grid;grid-template-columns:1.2fr 1fr 0.8fr 1fr;gap:14px;padding:12px 14px;background:var(--surface2);border-radius:8px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">
+      <div>Marker</div>
+      <div style="text-align:center;">${ctx.older.test_date}</div>
+      <div style="text-align:center;">Change</div>
+      <div style="text-align:center;">${ctx.newer.test_date}</div>
+    </div>
+    ${fieldRows}
+    ${toxicRows}
+    ${notesSection}
+    <style>
+      @media (max-width: 720px) {
+        .comparison-header-row { display: none !important; }
+        .comparison-data-row { grid-template-columns: 1fr !important; gap: 6px !important; padding: 10px 12px !important; }
+        .comparison-data-row .label-cell { font-weight: 600 !important; color: var(--text) !important; margin-bottom: 4px; }
+        .comparison-data-row .old-cell::before { content: 'Was: '; color: var(--text3); }
+        .comparison-data-row .new-cell::before { content: 'Now: '; color: var(--text3); }
+        .comparison-data-row .delta-cell { font-size: 13px !important; }
+        .comparison-notes-grid { grid-template-columns: 1fr !important; }
+      }
+    </style>
+  `;
+}
+
+function buildComparisonRow(label, oldVal, newVal, classify) {
+  const oldClass = classify(oldVal);
+  const newClass = classify(newVal);
+  const oldColor = classifyToColor(oldClass);
+  const newColor = classifyToColor(newClass);
+
+  // Format display values
+  const fmt = v => (v == null || v === '') ? '—' : (typeof v === 'number' ? (v < 1 ? v.toFixed(3) : v.toString()) : v);
+  const oldDisp = fmt(oldVal);
+  const newDisp = fmt(newVal);
+
+  // Delta calculation
+  let deltaText = '';
+  let deltaColor = 'var(--text3)';
+  if (oldVal != null && newVal != null && typeof oldVal === 'number' && typeof newVal === 'number') {
+    const diff = newVal - oldVal;
+    const pct = oldVal !== 0 ? ((diff / oldVal) * 100) : null;
+    if (diff === 0) {
+      deltaText = '—';
+    } else {
+      const arrow = diff > 0 ? '↑' : '↓';
+      const sign = diff > 0 ? '+' : '';
+      const diffStr = (Math.abs(diff) < 1) ? diff.toFixed(3) : diff.toFixed(diff % 1 === 0 ? 0 : 1);
+      const pctStr = pct != null ? ` (${diff > 0 ? '+' : ''}${pct.toFixed(0)}%)` : '';
+      deltaText = `${arrow} ${sign}${diffStr}${pctStr}`;
+      // Color: improvement = green, worse = red, neutral = gray
+      // Improvement defined as moving toward 'optimal' from anywhere else
+      if (oldClass !== 'optimal' && newClass === 'optimal') deltaColor = '#2d6a4f';  // moved into optimal
+      else if (oldClass === 'optimal' && newClass !== 'optimal' && newClass !== 'none') deltaColor = '#b91c1c';  // moved out of optimal
+      else deltaColor = 'var(--text2)';  // neutral movement
+    }
+  } else if (oldVal == null && newVal != null) {
+    deltaText = '+ new';
+    deltaColor = 'var(--text2)';
+  } else if (oldVal != null && newVal == null) {
+    deltaText = '− removed';
+    deltaColor = 'var(--text2)';
+  }
+
+  return `
+    <div class="comparison-data-row" style="display:grid;grid-template-columns:1.2fr 1fr 0.8fr 1fr;gap:14px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);">
+      <div class="label-cell" style="font-size:14px;color:var(--text);">${escapeHtmlSafe(label)}</div>
+      <div class="old-cell" style="text-align:center;font-size:14px;font-weight:600;color:${oldColor};">${oldDisp}</div>
+      <div class="delta-cell" style="text-align:center;font-size:13px;font-weight:600;color:${deltaColor};">${deltaText}</div>
+      <div class="new-cell" style="text-align:center;font-size:14px;font-weight:600;color:${newColor};">${newDisp}</div>
+    </div>
+  `;
+}
+
+// Safe HTML escape — used for notes which are user-entered
+function escapeHtmlSafe(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // â”€â”€ FLAGS GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
