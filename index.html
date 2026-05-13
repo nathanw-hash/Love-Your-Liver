@@ -1042,7 +1042,21 @@ async function dbUpsert(table, payload, onConflict) {
 
 let currentUser = null;
 let allLabResults = [];
-let _historyFilter = 'all';  // 'all' | 'blood' | 'hair'
+document.querySelectorAll('.history-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _historyFilter = btn.getAttribute('data-filter');
+      // Update active styling on all filter buttons
+      document.querySelectorAll('.history-filter-btn').forEach(b => {
+        const isActive = b.getAttribute('data-filter') === _historyFilter;
+        b.classList.toggle('active', isActive);
+        b.style.background = isActive ? 'var(--accent)' : 'var(--surface)';
+        b.style.color = isActive ? '#fff' : 'var(--text)';
+        b.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+        b.style.fontWeight = isActive ? '600' : '500';
+      });
+      loadHistory();  // Re-render with new filter
+    });
+  });
 let trendChart = null;
 let editingTest = null; // { id, kind } when editing, null otherwise
 
@@ -1084,6 +1098,9 @@ async function signOut() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   currentUser = null;
+  // Reset session flags so next sign-in re-reads their preferences
+  _historyFilterLoaded = false;
+  _historyFilter = 'all';
 }
 
 function showAuthError(msg, info=false) {
@@ -1916,6 +1933,25 @@ async function deleteEvent() {
 }
 
 async function loadHistory() {
+  // Apply saved per-user filter preference on first load this session
+  if (!_historyFilterLoaded && currentUser) {
+    try {
+      const saved = localStorage.getItem('lyl_history_filter_' + currentUser.id);
+      if (saved === 'all' || saved === 'blood' || saved === 'hair') {
+        _historyFilter = saved;
+      }
+    } catch(_) { /* localStorage can throw in private mode — silently fall back to default */ }
+    _historyFilterLoaded = true;
+    // Sync button styling to loaded filter
+    document.querySelectorAll('.history-filter-btn').forEach(b => {
+      const isActive = b.getAttribute('data-filter') === _historyFilter;
+      b.classList.toggle('active', isActive);
+      b.style.background = isActive ? 'var(--accent)' : 'var(--surface)';
+      b.style.color = isActive ? '#fff' : 'var(--text)';
+      b.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+      b.style.fontWeight = isActive ? '600' : '500';
+    });
+  }
   const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
   const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
   const bloodTests = Array.isArray(bloodArr) ? bloodArr.map(r => ({ ...r, _kind: 'blood' })) : [];
@@ -2007,6 +2043,11 @@ function wireHistoryFilterButtons() {
   document.querySelectorAll('.history-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       _historyFilter = btn.getAttribute('data-filter');
+      // Persist per-user preference
+      if (currentUser) {
+        try { localStorage.setItem('lyl_history_filter_' + currentUser.id, _historyFilter); }
+        catch(_) { /* localStorage can throw in private mode — silently skip */ }
+      }
       // Update active styling on all filter buttons
       document.querySelectorAll('.history-filter-btn').forEach(b => {
         const isActive = b.getAttribute('data-filter') === _historyFilter;
