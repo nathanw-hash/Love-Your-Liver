@@ -1042,6 +1042,8 @@ async function dbUpsert(table, payload, onConflict) {
 
 let currentUser = null;
 let allLabResults = [];
+  let _historyFilter = 'all';
+let _historyFilterLoaded = false;
 document.querySelectorAll('.history-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       _historyFilter = btn.getAttribute('data-filter');
