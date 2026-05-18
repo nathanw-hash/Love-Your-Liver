@@ -1040,11 +1040,11 @@ async function dbUpsert(table, payload, onConflict) {
   return { data: Array.isArray(data) ? data[0] : data, error: res.ok ? null : data };
 }
 
+'use strict';
 let currentUser = null;
 let allLabResults = [];
-  let _historyFilter = 'all';
-let _historyFilterLoaded = false;
-document.querySelectorAll('.history-filter-btn').forEach(btn => {
+let _historyFilter = 'all';
+let _historyFilterLoaded = false;document.querySelectorAll('.history-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       _historyFilter = btn.getAttribute('data-filter');
       // Update active styling on all filter buttons
