@@ -1040,9 +1040,48 @@ async function dbUpsert(table, payload, onConflict) {
   return { data: Array.isArray(data) ? data[0] : data, error: res.ok ? null : data };
 }
 
+// ── ENGINE V2 DATA LOADER ─────────────────────────────────────────────────
+// Loads the seven engine_* tables in parallel and stores the result in the
+// module-level `engineData`. Called once after auth completes.
+async function loadEngineData() {
+  const tables = [
+    'engine_thresholds',
+    'engine_ratio_thresholds',
+    'engine_findings',
+    'engine_actions',
+    'engine_supplement_doses',
+    'engine_toxic_thresholds',
+    'engine_profile_flag_actions'
+  ];
+  try {
+    const results = await Promise.all(tables.map(t => dbSelect(t, {})));
+    engineData = {
+      thresholds:           results[0].data || [],
+      ratio_thresholds:     results[1].data || [],
+      findings:             results[2].data || [],
+      actions:              results[3].data || [],
+      supplement_doses:     results[4].data || [],
+      toxic_thresholds:     results[5].data || [],
+      profile_flag_actions: results[6].data || []
+    };
+    console.log('[engine_v2] Loaded engine data:',
+      'thresholds=' + engineData.thresholds.length,
+      'findings=' + engineData.findings.length,
+      'actions=' + engineData.actions.length,
+      'doses=' + engineData.supplement_doses.length,
+      'toxics=' + engineData.toxic_thresholds.length,
+      'flags=' + engineData.profile_flag_actions.length
+    );
+  } catch (err) {
+    console.error('[engine_v2] Failed to load engine data:', err);
+    engineData = null;
+  }
+}
+
 'use strict';
 let currentUser = null;
 let allLabResults = [];
+let engineData = null;
 let _historyFilter = 'all';
 let _historyFilterLoaded = false;document.querySelectorAll('.history-filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1120,6 +1159,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('app').style.display = 'block';
     document.getElementById('user-email-display').textContent = currentUser.email;
     buildFlagsGrid();
+    await loadEngineData();
     await loadProfile();
     await loadHistory();
     await loadEvents();
@@ -1552,7 +1592,33 @@ async function generateAndShowReport() {
   const { data: profileData } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
   const profile = Array.isArray(profileData) ? profileData[0] : profileData || {};
   const combined = combineLabs(blood, hair);
-  const rec = generateRecommendations(combined, profile);
+  // Engine V2 (table-driven). Falls back to V1 if engine data didn't load.
+  let rec;
+  if (engineData) {
+    rec = generateRecommendationsV2(combined, profile, engineData);
+
+    // Shadow mode: run V1 in parallel and log any diff to console.
+    // Remove this block after a week of clean reports.
+    try {
+      const recV1 = generateRecommendations(combined, profile);
+      const diffs = compareEngineOutputs(recV1, rec);
+      if (diffs.length > 0) {
+        console.warn('[engine_v2] PARITY DIFF for user ' + (currentUser && currentUser.id),
+          'diffs:', diffs,
+          'V1 output:', recV1,
+          'V2 output:', rec
+        );
+      } else {
+        console.log('[engine_v2] parity OK for user ' + (currentUser && currentUser.id));
+      }
+    } catch (shadowErr) {
+      console.error('[engine_v2] shadow-mode error (ignored):', shadowErr);
+    }
+  } else {
+    // Engine data didn't load — fall back to V1 so users still get a report.
+    console.warn('[engine_v2] engineData not loaded, using V1');
+    rec = generateRecommendations(combined, profile);
+  }
   renderReport(combined, rec, profile, blood, hair);
   await loadHistory();
 }
@@ -2190,7 +2256,31 @@ function viewHistoryItem(id, kind) {
     // call sites because they touch nested fields. Guard against unexpected throws.
     const combined = combineLabs(blood, hair);
     if (!combined) throw new Error('Could not combine lab data');
-    const rec = generateRecommendations(combined, {});
+    // Engine V2 (table-driven). Falls back to V1 if engine data didn't load.
+    let rec;
+    if (engineData) {
+      rec = generateRecommendationsV2(combined, {}, engineData);
+
+      // Shadow mode: run V1 in parallel and log any diff to console.
+      try {
+        const recV1 = generateRecommendations(combined, {});
+        const diffs = compareEngineOutputs(recV1, rec);
+        if (diffs.length > 0) {
+          console.warn('[engine_v2] PARITY DIFF (history view)',
+            'diffs:', diffs,
+            'V1 output:', recV1,
+            'V2 output:', rec
+          );
+        } else {
+          console.log('[engine_v2] parity OK (history view)');
+        }
+      } catch (shadowErr) {
+        console.error('[engine_v2] shadow-mode error (ignored):', shadowErr);
+      }
+    } else {
+      console.warn('[engine_v2] engineData not loaded, using V1');
+      rec = generateRecommendations(combined, {});
+    }
     if (!rec) throw new Error('Could not generate recommendations');
 
     renderReport(combined, rec, {}, blood, hair);
@@ -2617,6 +2707,569 @@ function closePdfModal() {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
+}
+
+// =============================================================================
+// LYL Platform — Engine V2 (table-driven)
+// =============================================================================
+//
+// Replaces the hardcoded generateRecommendations() from index.html. Same
+// signature plus an `engineData` argument carrying the contents of the
+// seven engine_* tables.
+//
+// Goal: produce IDENTICAL output to the original engine for every fixture,
+// so the parity check reports zero diffs. Where the original engine has
+// bugs (literal "{optHigh}" in ferritin text, hair_copper threshold/text
+// mismatch), this engine reproduces them exactly — they're documented and
+// will be fixed in a separate post-v1 cleanup migration.
+//
+// engineData shape (matches the export query in HANDOFF):
+//   {
+//     thresholds:           [{ marker_key, marker_display_name, unit, sex,
+//                              low_threshold, high_threshold, evaluation_mode, ... }, ...],
+//     ratio_thresholds:     [{ ratio_key, display_name, numerator_marker_key,
+//                              denominator_marker_key, optimal_low, optimal_high,
+//                              status_when_below_low, status_when_above_high, ... }, ...],
+//     findings:             [{ marker_key, status, interpretation_text, applies_to_sex, ... }, ...],
+//     actions:              [{ marker_key, trigger_status, priority, title, body,
+//                              applies_to_sex, display_order, ... }, ...],
+//     supplement_doses:     [{ trigger_marker_key, trigger_status, supplement_name,
+//                              weight_factor, dose_increment, max_dose_cap, dose_unit,
+//                              fixed_dose_text, instructions, ... }, ...],
+//     toxic_thresholds:     [{ toxic_key, display_name, symbol, threshold, message,
+//                              display_order, ... }, ...],
+//     profile_flag_actions: [{ flag_column, flag_display_name, priority, title, body,
+//                              bucket, applies_to_sex, display_order, ... }, ...]
+//   }
+//
+// Marker output order is hardcoded below to match the original source order
+// from index.html. When the CMS UI is built (Week 2), add display_order
+// columns and replace the hardcoded order with a sort.
+// =============================================================================
+
+// Output order in the findings array — matches the source-code order in
+// the original generateRecommendations() exactly.
+const MARKER_ORDER = [
+  'serum_retinol',
+  'ferritin',
+  'blood_copper',
+  'blood_zinc',
+  'hair_calcium',
+  'hair_phosphorus',
+  'hair_ca_mg_ratio',  // emitted as "Hair Mg"
+  'hair_copper',
+  'hair_zn_cu_ratio',  // emitted as "Hair Zn"
+  'hair_selenium',
+  'hair_molybdenum',
+];
+
+// Display name per marker_key/ratio_key. Used for the `marker` field in
+// findings output. For ratios, the original engine emits "Hair Mg" and
+// "Hair Zn", NOT the ratio's display_name (which is "Hair Mg (Ca:Mg ratio)").
+// So we hardcode the user-facing names rather than reading from DB.
+const MARKER_DISPLAY = {
+  serum_retinol:    'Serum retinol',
+  ferritin:         'Ferritin',
+  blood_copper:     'Blood copper',
+  blood_zinc:       'Blood zinc',
+  hair_calcium:     'Hair Ca',
+  hair_phosphorus:  'Hair P',
+  hair_ca_mg_ratio: 'Hair Mg',
+  hair_copper:      'Hair Cu',
+  hair_zn_cu_ratio: 'Hair Zn',
+  hair_selenium:    'Hair Se',
+  hair_molybdenum:  'Hair Mo',
+};
+
+// Which lab field the engine should read for each marker_key when building
+// the finding's `value` field. For ratios, this is the NUMERATOR field
+// (matches original: Hair Mg finding has value = labs.hair_magnesium).
+const MARKER_VALUE_SOURCE = {
+  serum_retinol:    'serum_retinol',
+  ferritin:         'ferritin',
+  blood_copper:     'blood_copper',
+  blood_zinc:       'blood_zinc',
+  hair_calcium:     'hair_calcium',
+  hair_phosphorus:  'hair_phosphorus',
+  hair_ca_mg_ratio: 'hair_magnesium',  // ratio finding shows Mg as the value
+  hair_copper:      'hair_copper',
+  hair_zn_cu_ratio: 'hair_zinc',       // ratio finding shows Zn as the value
+  hair_selenium:    'hair_selenium',
+  hair_molybdenum:  'hair_molybdenum',
+};
+
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+// Match original engine's status() function exactly.
+//   null/undefined → null
+//   < low → 'low'; > high → 'high'; else 'optimal'
+// Critically: comparisons use < and >, not <= and >=. Boundary values are
+// 'optimal'. (engine_toxic_thresholds.threshold also uses > only.)
+function statusBetween(val, low, high) {
+  if (val === null || val === undefined) return null;
+  if (val < low) return 'low';
+  if (val > high) return 'high';
+  return 'optimal';
+}
+
+// Find the threshold row for a marker, picking the sex-specific row if one
+// exists, otherwise the 'all' row.
+function lookupThreshold(thresholds, marker_key, sex) {
+  // Prefer exact sex match
+  const exact = thresholds.find(t => t.marker_key === marker_key && t.sex === sex);
+  if (exact) return exact;
+  return thresholds.find(t => t.marker_key === marker_key && t.sex === 'all') || null;
+}
+
+// Find a finding row for (marker_key, status), preferring sex-specific.
+function lookupFinding(findings, marker_key, status, sex) {
+  const exact = findings.find(f =>
+    f.marker_key === marker_key && f.status === status && f.applies_to_sex === sex);
+  if (exact) return exact;
+  return findings.find(f =>
+    f.marker_key === marker_key && f.status === status && f.applies_to_sex === 'all') || null;
+}
+
+// Find all action rows for (marker_key, status), preferring sex-specific.
+// If any sex-specific rows exist for this (marker, status, sex), use them.
+// Otherwise fall back to the 'all' rows.
+function lookupActions(actions, marker_key, status, sex) {
+  const specific = actions.filter(a =>
+    a.marker_key === marker_key && a.trigger_status === status && a.applies_to_sex === sex);
+  if (specific.length > 0) return specific;
+  return actions.filter(a =>
+    a.marker_key === marker_key && a.trigger_status === status && a.applies_to_sex === 'all');
+}
+
+// Find the dose rule for (marker_key, status). Returns null if none.
+function lookupDose(doses, marker_key, status) {
+  return doses.find(d =>
+    d.trigger_marker_key === marker_key && d.trigger_status === status) || null;
+}
+
+// Substitute {{template}} variables in text. Variables not in vars are left
+// alone (so literal "{optHigh}" passes through untouched — that's the
+// preserved-bug behavior).
+function substitute(text, vars) {
+  if (text === null || text === undefined) return text;
+  return text.replace(/\{\{([a-z_]+)\}\}/g, (match, key) => {
+    if (Object.prototype.hasOwnProperty.call(vars, key)) {
+      const v = vars[key];
+      return v === null || v === undefined ? '' : String(v);
+    }
+    return match;
+  });
+}
+
+// Compute a personalized zinc-style dose: round(weight * factor / increment) * increment, capped.
+function computeDose(weight, factor, increment, cap) {
+  return Math.min(Math.round(weight * factor / increment) * increment, cap);
+}
+
+
+// ---------------------------------------------------------------------------
+// Main entry point
+// ---------------------------------------------------------------------------
+
+function generateRecommendationsV2(labs, profile, engineData) {
+  const findings = [];
+  const actions  = [];
+  const doses    = [];
+
+  // Original engine uses binary ternary `sex==='male' ? ... : ...`, which
+  // means any non-'male' value (null, undefined, 'unknown', 'other') falls
+  // through to the female branch for thresholds, labels, and ratio gates.
+  // We collapse to two effective values here so DB lookups (which have rows
+  // for 'male' and 'female' only) work the same way.
+  const rawSex = profile.sex || 'unknown';
+  const sex    = rawSex === 'male' ? 'male' : 'female';
+  const weight = profile.weight_lbs || 150;
+
+  const thresholds          = engineData.thresholds || [];
+  const ratioThresholds     = engineData.ratio_thresholds || [];
+  const findingRows         = engineData.findings || [];
+  const actionRows          = engineData.actions || [];
+  const doseRows            = engineData.supplement_doses || [];
+  const toxicThresholds     = engineData.toxic_thresholds || [];
+  const flagActions         = engineData.profile_flag_actions || [];
+
+  // Walk markers in fixed order so output ordering matches original engine.
+  for (const marker_key of MARKER_ORDER) {    // Ratio markers branch first
+    if (marker_key === 'hair_ca_mg_ratio') {
+      processRatio({
+        ratio_key: 'hair_ca_mg_ratio',
+        labs, profile, sex,
+        ratioThresholds, findingRows,
+        findings, actions, doses,
+        actionRows, doseRows
+      });
+      continue;
+    }
+    if (marker_key === 'hair_zn_cu_ratio') {
+      processRatio({
+        ratio_key: 'hair_zn_cu_ratio',
+        labs, profile, sex,
+        ratioThresholds, findingRows,
+        findings, actions, doses,
+        actionRows, doseRows
+      });
+      continue;
+    }
+
+    // Standard absolute-threshold markers
+    processMarker({
+      marker_key, labs, profile, sex, weight,
+      thresholds, findingRows, actionRows, doseRows,
+      findings, actions, doses
+    });
+  }
+
+  // Toxic elements scan
+  processToxics({ labs, toxicThresholds, findings, actions });
+
+  // Fix These FIRST — consolidated action, prepended to the front of actions
+  processFixFirst({ profile, sex, flagActions, actions });
+
+  // Standalone profile-flag actions (e.g., women's hormonal).
+  // Pass rawSex here because the original engine's hormonal check is strict:
+  // `if (sex==='female' && profile.flag_hormonal_issues)`. Using collapsed
+  // `sex` would incorrectly fire hormonal for sex='unknown'/null users.
+  processStandaloneFlags({ profile, sex: rawSex, flagActions, actions });
+
+  return { findings, priority_actions: actions, supplement_doses: doses };
+}
+
+
+// ---------------------------------------------------------------------------
+// processMarker — handle one absolute-threshold marker
+// ---------------------------------------------------------------------------
+
+function processMarker(ctx) {
+  const {
+    marker_key, labs, profile, sex, weight,
+    thresholds, findingRows, actionRows, doseRows,
+    findings, actions, doses
+  } = ctx;
+
+  const valueField = MARKER_VALUE_SOURCE[marker_key];
+  const value = labs[valueField];
+  if (value === null || value === undefined) return;
+
+  const threshold = lookupThreshold(thresholds, marker_key, sex);
+  if (!threshold) return;
+
+  // Compute status using the appropriate evaluation_mode
+  const status = evaluateStatus(value, threshold);
+  if (status === null) return;
+
+  // Map "high" → "watch" for watch_high markers (e.g. hair_calcium).
+  // Already handled inside evaluateStatus — see comments there.
+
+  // Build the finding row
+  const finding = lookupFinding(findingRows, marker_key, status, sex);
+  if (finding) {
+    const vars = {
+      value: value,
+      unit:  threshold.unit || '',
+      optimal_low:  threshold.low_threshold,
+      optimal_high: threshold.high_threshold,
+      sex_label:       sex === 'male' ? 'males' : 'females',
+      sex_label_short: sex === 'male' ? 'M' : 'F',
+    };
+    findings.push({
+      marker: MARKER_DISPLAY[marker_key],
+      value,
+      unit: threshold.unit || '',
+      status,
+      interpretation: substitute(finding.interpretation_text, vars),
+    });
+  }
+
+  // Build the dose row (computed or fixed)
+  let computedDose = null;
+  const doseRule = lookupDose(doseRows, marker_key, status);
+  if (doseRule) {
+    let doseString;
+    if (doseRule.weight_factor !== null && doseRule.weight_factor !== undefined) {
+      // Computed dose
+      computedDose = computeDose(
+        weight,
+        Number(doseRule.weight_factor),
+        Number(doseRule.dose_increment),
+        Number(doseRule.max_dose_cap)
+      );
+      doseString = computedDose + (doseRule.dose_unit || '');
+    } else {
+      doseString = doseRule.fixed_dose_text;
+    }
+    const doseVars = {
+      weight,
+      max_dose_cap: doseRule.max_dose_cap,
+      weight_factor_pct: doseRule.weight_factor !== null && doseRule.weight_factor !== undefined
+        ? Math.round(Number(doseRule.weight_factor) * 100) : null,
+    };
+    doses.push({
+      supplement: doseRule.supplement_name,
+      dose: doseString,
+      instructions: substitute(doseRule.instructions, doseVars),
+    });
+  }
+
+  // Build the action rows
+  const ruleActions = lookupActions(actionRows, marker_key, status, sex);
+  for (const a of ruleActions) {
+    const actionVars = { computed_dose: computedDose };
+    actions.push({
+      priority: a.priority,
+      title:    substitute(a.title, actionVars),
+      body:     substitute(a.body, actionVars),
+    });
+  }
+}
+
+// Evaluate status given a value and a threshold row's evaluation_mode.
+//   standard:   below low → 'low', above high → 'high', else 'optimal'
+//   high_only:  above high → 'high', else 'optimal'  (matches "val >= 90" check style via "> high - 1"? no — see below)
+//   low_only:   below low → 'low', else 'optimal'
+//   watch_high: same as standard, but high → 'watch'
+//
+// Wrinkles vs the original engine:
+//  - blood_copper uses `>= 90`. Our engine_thresholds row for blood_copper
+//    has low_threshold=0, high_threshold=90, evaluation_mode='high_only'.
+//    Using statusBetween(value, 0, 90) returns 'high' only when value > 90,
+//    which is OFF BY ONE from the original.
+//    Special-case: high_only mode triggers high when value >= high_threshold.
+//  - serum_retinol uses `> 20`. evaluation_mode='high_only',
+//    high_threshold=20, the standard `>` comparison is correct.
+//  - hair_calcium uses status(val, 40, 42) then maps 'high' → 'watch'.
+//  - hair_phosphorus uses `< 15`. low_only, low_threshold=15. `<` is right.
+//  - hair_molybdenum uses `< 0.004`. low_only, low_threshold=0.004. `<` is right.
+//
+// The blood_copper vs serum_retinol discrepancy means 'high_only' alone is
+// ambiguous about boundary semantics. We resolve it by checking the
+// original engine's exact comparator per marker:
+//   serum_retinol: `> 20` strict   → use statusBetween
+//   blood_copper:  `>= 90`         → custom inclusive comparison
+// To keep the seed table-driven AND get correct behavior, we look at
+// marker_key to decide. (When the CMS lands, encode this in a column.)
+function evaluateStatus(value, threshold) {
+  const mode = threshold.evaluation_mode;
+  const lo   = threshold.low_threshold !== null ? Number(threshold.low_threshold) : null;
+  const hi   = threshold.high_threshold !== null ? Number(threshold.high_threshold) : null;
+
+  if (mode === 'standard') {
+    return statusBetween(value, lo, hi);
+  }
+
+  if (mode === 'high_only') {
+    // blood_copper uses inclusive >=90 in the original engine.
+    // serum_retinol uses strict >20.
+    // Distinguish by marker_key.
+    if (threshold.marker_key === 'blood_copper') {
+      return value >= hi ? 'high' : 'optimal';
+    }
+    // Strict > for all other high_only markers
+    return value > hi ? 'high' : 'optimal';
+  }
+
+  if (mode === 'low_only') {
+    return value < lo ? 'low' : 'optimal';
+  }
+
+  if (mode === 'watch_high') {
+    const s = statusBetween(value, lo, hi);
+    return s === 'high' ? 'watch' : s;
+  }
+
+  return null;
+}
+
+
+// ---------------------------------------------------------------------------
+// processRatio — handle Ca:Mg and Zn:Cu ratio markers
+// ---------------------------------------------------------------------------
+
+function processRatio(ctx) {
+  const {
+    ratio_key, labs, profile, sex,
+    ratioThresholds, findingRows,
+    findings, actions, doses,
+    actionRows, doseRows
+  } = ctx;
+
+  const ratioDef = ratioThresholds.find(r => r.ratio_key === ratio_key);
+  if (!ratioDef) return;
+
+  const numerator   = labs[ratioDef.numerator_marker_key];
+  const denominator = labs[ratioDef.denominator_marker_key];
+
+  // Original engine gate: both numerator AND denominator present, and
+  // denominator > 0 (avoids divide-by-zero and matches the `> 0` check).
+  if (numerator === null || numerator === undefined) return;
+  if (denominator === null || denominator === undefined || denominator <= 0) return;
+
+  const ratio = numerator / denominator;
+  const ratioStr = ratio.toFixed(1);
+
+  // Determine status from ratio bounds.
+  // Original engine logic:
+  //   Ca:Mg < 3 → 'high'; > 11 → 'low'; else 'optimal'  (note: strict < and >)
+  //   Zn:Cu < 18 → 'low'; > 22 → 'high'; else 'optimal'
+  // The DB row encodes this via status_when_below_low and status_when_above_high.
+  const lo = Number(ratioDef.optimal_low);
+  const hi = Number(ratioDef.optimal_high);
+  let status;
+  if (ratio < lo) status = ratioDef.status_when_below_low;
+  else if (ratio > hi) status = ratioDef.status_when_above_high;
+  else status = 'optimal';
+
+  const finding = lookupFinding(findingRows, ratio_key, status, sex);
+  if (finding) {
+    const vars = {
+      ratio: ratioStr,
+      ratio_target_low:  lo,
+      ratio_target_high: hi,
+    };
+    findings.push({
+      marker: MARKER_DISPLAY[ratio_key],
+      value: labs[MARKER_VALUE_SOURCE[ratio_key]],  // emit numerator value (matches original)
+      unit: '',
+      status,
+      interpretation: substitute(finding.interpretation_text, vars),
+    });
+  }
+
+  // Ratio markers in the original engine emit NO actions or doses directly.
+  // (Zinc dose/action come from blood_zinc-low, not the Zn:Cu ratio.
+  //  Mg has no action at all.) So we deliberately do not look up actions
+  //  or doses keyed on the ratio_key.
+}
+
+
+// ---------------------------------------------------------------------------
+// processToxics — scan for elevated toxic elements
+// ---------------------------------------------------------------------------
+
+function processToxics(ctx) {
+  const { labs, toxicThresholds, findings, actions } = ctx;
+  const toxics = labs.hair_toxics || {};
+
+  // Order matters: iterate by display_order so the consolidated message
+  // text matches the original engine's hardcoded order.
+  const sorted = [...toxicThresholds].sort((a, b) =>
+    (a.display_order || 0) - (b.display_order || 0));
+
+  const messages = [];
+  for (const t of sorted) {
+    const v = toxics[t.toxic_key];
+    if (v !== null && v !== undefined && Number(v) > Number(t.threshold)) {
+      messages.push(t.message);
+    }
+  }
+
+  if (messages.length === 0) return;
+
+  // Action: joined by '\n' (matches toxicFlags.join('\n') in original)
+  actions.push({
+    priority: 'urgent',
+    title: 'Toxic element burden detected',
+    body: messages.join('\n'),
+  });
+
+  // Finding: joined by ' ' (matches toxicFlags.join(' ') in original)
+  findings.push({
+    marker: 'Toxic elements',
+    value: 'Elevated',
+    unit: '',
+    status: 'high',
+    interpretation: messages.join(' '),
+  });
+}
+
+
+// ---------------------------------------------------------------------------
+// processFixFirst — consolidated "Fix These FIRST" action, prepended
+// ---------------------------------------------------------------------------
+
+function processFixFirst(ctx) {
+  const { profile, sex, flagActions, actions } = ctx;
+
+  const fixFirstRows = flagActions
+    .filter(f => f.bucket === 'fix_first')
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  const triggered = [];
+  let titleText = 'Fix These FIRST —blocking recovery';  // fallback; rows have the same title
+  let priorityText = 'urgent';
+
+  for (const f of fixFirstRows) {
+    if (profile[f.flag_column]) {
+      triggered.push(f.body);
+      titleText = f.title;       // use the row's title (all four are identical)
+      priorityText = f.priority; // use the row's priority (all four are urgent)
+    }
+  }
+
+  if (triggered.length === 0) return;
+
+  // unshift to front of actions, matching original engine's actions.unshift(...)
+  actions.unshift({
+    priority: priorityText,
+    title: titleText,
+    body: triggered.join('\n'),
+  });
+}
+
+
+// ---------------------------------------------------------------------------
+// processStandaloneFlags — separate (non-bucketed) profile-flag actions
+// ---------------------------------------------------------------------------
+
+function processStandaloneFlags(ctx) {
+  const { profile, sex, flagActions, actions } = ctx;
+
+  const standalone = flagActions
+    .filter(f => f.bucket === 'standalone')
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+  for (const f of standalone) {
+    if (!profile[f.flag_column]) continue;
+    // Sex-gated check
+    if (f.applies_to_sex && f.applies_to_sex !== 'all' && f.applies_to_sex !== sex) continue;
+    actions.push({
+      priority: f.priority,
+      title:    f.title,
+      body:     f.body,
+    });
+  }
+}
+
+// ── ENGINE V2 SHADOW-MODE HELPER ──────────────────────────────────────────
+function compareEngineOutputs(oldOut, newOut) {
+  function deepEqualSet(a, b, path) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return ['length mismatch or non-array at ' + path];
+    if (a.length !== b.length) return ['length mismatch at ' + path + ': ' + a.length + ' vs ' + b.length];
+    const diffs = [];
+    const bRemaining = [...b];
+    for (const itemA of a) {
+      const sA = JSON.stringify(itemA);
+      const idx = bRemaining.findIndex(itemB => JSON.stringify(itemB) === sA);
+      if (idx === -1) diffs.push('OLD-only at ' + path + ': ' + sA.slice(0, 200));
+      else bRemaining.splice(idx, 1);
+    }
+    for (const itemB of bRemaining) {
+      diffs.push('NEW-only at ' + path + ': ' + JSON.stringify(itemB).slice(0, 200));
+    }
+    return diffs;
+  }
+  const all = [];
+  all.push(...deepEqualSet(oldOut.findings || [], newOut.findings || [], 'findings'));
+  all.push(...deepEqualSet(oldOut.priority_actions || [], newOut.priority_actions || [], 'priority_actions'));
+  all.push(...deepEqualSet(oldOut.supplement_doses || [], newOut.supplement_doses || [], 'supplement_doses'));
+  return all;
 }
 </script>
 </body>
