@@ -1180,7 +1180,15 @@ function showTab(name) {
   const bnavBtn = document.querySelector('.bnav-tab[data-tab="' + name + '"]');
   if (bnavBtn) bnavBtn.classList.add('active');
   if (name === 'history' && currentUser) { loadHistory(); loadEvents(); }
-  if (name === 'report' && currentUser) generateAndShowReport();
+  if (name === 'report' && currentUser) {
+    if (_historyContext) {
+      const ctx = _historyContext;
+      _historyContext = null;
+      renderReport(ctx.combined, ctx.rec, {}, ctx.blood, ctx.hair);
+    } else {
+      generateAndShowReport();
+    }
+  }
   if (name === 'comparison' && _comparisonContext) renderComparison();
 }
 
@@ -2015,6 +2023,7 @@ function buildPillsForEntry(r) {
 
 // Currently-displayed comparison context — used by Chunk D's render
 let _comparisonContext = null;
+let _historyContext = null;
 
 function viewComparison(idA, idB, kind) {
   if (!Array.isArray(allLabResults) || !allLabResults.length) {
@@ -2065,7 +2074,7 @@ function viewHistoryItem(id, kind) {
     const rec = generateRecommendationsV2(combined, {}, engineData);
     if (!rec) throw new Error('Could not generate recommendations');
 
-    renderReport(combined, rec, {}, blood, hair);
+    _historyContext = { combined, rec, blood, hair };
     showTab('report');
     // showTab('report') already sets the report tab to active — the manual class
     // toggle that used to be here was redundant and brittle (hard-coded i===2).
