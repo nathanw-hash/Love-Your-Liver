@@ -1191,6 +1191,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('user-email-display').textContent = currentUser.email;
     buildFlagsGrid();
     await loadEngineData();
+    refreshAdminStatus();
     await loadProfile();
     await loadHistory();
     await loadEvents();
@@ -1202,9 +1203,14 @@ let isAdminUser = false;
 
 async function refreshAdminStatus() {
   try {
-    const { data, error } = await sb.rpc('is_admin');
-    if (error) throw error;
-    isAdminUser = data === true;
+    const { data: sessionData } = await sb.auth.getSession();
+    if (!sessionData.session?.user) {
+      isAdminUser = false;
+    } else {
+      const { data, error } = await sb.rpc('is_admin');
+      if (error) throw error;
+      isAdminUser = data === true;
+    }
   } catch (err) {
     console.error('[admin] is_admin check failed:', err);
     isAdminUser = false;
