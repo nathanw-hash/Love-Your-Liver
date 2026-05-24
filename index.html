@@ -673,8 +673,15 @@
 
     <!-- ADMIN TAB -->
     <div class="panel" id="panel-admin">
-      <div class="card">
+      <div class="admin-toggle">
+        <button id="admin-toggle-findings" class="admin-toggle-btn active" onclick="showAdminView('findings')">Findings</button>
+        <button id="admin-toggle-log" class="admin-toggle-btn" onclick="showAdminView('log')">Edit history</button>
+      </div>
+      <div class="card" id="admin-findings-card">
         <div id="admin-findings-list"></div>
+      </div>
+      <div class="card" id="admin-log-card" style="display:none">
+        <div id="admin-log-list"></div>
       </div>
     </div>
 
@@ -1401,6 +1408,72 @@ async function saveEditFinding(id) {
     }
   } catch (err) {
     if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
+}
+
+function showAdminView(which) {
+  const fCard = document.getElementById('admin-findings-card');
+  const lCard = document.getElementById('admin-log-card');
+  const fBtn = document.getElementById('admin-toggle-findings');
+  const lBtn = document.getElementById('admin-toggle-log');
+  if (which === 'log') {
+    if (fCard) fCard.style.display = 'none';
+    if (lCard) lCard.style.display = 'block';
+    if (fBtn) fBtn.classList.remove('active');
+    if (lBtn) lBtn.classList.add('active');
+    renderEditLog();
+  } else {
+    if (fCard) fCard.style.display = 'block';
+    if (lCard) lCard.style.display = 'none';
+    if (fBtn) fBtn.classList.add('active');
+    if (lBtn) lBtn.classList.remove('active');
+  }
+}
+
+async function renderEditLog() {
+  const host = document.getElementById('admin-log-list');
+  if (!host) return;
+  host.innerHTML = '<div class="admin-empty">Loading edit history…</div>';
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  try {
+    const { data: logRows, error } = await dbSelect('engine_edit_log', { order: 'edited_at.desc', limit: '100' });
+    if (error) { host.innerHTML = '<div class="admin-empty">Could not load edit history: ' + esc(JSON.stringify(error)) + '</div>'; return; }
+    if (!Array.isArray(logRows) || logRows.length === 0) {
+      host.innerHTML = '<div class="admin-empty">No edits recorded yet.</div>';
+      return;
+    }
+    const ids = [...new Set(logRows.map(r => r.editor_id).filter(Boolean))];
+    const nameById = {};
+    for (const id of ids) {
+      try {
+        const { data: pr } = await dbSelect('profiles', { id: 'eq.' + id });
+        const row = Array.isArray(pr) ? pr[0] : pr;
+        if (row) nameById[id] = row.display_name || row.name || (id.slice(0, 8) + '…');
+      } catch (e) { /* fall through to id */ }
+    }
+    const fmt = ts => {
+      try { return new Date(ts).toLocaleString(); } catch (e) { return ts; }
+    };
+    let html = '<div class="admin-head"><div><div class="admin-title">Edit history</div>' +
+               '<div class="admin-sub">' + logRows.length + ' change' + (logRows.length === 1 ? '' : 's') + ' \u00b7 newest first</div></div></div>';
+    logRows.forEach(r => {
+      const who = nameById[r.editor_id] || (r.editor_id ? r.editor_id.slice(0, 8) + '…' : 'unknown');
+      html += '<div class="admin-log-row">';
+      html += '<div class="admin-log-meta">' +
+                '<span class="admin-log-when">' + esc(fmt(r.edited_at)) + '</span>' +
+                '<span class="admin-log-who">' + esc(who) + '</span>' +
+              '</div>';
+      html += '<div class="admin-log-target"><span class="admin-marker">' + esc(r.table_name) + '</span>' +
+              ' \u00b7 ' + esc(r.field_name) + '</div>';
+      html += '<div class="admin-log-diff">' +
+                '<div class="admin-log-old"><span class="admin-log-tag">was</span> ' + esc(r.old_value) + '</div>' +
+                '<div class="admin-log-new"><span class="admin-log-tag">now</span> ' + esc(r.new_value) + '</div>' +
+              '</div>';
+      html += '</div>';
+    });
+    host.innerHTML = html;
+  } catch (err) {
+    host.innerHTML = '<div class="admin-empty">Error loading edit history.</div>';
   }
 }
 
