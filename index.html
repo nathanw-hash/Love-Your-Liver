@@ -266,6 +266,29 @@
   .panel { display: none; }
   .panel.active { display: block; }
 
+  /* ADMIN ENGINE FINDINGS (read-only) */
+  .admin-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .admin-title { font-size:18px; font-weight:500; }
+  .admin-sub { font-size:13px; color:var(--muted, #888); margin-top:2px; }
+  .admin-counts { display:flex; gap:8px; }
+  .admin-pill { background:var(--bg, #f1efe8); color:var(--muted, #5f5e5a); font-size:12px; padding:4px 10px; border-radius:8px; }
+  .admin-card { border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:12px; }
+  .admin-card-head { display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--bg, rgba(0,0,0,0.03)); border-bottom:1px solid var(--border); }
+  .admin-marker { font-family:monospace; font-size:13px; font-weight:500; }
+  .admin-card-meta { font-size:12px; color:var(--muted, #999); }
+  .admin-row { padding:12px 14px; border-bottom:1px solid var(--border); }
+  .admin-row.last { border-bottom:none; }
+  .admin-badges { display:flex; gap:8px; margin-bottom:6px; }
+  .admin-badge { font-size:11px; padding:2px 8px; border-radius:8px; }
+  .st-low { background:#e6f1fb; color:#0c447c; }
+  .st-high { background:#faeeda; color:#854f0b; }
+  .st-opt { background:#eaf3de; color:#27500a; }
+  .st-other { background:#f1efe8; color:#444; }
+  .st-sex { background:#f1efe8; color:#5f5e5a; }
+  .admin-interp { font-size:14px; line-height:1.6; }
+  .admin-notes { font-size:12px; color:var(--muted, #999); font-style:italic; margin-top:6px; }
+  .admin-empty { padding:24px; text-align:center; color:var(--muted, #999); }
+
   /* CARDS */
   .card {
     background: var(--surface);
@@ -629,6 +652,7 @@
       <button class="tab" onclick="showTab('labs')">Enter Labs</button>
       <button class="tab" onclick="showTab('report')">Report</button>
       <button class="tab" onclick="showTab('history')">History</button>
+      <button class="tab admin-only" style="display:none" onclick="showTab('admin')">Admin</button>
     </div>
     <div class="user-menu">
       <span class="user-email" id="user-email-display"></span>
@@ -637,6 +661,13 @@
   </div>
 
   <div class="main">
+
+    <!-- ADMIN TAB -->
+    <div class="panel" id="panel-admin">
+      <div class="card">
+        <div id="admin-findings-list"></div>
+      </div>
+    </div>
 
     <!-- PROFILE TAB -->
     <div class="panel active" id="panel-profile">
@@ -1160,6 +1191,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
     document.getElementById('user-email-display').textContent = currentUser.email;
     buildFlagsGrid();
     await loadEngineData();
+    await refreshAdminStatus();
     await loadProfile();
     await loadHistory();
     await loadEvents();
@@ -1167,6 +1199,22 @@ sb.auth.onAuthStateChange(async (event, session) => {
 });
 
 // â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let isAdminUser = false;
+
+async function refreshAdminStatus() {
+  try {
+    const { data, error } = await sb.rpc('is_admin');
+    if (error) throw error;
+    isAdminUser = data === true;
+  } catch (err) {
+    console.error('[admin] is_admin check failed:', err);
+    isAdminUser = false;
+  }
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdminUser ? '' : 'none';
+  });
+}
+
 function showTab(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1190,6 +1238,61 @@ function showTab(name) {
     }
   }
   if (name === 'comparison' && _comparisonContext) renderComparison();
+  if (name === 'admin') {
+    if (!isAdminUser) { showTab('profile'); return; }
+    renderAdminFindings();
+  }
+}
+
+function renderAdminFindings() {
+  const host = document.getElementById('admin-findings-list');
+  if (!host) return;
+  if (!engineData || !Array.isArray(engineData.findings)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const findings = engineData.findings;
+  const groups = {};
+  findings.forEach(f => {
+    const key = f.marker_key || '(no marker)';
+    (groups[key] = groups[key] || []).push(f);
+  });
+  const markerKeys = Object.keys(groups).sort();
+  const statusClass = s => ({ low: 'st-low', high: 'st-high', optimal: 'st-opt' })[String(s || '').toLowerCase()] || 'st-other';
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Engine findings</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + findings.length + ' findings</span>' +
+        '<span class="admin-pill">' + markerKeys.length + ' markers</span>' +
+      '</div>' +
+    '</div>';
+  markerKeys.forEach(mk => {
+    const rows = groups[mk];
+    const sexGated = rows.some(r => {
+      const s = String(r.applies_to_sex || '').toLowerCase();
+      return s && s !== 'all' && s !== 'any';
+    });
+    html += '<div class="admin-card">';
+    html += '<div class="admin-card-head"><span class="admin-marker">' + esc(mk) + '</span>' +
+            '<span class="admin-card-meta">' + (sexGated ? 'sex-gated \u00b7 ' : '') + rows.length + ' findings</span></div>';
+    rows.forEach((r, i) => {
+      const last = i === rows.length - 1;
+      html += '<div class="admin-row' + (last ? ' last' : '') + '">';
+      html += '<div class="admin-badges">' +
+                '<span class="admin-badge ' + statusClass(r.status) + '">' + esc(r.status) + '</span>' +
+                '<span class="admin-badge st-sex">' + esc(r.applies_to_sex || 'all') + '</span></div>';
+      html += '<div class="admin-interp">' + esc(r.interpretation_text) + '</div>';
+      if (r.notes != null && String(r.notes).trim() !== '') {
+        html += '<div class="admin-notes">notes: ' + esc(r.notes) + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  host.innerHTML = html;
 }
 
 // Field definitions per kind — label + threshold logic shared with loadHistory pills
