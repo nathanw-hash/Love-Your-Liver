@@ -288,6 +288,15 @@
   .admin-interp { font-size:14px; line-height:1.6; }
   .admin-notes { font-size:12px; color:var(--muted, #999); font-style:italic; margin-top:6px; }
   .admin-empty { padding:24px; text-align:center; color:var(--muted, #999); }
+  .admin-edit-btn { margin-left:auto; font-size:12px; padding:2px 10px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
+  .admin-edit-btn:hover { background:var(--bg, rgba(0,0,0,0.04)); }
+  .admin-badges { align-items:center; }
+  .admin-edit-ta { width:100%; min-height:80px; font-size:14px; line-height:1.6; padding:8px 10px; border:1px solid var(--border); border-radius:8px; box-sizing:border-box; font-family:inherit; resize:vertical; }
+  .admin-edit-actions { display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .admin-save-btn { font-size:13px; padding:4px 14px; border:none; border-radius:8px; background:#2f6b43; color:#fff; cursor:pointer; }
+  .admin-cancel-btn { font-size:13px; padding:4px 14px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
+  .admin-edit-status { font-size:12px; color:var(--muted, #888); }
+  .admin-save-note { margin-bottom:12px; padding:10px 14px; font-size:13px; line-height:1.5; border:1px solid var(--border); border-radius:8px; background:var(--bg, #f1efe8); color:var(--muted, #5f5e5a); }
 
   /* CARDS */
   .card {
@@ -1053,6 +1062,41 @@ async function dbUpdate(table, id, payload) {
   return { data: Array.isArray(data) ? data[0] : data, error: res.ok ? null : data };
 }
 
+let _currentProfileId = null;
+async function getCurrentProfileId() {
+  if (_currentProfileId) return _currentProfileId;
+  const { data } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
+  const row = Array.isArray(data) ? data[0] : data;
+  _currentProfileId = row ? row.id : null;
+  return _currentProfileId;
+}
+
+async function logEngineEdit(tableName, rowId, oldRow, newValues, editorProfileId) {
+  const rows = [];
+  for (const field of Object.keys(newValues)) {
+    const oldVal = oldRow ? oldRow[field] : null;
+    const newVal = newValues[field];
+    if (String(oldVal == null ? '' : oldVal) === String(newVal == null ? '' : newVal)) continue;
+    rows.push({
+      editor_id:  editorProfileId,
+      table_name: tableName,
+      row_id:     rowId,
+      field_name: field,
+      old_value:  oldVal == null ? null : String(oldVal),
+      new_value:  newVal == null ? null : String(newVal),
+      action:     'update'
+    });
+  }
+  if (rows.length === 0) return { logged: 0, error: null };
+  const res = await fetch(SUPABASE_URL + '/rest/v1/engine_edit_log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + getToken(), 'Prefer': 'return=minimal' },
+    body: JSON.stringify(rows)
+  });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); return { logged: 0, error: err }; }
+  return { logged: rows.length, error: null };
+}
+
 async function dbDelete(table, id) {
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
     method: 'DELETE',
@@ -1274,6 +1318,7 @@ function renderAdminFindings() {
         '<span class="admin-pill">' + markerKeys.length + ' markers</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-save-note" class="admin-save-note" style="display:none"></div>';
   markerKeys.forEach(mk => {
     const rows = groups[mk];
     const sexGated = rows.some(r => {
@@ -1285,11 +1330,25 @@ function renderAdminFindings() {
             '<span class="admin-card-meta">' + (sexGated ? 'sex-gated \u00b7 ' : '') + rows.length + ' findings</span></div>';
     rows.forEach((r, i) => {
       const last = i === rows.length - 1;
+      const editing = _editingFindingId === r.id;
       html += '<div class="admin-row' + (last ? ' last' : '') + '">';
       html += '<div class="admin-badges">' +
                 '<span class="admin-badge ' + statusClass(r.status) + '">' + esc(r.status) + '</span>' +
-                '<span class="admin-badge st-sex">' + esc(r.applies_to_sex || 'all') + '</span></div>';
-      html += '<div class="admin-interp">' + esc(r.interpretation_text) + '</div>';
+                '<span class="admin-badge st-sex">' + esc(r.applies_to_sex || 'all') + '</span>';
+      if (!editing) {
+        html += '<button class="admin-edit-btn" onclick="startEditFinding(\'' + r.id + '\')">Edit</button>';
+      }
+      html += '</div>';
+      if (editing) {
+        html += '<textarea id="edit-ta-' + r.id + '" class="admin-edit-ta">' + esc(r.interpretation_text) + '</textarea>';
+        html += '<div class="admin-edit-actions">' +
+                  '<button class="admin-save-btn" onclick="saveEditFinding(\'' + r.id + '\')">Save</button>' +
+                  '<button class="admin-cancel-btn" onclick="cancelEditFinding()">Cancel</button>' +
+                  '<span id="edit-status-' + r.id + '" class="admin-edit-status"></span>' +
+                '</div>';
+      } else {
+        html += '<div class="admin-interp">' + esc(r.interpretation_text) + '</div>';
+      }
       if (r.notes != null && String(r.notes).trim() !== '') {
         html += '<div class="admin-notes">notes: ' + esc(r.notes) + '</div>';
       }
@@ -1298,6 +1357,51 @@ function renderAdminFindings() {
     html += '</div>';
   });
   host.innerHTML = html;
+}
+let _editingFindingId = null;
+
+function startEditFinding(id) {
+  _editingFindingId = id;
+  renderAdminFindings();
+}
+function cancelEditFinding() {
+  _editingFindingId = null;
+  renderAdminFindings();
+}
+
+async function saveEditFinding(id) {
+  const ta = document.getElementById('edit-ta-' + id);
+  const statusEl = document.getElementById('edit-status-' + id);
+  if (!ta) return;
+  const newText = ta.value;
+  const oldRow = (engineData.findings || []).find(f => f.id === id);
+  if (oldRow && String(oldRow.interpretation_text || '') === String(newText || '')) {
+    cancelEditFinding();
+    return;
+  }
+  if (statusEl) statusEl.textContent = 'Saving…';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_findings', id, {
+      interpretation_text: newText,
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    });
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_findings', id, oldRow,
+      { interpretation_text: newText }, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingFindingId = null;
+    renderAdminFindings();
+    const note = document.getElementById('admin-save-note');
+    if (note) {
+      note.style.display = 'block';
+      note.textContent = 'Saved. This was a data edit (finding text) — the parity harness guards engine-logic changes, not data, so a re-run isn\u2019t required here. Re-run it anyway for the habit, and always before editing thresholds or doses.';
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
 }
 
 // Field definitions per kind — label + threshold logic shared with loadHistory pills
