@@ -708,6 +708,8 @@
         <button id="admin-toggle-thresholds" class="admin-toggle-btn" onclick="showAdminView('thresholds')">Thresholds</button>
         <button id="admin-toggle-ratios" class="admin-toggle-btn" onclick="showAdminView('ratios')">Ratios</button>
         <button id="admin-toggle-toxics" class="admin-toggle-btn" onclick="showAdminView('toxics')">Toxics</button>
+        <button id="admin-toggle-doses" class="admin-toggle-btn" onclick="showAdminView('doses')">Doses</button>
+        <button id="admin-toggle-flags" class="admin-toggle-btn" onclick="showAdminView('flags')">Flags</button>
         <button id="admin-toggle-log" class="admin-toggle-btn" onclick="showAdminView('log')">Edit history</button>
       </div>
       <div class="card" id="admin-findings-card">
@@ -724,6 +726,12 @@
       </div>
       <div class="card" id="admin-toxics-card" style="display:none">
         <div id="admin-toxics-list"></div>
+      </div>
+      <div class="card" id="admin-doses-card" style="display:none">
+        <div id="admin-doses-list"></div>
+      </div>
+      <div class="card" id="admin-flags-card" style="display:none">
+        <div id="admin-flags-list"></div>
       </div>
       <div class="card" id="admin-log-card" style="display:none">
         <div id="admin-log-list"></div>
@@ -1618,6 +1626,117 @@ function renderAdminToxics() {
   host.innerHTML = html;
 }
 
+function renderAdminDoses() {
+  const host = document.getElementById('admin-doses-list');
+  if (!host) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!engineData || !Array.isArray(engineData.supplement_doses)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const rows = engineData.supplement_doses.slice().sort((a, b) => {
+    const ka = String(a.trigger_marker_key || ''), kb = String(b.trigger_marker_key || '');
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+  const statusClass = s => ({ low: 'st-low', high: 'st-high', optimal: 'st-opt' })[String(s || '').toLowerCase()] || 'st-other';
+  const hasVal = v => v !== null && v !== undefined && String(v).trim() !== '';
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Supplement doses</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + rows.length + ' doses</span>' +
+      '</div>' +
+    '</div>';
+  rows.forEach((d, i) => {
+    const computed = hasVal(d.weight_factor);
+    const last = i === rows.length - 1;
+    html += '<div class="admin-card">';
+    html += '<div class="admin-card-head"><span class="admin-marker">' + esc(d.supplement_name || '(unnamed)') + '</span>' +
+            '<span class="admin-card-meta">' + (computed ? 'weight-computed' : 'fixed dose') + '</span></div>';
+    html += '<div class="admin-row last">';
+    html += '<div class="admin-badges">' +
+              '<span class="admin-badge st-other">' + esc(d.trigger_marker_key || '\u2014') + '</span>' +
+              '<span class="admin-badge ' + statusClass(d.trigger_status) + '">' + esc(d.trigger_status || '\u2014') + '</span>' +
+              '<span class="admin-badge st-sex">' + (computed ? 'computed' : 'fixed') + '</span>' +
+            '</div>';
+    if (computed) {
+      const pct = Math.round(Number(d.weight_factor) * 100);
+      const incr = hasVal(d.dose_increment) ? Number(d.dose_increment) : null;
+      const cap  = hasVal(d.max_dose_cap) ? Number(d.max_dose_cap) : null;
+      const unit = d.dose_unit || '';
+      let formula = pct + '% of body weight';
+      if (incr !== null) formula += ', rounded to ' + incr + unit + ' increments';
+      if (cap !== null)  formula += ', capped at ' + cap + unit;
+      html += '<div class="admin-action-title">' + esc(formula) + '</div>';
+    } else {
+      html += '<div class="admin-action-title">' + esc(d.fixed_dose_text || '\u2014') + '</div>';
+    }
+    if (hasVal(d.instructions)) {
+      html += '<div class="admin-interp">' + esc(d.instructions) + '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+  });
+  host.innerHTML = html;
+}
+
+function renderAdminFlags() {
+  const host = document.getElementById('admin-flags-list');
+  if (!host) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!engineData || !Array.isArray(engineData.profile_flag_actions)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const rows = engineData.profile_flag_actions;
+  const buckets = {};
+  rows.forEach(f => {
+    const key = f.bucket || '(no bucket)';
+    (buckets[key] = buckets[key] || []).push(f);
+  });
+  // Show fix_first first, then standalone, then anything else.
+  const order = ['fix_first', 'standalone'];
+  const bucketKeys = Object.keys(buckets).sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
+  const bucketLabel = b => ({ fix_first: 'Fix These FIRST (consolidated)', standalone: 'Standalone actions' })[b] || b;
+  const priClass = p => ({ urgent: 'st-high', action: 'st-low', watch: 'st-other' })[String(p || '').toLowerCase()] || 'st-other';
+  const hasVal = v => v !== null && v !== undefined && String(v).trim() !== '';
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Profile flag actions</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 fired by profile flags</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + rows.length + ' flags</span>' +
+        '<span class="admin-pill">' + bucketKeys.length + ' buckets</span>' +
+      '</div>' +
+    '</div>';
+  bucketKeys.forEach(bk => {
+    const items = buckets[bk].slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    html += '<div class="admin-card">';
+    html += '<div class="admin-card-head"><span class="admin-marker">' + esc(bucketLabel(bk)) + '</span>' +
+            '<span class="admin-card-meta">' + items.length + ' flags</span></div>';
+    items.forEach((f, i) => {
+      const last = i === items.length - 1;
+      html += '<div class="admin-row' + (last ? ' last' : '') + '">';
+      html += '<div class="admin-badges">' +
+                '<span class="admin-badge st-other">' + esc(f.flag_column || '\u2014') + '</span>' +
+                '<span class="admin-badge ' + priClass(f.priority) + '">priority: ' + esc(f.priority || '\u2014') + '</span>' +
+                '<span class="admin-badge st-sex">' + esc(f.applies_to_sex || 'all') + '</span>' +
+              '</div>';
+      if (hasVal(f.title)) {
+        html += '<div class="admin-action-title">' + esc(f.title) + '</div>';
+      }
+      html += '<div class="admin-interp">' + esc(f.body) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  host.innerHTML = html;
+}
+
 function startEditFinding(id) {
   _editingFindingId = id;
   renderAdminFindings();
@@ -1740,6 +1859,8 @@ function showAdminView(which) {
     thresholds: { card: 'admin-thresholds-card', btn: 'admin-toggle-thresholds', render: renderAdminThresholds },
     ratios:     { card: 'admin-ratios-card',     btn: 'admin-toggle-ratios',     render: renderAdminRatios },
     toxics:     { card: 'admin-toxics-card',     btn: 'admin-toggle-toxics',     render: renderAdminToxics },
+    doses:      { card: 'admin-doses-card',      btn: 'admin-toggle-doses',      render: renderAdminDoses },
+    flags:      { card: 'admin-flags-card',      btn: 'admin-toggle-flags',      render: renderAdminFlags },
     log:        { card: 'admin-log-card',        btn: 'admin-toggle-log',        render: renderEditLog }
   };
   if (!views[which]) which = 'findings';
