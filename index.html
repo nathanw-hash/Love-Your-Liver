@@ -287,16 +287,30 @@
   .st-sex { background:#f1efe8; color:#5f5e5a; }
   .admin-interp { font-size:14px; line-height:1.6; }
   .admin-notes { font-size:12px; color:var(--muted, #999); font-style:italic; margin-top:6px; }
+  .admin-action-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+  .admin-thresh-table { display:flex; flex-direction:column; }
+  .admin-thresh-row { display:grid; grid-template-columns:2fr 0.8fr 1.2fr 0.9fr 0.9fr 0.9fr; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:baseline; }
+  .admin-thresh-head { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted, #888); }
+  .admin-thresh-marker { font-weight:500; }
   .admin-empty { padding:24px; text-align:center; color:var(--muted, #999); }
   .admin-edit-btn { margin-left:auto; font-size:12px; padding:2px 10px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
   .admin-edit-btn:hover { background:var(--bg, rgba(0,0,0,0.04)); }
   .admin-badges { align-items:center; }
   .admin-edit-ta { width:100%; min-height:80px; font-size:14px; line-height:1.6; padding:8px 10px; border:1px solid var(--border); border-radius:8px; box-sizing:border-box; font-family:inherit; resize:vertical; }
+  .admin-edit-label { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted, #888); margin:8px 0 4px; }
+  .admin-edit-label.first { margin-top:0; }
+  .admin-edit-ta.notes { min-height:56px; font-style:italic; }
   .admin-edit-actions { display:flex; align-items:center; gap:8px; margin-top:8px; }
   .admin-save-btn { font-size:13px; padding:4px 14px; border:none; border-radius:8px; background:#2f6b43; color:#fff; cursor:pointer; }
   .admin-cancel-btn { font-size:13px; padding:4px 14px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
   .admin-edit-status { font-size:12px; color:var(--muted, #888); }
   .admin-save-note { margin-bottom:12px; padding:10px 14px; font-size:13px; line-height:1.5; border:1px solid var(--border); border-radius:8px; background:var(--bg, #f1efe8); color:var(--muted, #5f5e5a); }
+  .admin-save-note-warn { border-color:#c97a2b; background:#fdf3e7; color:#8a4b12; font-weight:500; }
+  .admin-engine-fields { border:1px solid #e7c9a3; background:#fdf8f1; border-radius:8px; padding:10px 12px; margin:8px 0 4px; }
+  .admin-engine-warn { font-size:12px; color:#8a4b12; margin-bottom:8px; line-height:1.4; }
+  .admin-engine-row { display:flex; gap:16px; flex-wrap:wrap; }
+  .admin-engine-field { flex:1; min-width:120px; }
+  .admin-engine-select { width:100%; font-size:14px; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#fff; font-family:inherit; box-sizing:border-box; }
   .admin-toggle { display:flex; gap:8px; margin-bottom:16px; }
   .admin-toggle-btn { font-size:14px; padding:6px 16px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
   .admin-toggle-btn.active { background:#2f6b43; color:#fff; border-color:#2f6b43; }
@@ -687,10 +701,18 @@
     <div class="panel" id="panel-admin">
       <div class="admin-toggle">
         <button id="admin-toggle-findings" class="admin-toggle-btn active" onclick="showAdminView('findings')">Findings</button>
+        <button id="admin-toggle-actions" class="admin-toggle-btn" onclick="showAdminView('actions')">Actions</button>
+        <button id="admin-toggle-thresholds" class="admin-toggle-btn" onclick="showAdminView('thresholds')">Thresholds</button>
         <button id="admin-toggle-log" class="admin-toggle-btn" onclick="showAdminView('log')">Edit history</button>
       </div>
       <div class="card" id="admin-findings-card">
         <div id="admin-findings-list"></div>
+      </div>
+      <div class="card" id="admin-actions-card" style="display:none">
+        <div id="admin-actions-list"></div>
+      </div>
+      <div class="card" id="admin-thresholds-card" style="display:none">
+        <div id="admin-thresholds-list"></div>
       </div>
       <div class="card" id="admin-log-card" style="display:none">
         <div id="admin-log-list"></div>
@@ -1312,6 +1334,27 @@ function showTab(name) {
   }
 }
 
+// Build a <select> constrained to a valid vocabulary. If the current value is
+// off-vocab (unexpected DB value), it is preserved as a selected option flagged
+// "(current)" so editing never silently drops it — the admin must consciously
+// pick a valid value.
+function buildSelect(id, validValues, current) {
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const cur = current == null ? '' : String(current);
+  const opts = validValues.slice();
+  const offVocab = cur !== '' && opts.indexOf(cur) === -1;
+  let html = '<select id="' + id + '" class="admin-engine-select">';
+  if (offVocab) {
+    html += '<option value="' + esc(cur) + '" selected>' + esc(cur) + ' (current \u2014 off-vocab)</option>';
+  }
+  opts.forEach(v => {
+    const sel = (!offVocab && v === cur) ? ' selected' : '';
+    html += '<option value="' + esc(v) + '"' + sel + '>' + esc(v) + '</option>';
+  });
+  html += '</select>';
+  return html;
+}
+
 function renderAdminFindings() {
   const host = document.getElementById('admin-findings-list');
   if (!host) return;
@@ -1359,7 +1402,23 @@ function renderAdminFindings() {
       }
       html += '</div>';
       if (editing) {
+        html += '<div class="admin-engine-fields">';
+        html += '<div class="admin-engine-warn">\u26a0 Engine-logic fields \u2014 the engine selects findings on these. Changing them requires a parity harness re-run.</div>';
+        html += '<div class="admin-engine-row">';
+        html += '<div class="admin-engine-field">';
+        html += '<label class="admin-edit-label first" for="edit-status-sel-' + r.id + '">Status</label>';
+        html += buildSelect('edit-status-sel-' + r.id, ['low','high','optimal'], r.status);
+        html += '</div>';
+        html += '<div class="admin-engine-field">';
+        html += '<label class="admin-edit-label first" for="edit-sex-sel-' + r.id + '">Applies to sex</label>';
+        html += buildSelect('edit-sex-sel-' + r.id, ['all','female','male'], r.applies_to_sex || 'all');
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '<label class="admin-edit-label first" for="edit-ta-' + r.id + '">Interpretation text</label>';
         html += '<textarea id="edit-ta-' + r.id + '" class="admin-edit-ta">' + esc(r.interpretation_text) + '</textarea>';
+        html += '<label class="admin-edit-label" for="edit-notes-ta-' + r.id + '">Notes</label>';
+        html += '<textarea id="edit-notes-ta-' + r.id + '" class="admin-edit-ta notes" placeholder="(no notes)">' + esc(r.notes) + '</textarea>';
         html += '<div class="admin-edit-actions">' +
                   '<button class="admin-save-btn" onclick="saveEditFinding(\'' + r.id + '\')">Save</button>' +
                   '<button class="admin-cancel-btn" onclick="cancelEditFinding()">Cancel</button>' +
@@ -1367,9 +1426,9 @@ function renderAdminFindings() {
                 '</div>';
       } else {
         html += '<div class="admin-interp">' + esc(r.interpretation_text) + '</div>';
-      }
-      if (r.notes != null && String(r.notes).trim() !== '') {
-        html += '<div class="admin-notes">notes: ' + esc(r.notes) + '</div>';
+        if (r.notes != null && String(r.notes).trim() !== '') {
+          html += '<div class="admin-notes">notes: ' + esc(r.notes) + '</div>';
+        }
       }
       html += '</div>';
     });
@@ -1378,6 +1437,98 @@ function renderAdminFindings() {
   host.innerHTML = html;
 }
 let _editingFindingId = null;
+
+function renderAdminActions() {
+  const host = document.getElementById('admin-actions-list');
+  if (!host) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!engineData || !Array.isArray(engineData.actions)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const actions = engineData.actions;
+  const groups = {};
+  actions.forEach(a => {
+    const key = a.marker_key || '(no marker)';
+    (groups[key] = groups[key] || []).push(a);
+  });
+  const markerKeys = Object.keys(groups).sort();
+  const statusClass = s => ({ low: 'st-low', high: 'st-high', optimal: 'st-opt' })[String(s || '').toLowerCase()] || 'st-other';
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Engine actions</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + actions.length + ' actions</span>' +
+        '<span class="admin-pill">' + markerKeys.length + ' markers</span>' +
+      '</div>' +
+    '</div>';
+  markerKeys.forEach(mk => {
+    const rows = groups[mk].slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    html += '<div class="admin-card">';
+    html += '<div class="admin-card-head"><span class="admin-marker">' + esc(mk) + '</span>' +
+            '<span class="admin-card-meta">' + rows.length + ' actions</span></div>';
+    rows.forEach((a, i) => {
+      const last = i === rows.length - 1;
+      html += '<div class="admin-row' + (last ? ' last' : '') + '">';
+      html += '<div class="admin-badges">' +
+                '<span class="admin-badge ' + statusClass(a.trigger_status) + '">' + esc(a.trigger_status) + '</span>' +
+                '<span class="admin-badge st-sex">' + esc(a.applies_to_sex || 'all') + '</span>';
+      if (a.priority != null && String(a.priority).trim() !== '') {
+        html += '<span class="admin-badge st-other">priority: ' + esc(a.priority) + '</span>';
+      }
+      html += '</div>';
+      if (a.title != null && String(a.title).trim() !== '') {
+        html += '<div class="admin-action-title">' + esc(a.title) + '</div>';
+      }
+      html += '<div class="admin-interp">' + esc(a.body) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  host.innerHTML = html;
+}
+
+function renderAdminThresholds() {
+  const host = document.getElementById('admin-thresholds-list');
+  if (!host) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!engineData || !Array.isArray(engineData.thresholds)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const thresholds = engineData.thresholds.slice().sort((a, b) => {
+    const ma = String(a.marker_key || ''), mb = String(b.marker_key || '');
+    if (ma !== mb) return ma < mb ? -1 : 1;
+    return String(a.sex || '').localeCompare(String(b.sex || ''));
+  });
+  const fmtNum = v => (v === null || v === undefined || v === '') ? '\u2014' : String(v);
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Engine thresholds</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + thresholds.length + ' thresholds</span>' +
+      '</div>' +
+    '</div>';
+  html += '<div class="admin-thresh-table">';
+  html += '<div class="admin-thresh-row admin-thresh-head">' +
+            '<span>Marker</span><span>Sex</span><span>Mode</span>' +
+            '<span>Low</span><span>High</span><span>Unit</span>' +
+          '</div>';
+  thresholds.forEach(t => {
+    html += '<div class="admin-thresh-row">' +
+              '<span class="admin-thresh-marker">' + esc(t.marker_key) + '</span>' +
+              '<span>' + esc(t.sex || 'all') + '</span>' +
+              '<span>' + esc(t.evaluation_mode || '\u2014') + '</span>' +
+              '<span>' + esc(fmtNum(t.low_threshold)) + '</span>' +
+              '<span>' + esc(fmtNum(t.high_threshold)) + '</span>' +
+              '<span>' + esc(t.unit || '') + '</span>' +
+            '</div>';
+  });
+  html += '</div>';
+  host.innerHTML = html;
+}
 
 function startEditFinding(id) {
   _editingFindingId = id;
@@ -1390,25 +1541,64 @@ function cancelEditFinding() {
 
 async function saveEditFinding(id) {
   const ta = document.getElementById('edit-ta-' + id);
+  const notesTa = document.getElementById('edit-notes-ta-' + id);
+  const statusSel = document.getElementById('edit-status-sel-' + id);
+  const sexSel = document.getElementById('edit-sex-sel-' + id);
   const statusEl = document.getElementById('edit-status-' + id);
   if (!ta) return;
   const newText = ta.value;
+  const newNotes = notesTa ? notesTa.value : null;
+  const newStatus = statusSel ? statusSel.value : null;
+  const newSex = sexSel ? sexSel.value : null;
   const oldRow = (engineData.findings || []).find(f => f.id === id);
-  if (oldRow && String(oldRow.interpretation_text || '') === String(newText || '')) {
+
+  // Normalize for comparison: notes is nullable, so treat '' and null as equal.
+  const norm = v => String(v == null ? '' : v);
+  const textChanged   = oldRow ? norm(oldRow.interpretation_text) !== norm(newText)  : true;
+  const notesChanged  = (notesTa  != null) && (oldRow ? norm(oldRow.notes) !== norm(newNotes) : true);
+  const statusChanged = (statusSel != null) && (oldRow ? norm(oldRow.status) !== norm(newStatus) : true);
+  const sexChanged    = (sexSel    != null) && (oldRow ? norm(oldRow.applies_to_sex) !== norm(newSex) : true);
+
+  if (!textChanged && !notesChanged && !statusChanged && !sexChanged) {
     cancelEditFinding();
     return;
   }
+
+  // Engine-logic fields are the ones the engine SELECTS findings on.
+  // Editing them changes engine behavior and demands a parity harness re-run.
+  const engineLogicChanged = statusChanged || sexChanged;
+  if (engineLogicChanged) {
+    const parts = [];
+    if (statusChanged) parts.push('status: "' + norm(oldRow && oldRow.status) + '" \u2192 "' + norm(newStatus) + '"');
+    if (sexChanged)    parts.push('applies_to_sex: "' + norm(oldRow && oldRow.applies_to_sex) + '" \u2192 "' + norm(newSex) + '"');
+    const ok = window.confirm(
+      'You are changing engine-logic fields the engine uses to SELECT this finding:\n\n  ' +
+      parts.join('\n  ') +
+      '\n\nThis changes which finding shows for a given marker/status/sex. ' +
+      'After saving you MUST re-run the parity harness on your laptop before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) {
+      if (statusEl) statusEl.textContent = 'Cancelled — no changes saved.';
+      return;
+    }
+  }
+
+  // Build only the fields that actually changed. Empty notes is stored as null.
+  const changes = {};
+  if (textChanged)   changes.interpretation_text = newText;
+  if (notesChanged)  changes.notes = (newNotes != null && newNotes.trim() !== '') ? newNotes : null;
+  if (statusChanged) changes.status = newStatus;
+  if (sexChanged)    changes.applies_to_sex = newSex;
+
   if (statusEl) statusEl.textContent = 'Saving…';
   try {
     const profileId = await getCurrentProfileId();
-    const { error: updErr } = await dbUpdate('engine_findings', id, {
-      interpretation_text: newText,
+    const { error: updErr } = await dbUpdate('engine_findings', id, Object.assign({}, changes, {
       updated_at: new Date().toISOString(),
       updated_by: profileId
-    });
+    }));
     if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
-    const { error: logErr } = await logEngineEdit('engine_findings', id, oldRow,
-      { interpretation_text: newText }, profileId);
+    const { error: logErr } = await logEngineEdit('engine_findings', id, oldRow, changes, profileId);
     if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
     await loadEngineData();
     _editingFindingId = null;
@@ -1416,7 +1606,13 @@ async function saveEditFinding(id) {
     const note = document.getElementById('admin-save-note');
     if (note) {
       note.style.display = 'block';
-      note.textContent = 'Saved. This was a data edit (finding text) — the parity harness guards engine-logic changes, not data, so a re-run isn\u2019t required here. Re-run it anyway for the habit, and always before editing thresholds or doses.';
+      if (engineLogicChanged) {
+        note.className = 'admin-save-note admin-save-note-warn';
+        note.textContent = '\u26a0 Saved an ENGINE-LOGIC edit (status / applies_to_sex). This changes which finding the engine selects. Re-run the parity harness on your laptop NOW and confirm zero unexpected diffs before trusting any recommendations. The change is logged and revertable from Edit history.';
+      } else {
+        note.className = 'admin-save-note';
+        note.textContent = 'Saved. This was a data edit (finding text/notes) — the parity harness guards engine-logic changes, not data, so a re-run isn\u2019t required here. Re-run it anyway for the habit, and always before editing thresholds or doses.';
+      }
     }
   } catch (err) {
     if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
@@ -1424,22 +1620,24 @@ async function saveEditFinding(id) {
 }
 
 function showAdminView(which) {
-  const fCard = document.getElementById('admin-findings-card');
-  const lCard = document.getElementById('admin-log-card');
-  const fBtn = document.getElementById('admin-toggle-findings');
-  const lBtn = document.getElementById('admin-toggle-log');
-  if (which === 'log') {
-    if (fCard) fCard.style.display = 'none';
-    if (lCard) lCard.style.display = 'block';
-    if (fBtn) fBtn.classList.remove('active');
-    if (lBtn) lBtn.classList.add('active');
-    renderEditLog();
-  } else {
-    if (fCard) fCard.style.display = 'block';
-    if (lCard) lCard.style.display = 'none';
-    if (fBtn) fBtn.classList.add('active');
-    if (lBtn) lBtn.classList.remove('active');
-  }
+  // View registry: id -> { card, btn, render? }
+  const views = {
+    findings:   { card: 'admin-findings-card',   btn: 'admin-toggle-findings',   render: null },
+    actions:    { card: 'admin-actions-card',    btn: 'admin-toggle-actions',    render: renderAdminActions },
+    thresholds: { card: 'admin-thresholds-card', btn: 'admin-toggle-thresholds', render: renderAdminThresholds },
+    log:        { card: 'admin-log-card',        btn: 'admin-toggle-log',        render: renderEditLog }
+  };
+  if (!views[which]) which = 'findings';
+  Object.keys(views).forEach(key => {
+    const v = views[key];
+    const card = document.getElementById(v.card);
+    const btn  = document.getElementById(v.btn);
+    const on = (key === which);
+    if (card) card.style.display = on ? 'block' : 'none';
+    if (btn)  btn.classList.toggle('active', on);
+  });
+  const render = views[which].render;
+  if (render) render();
 }
 
 async function renderEditLog() {
