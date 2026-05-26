@@ -1564,6 +1564,31 @@ async function saveEditFinding(id) {
     return;
   }
 
+  // Duplicate (marker, status, sex) guard. The engine's lookupFinding returns
+  // first-match, so landing a finding on a triple another row already occupies
+  // silently makes one of them dead code. Only possible when status/sex changed.
+  if (statusChanged || sexChanged) {
+    const targetMarker = oldRow ? oldRow.marker_key : null;
+    const clash = (engineData.findings || []).find(f =>
+      f.id !== id &&
+      f.marker_key === targetMarker &&
+      norm(f.status) === norm(newStatus) &&
+      norm(f.applies_to_sex) === norm(newSex)
+    );
+    if (clash) {
+      const proceedDup = window.confirm(
+        'A finding for ' + targetMarker + ' with status "' + norm(newStatus) +
+        '" and applies_to_sex "' + norm(newSex) + '" already exists.\n\n' +
+        'The engine selects the FIRST match only, so saving this will make one of ' +
+        'the two findings unreachable (silent dead row \u2014 no error). Save anyway?'
+      );
+      if (!proceedDup) {
+        if (statusEl) statusEl.textContent = 'Cancelled \u2014 duplicate would orphan a finding.';
+        return;
+      }
+    }
+  }
+
   // Engine-logic fields are the ones the engine SELECTS findings on.
   // Editing them changes engine behavior and demands a parity harness re-run.
   const engineLogicChanged = statusChanged || sexChanged;
@@ -1575,7 +1600,7 @@ async function saveEditFinding(id) {
       'You are changing engine-logic fields the engine uses to SELECT this finding:\n\n  ' +
       parts.join('\n  ') +
       '\n\nThis changes which finding shows for a given marker/status/sex. ' +
-      'After saving you MUST re-run the parity harness on your laptop before trusting recommendations.\n\nProceed?'
+      'After saving you MUST regenerate engine_data.json from Supabase, then re-run the parity harness on your laptop before trusting recommendations.\n\nProceed?'
     );
     if (!ok) {
       if (statusEl) statusEl.textContent = 'Cancelled — no changes saved.';
@@ -1608,7 +1633,7 @@ async function saveEditFinding(id) {
       note.style.display = 'block';
       if (engineLogicChanged) {
         note.className = 'admin-save-note admin-save-note-warn';
-        note.textContent = '\u26a0 Saved an ENGINE-LOGIC edit (status / applies_to_sex). This changes which finding the engine selects. Re-run the parity harness on your laptop NOW and confirm zero unexpected diffs before trusting any recommendations. The change is logged and revertable from Edit history.';
+        note.textContent = '\u26a0 Saved an ENGINE-LOGIC edit (status / applies_to_sex). This changes which finding the engine selects. On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), (2) regenerate v2_engine_extract.js, then (3) re-run the parity harness and confirm zero unexpected diffs before trusting any recommendations. A deliberate status/sex change will show as an expected diff \u2014 add a whitelist entry documenting it. The change is logged and revertable from Edit history.';
       } else {
         note.className = 'admin-save-note';
         note.textContent = 'Saved. This was a data edit (finding text/notes) — the parity harness guards engine-logic changes, not data, so a re-run isn\u2019t required here. Re-run it anyway for the habit, and always before editing thresholds or doses.';
