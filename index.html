@@ -291,6 +291,9 @@
   .admin-thresh-table { display:flex; flex-direction:column; }
   .admin-thresh-row { display:grid; grid-template-columns:2fr 0.8fr 1.2fr 0.9fr 0.9fr 0.9fr; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:baseline; }
   .admin-thresh-head { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted, #888); }
+  .admin-ratio-table .admin-thresh-row { grid-template-columns:1.6fr 1.2fr 1.2fr 0.9fr 0.9fr 0.9fr 0.9fr; }
+  .admin-toxic-table .admin-thresh-row { grid-template-columns:1.2fr 0.6fr 0.9fr 3fr; }
+  .admin-toxic-msg { color:var(--muted, #777); line-height:1.5; }
   .admin-thresh-marker { font-weight:500; }
   .admin-empty { padding:24px; text-align:center; color:var(--muted, #999); }
   .admin-edit-btn { margin-left:auto; font-size:12px; padding:2px 10px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
@@ -703,6 +706,8 @@
         <button id="admin-toggle-findings" class="admin-toggle-btn active" onclick="showAdminView('findings')">Findings</button>
         <button id="admin-toggle-actions" class="admin-toggle-btn" onclick="showAdminView('actions')">Actions</button>
         <button id="admin-toggle-thresholds" class="admin-toggle-btn" onclick="showAdminView('thresholds')">Thresholds</button>
+        <button id="admin-toggle-ratios" class="admin-toggle-btn" onclick="showAdminView('ratios')">Ratios</button>
+        <button id="admin-toggle-toxics" class="admin-toggle-btn" onclick="showAdminView('toxics')">Toxics</button>
         <button id="admin-toggle-log" class="admin-toggle-btn" onclick="showAdminView('log')">Edit history</button>
       </div>
       <div class="card" id="admin-findings-card">
@@ -713,6 +718,12 @@
       </div>
       <div class="card" id="admin-thresholds-card" style="display:none">
         <div id="admin-thresholds-list"></div>
+      </div>
+      <div class="card" id="admin-ratios-card" style="display:none">
+        <div id="admin-ratios-list"></div>
+      </div>
+      <div class="card" id="admin-toxics-card" style="display:none">
+        <div id="admin-toxics-list"></div>
       </div>
       <div class="card" id="admin-log-card" style="display:none">
         <div id="admin-log-list"></div>
@@ -1530,6 +1541,83 @@ function renderAdminThresholds() {
   host.innerHTML = html;
 }
 
+function renderAdminRatios() {
+  const host = document.getElementById('admin-ratios-list');
+  if (!host) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!engineData || !Array.isArray(engineData.ratio_thresholds)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const rows = engineData.ratio_thresholds.slice().sort((a, b) => {
+    const ka = String(a.ratio_key || ''), kb = String(b.ratio_key || '');
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+  const fmtNum = v => (v === null || v === undefined || v === '') ? '\u2014' : String(v);
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Engine ratios</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + rows.length + ' ratios</span>' +
+      '</div>' +
+    '</div>';
+  html += '<div class="admin-thresh-table admin-ratio-table">';
+  html += '<div class="admin-thresh-row admin-thresh-head">' +
+            '<span>Ratio</span><span>Numerator</span><span>Denominator</span>' +
+            '<span>Opt low</span><span>Opt high</span>' +
+            '<span>If below</span><span>If above</span>' +
+          '</div>';
+  rows.forEach(r => {
+    html += '<div class="admin-thresh-row">' +
+              '<span class="admin-thresh-marker">' + esc(r.display_name || r.ratio_key) + '</span>' +
+              '<span>' + esc(r.numerator_marker_key) + '</span>' +
+              '<span>' + esc(r.denominator_marker_key) + '</span>' +
+              '<span>' + esc(fmtNum(r.optimal_low)) + '</span>' +
+              '<span>' + esc(fmtNum(r.optimal_high)) + '</span>' +
+              '<span>' + esc(r.status_when_below_low || '\u2014') + '</span>' +
+              '<span>' + esc(r.status_when_above_high || '\u2014') + '</span>' +
+            '</div>';
+  });
+  html += '</div>';
+  host.innerHTML = html;
+}
+
+function renderAdminToxics() {
+  const host = document.getElementById('admin-toxics-list');
+  if (!host) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (!engineData || !Array.isArray(engineData.toxic_thresholds)) {
+    host.innerHTML = '<div class="admin-empty">Engine data not loaded. Reload the page.</div>';
+    return;
+  }
+  const rows = engineData.toxic_thresholds.slice().sort((a, b) =>
+    (a.display_order || 0) - (b.display_order || 0));
+  const fmtNum = v => (v === null || v === undefined || v === '') ? '\u2014' : String(v);
+  let html =
+    '<div class="admin-head">' +
+      '<div><div class="admin-title">Toxic element thresholds</div>' +
+      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math \u00b7 triggers when value &gt; threshold</div></div>' +
+      '<div class="admin-counts">' +
+        '<span class="admin-pill">' + rows.length + ' elements</span>' +
+      '</div>' +
+    '</div>';
+  html += '<div class="admin-thresh-table admin-toxic-table">';
+  html += '<div class="admin-thresh-row admin-thresh-head">' +
+            '<span>Element</span><span>Symbol</span><span>Threshold (&gt;)</span><span>Message</span>' +
+          '</div>';
+  rows.forEach(t => {
+    html += '<div class="admin-thresh-row">' +
+              '<span class="admin-thresh-marker">' + esc(t.display_name || t.toxic_key) + '</span>' +
+              '<span>' + esc(t.symbol || '') + '</span>' +
+              '<span>' + esc(fmtNum(t.threshold)) + '</span>' +
+              '<span class="admin-toxic-msg">' + esc(t.message || '') + '</span>' +
+            '</div>';
+  });
+  html += '</div>';
+  host.innerHTML = html;
+}
+
 function startEditFinding(id) {
   _editingFindingId = id;
   renderAdminFindings();
@@ -1650,6 +1738,8 @@ function showAdminView(which) {
     findings:   { card: 'admin-findings-card',   btn: 'admin-toggle-findings',   render: null },
     actions:    { card: 'admin-actions-card',    btn: 'admin-toggle-actions',    render: renderAdminActions },
     thresholds: { card: 'admin-thresholds-card', btn: 'admin-toggle-thresholds', render: renderAdminThresholds },
+    ratios:     { card: 'admin-ratios-card',     btn: 'admin-toggle-ratios',     render: renderAdminRatios },
+    toxics:     { card: 'admin-toxics-card',     btn: 'admin-toggle-toxics',     render: renderAdminToxics },
     log:        { card: 'admin-log-card',        btn: 'admin-toggle-log',        render: renderEditLog }
   };
   if (!views[which]) which = 'findings';
