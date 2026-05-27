@@ -327,6 +327,16 @@
   .admin-thresh-num:disabled { background:#f1efe8; cursor:not-allowed; }
   .admin-thresh-ro { font-size:13px; color:var(--muted, #5f5e5a); padding:6px 0; }
   .admin-thresh-hint { font-size:11px; color:var(--muted, #999); margin-top:3px; line-height:1.3; }
+  .admin-preview-wrap { margin-top:8px; border:1px solid var(--border); border-radius:8px; background:#fafaf6; padding:8px 12px; }
+  .admin-preview-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .admin-preview-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted, #888); }
+  .admin-preview-sex-toggle { display:inline-flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .admin-preview-sex-btn { font-size:11px; padding:1px 8px; border:none; background:transparent; cursor:pointer; color:var(--muted, #666); }
+  .admin-preview-sex-btn.active { background:#2f6b43; color:#fff; }
+  .admin-preview-body { font-size:14px; line-height:1.6; color:#2a2a28; white-space:pre-wrap; word-wrap:break-word; }
+  .admin-preview-token { background:#f0ecdb; color:#5a4a18; padding:0 3px; border-radius:3px; font-variant-numeric:tabular-nums; }
+  .admin-preview-missing { background:#fbe6e6; color:#8a1f1f; padding:0 3px; border-radius:3px; font-family:monospace; font-size:0.9em; }
+  .admin-preview-empty { color:var(--muted, #999); font-style:italic; }
   .admin-toggle { display:flex; gap:8px; margin-bottom:16px; }
   .admin-toggle-btn { font-size:14px; padding:6px 16px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
   .admin-toggle-btn.active { background:#2f6b43; color:#fff; border-color:#2f6b43; }
@@ -1387,6 +1397,202 @@ function buildSelect(id, validValues, current) {
   return html;
 }
 
+// ── LIVE TEMPLATE PREVIEW ────────────────────────────────────────────────
+// Substitutes {{tokens}} in admin-editable text using sample values pulled
+// from engineData, so editors can see what the report will render. The
+// substitution behavior MIRRORS the engine's substitute() (see engine block):
+// matches /\{\{([a-z_]+)\}\}/g, unknown tokens left as literal {{xxx}}.
+// We re-implement here (rather than calling the engine fn) so we can wrap
+// matches with highlight spans in one pass; behavior must stay in sync.
+//
+// Available tokens by context (verified against the engine):
+//   marker-finding text: value, unit, optimal_low, optimal_high,
+//                        sex_label, sex_label_short
+//   ratio-finding text:  ratio, ratio_target_low, ratio_target_high
+//   dose instructions:   weight, max_dose_cap, weight_factor_pct
+//
+// Unknown tokens in a row's context (e.g. {{value}} in a ratio-finding) get
+// flagged in red so admins catch token-context mistakes.
+
+const PREVIEW_SAMPLE_WEIGHT = 170; // lb \u2014 the value baked into existing instruction text
+let _previewSex = 'female';        // module-level: persists across re-renders within a session
+
+// HTML-escape and substitute in one pass. Returns an HTML string (NOT plain text).
+// `vars` is the substitution map; `knownKeys` lists every key valid in this
+// context (so we can flag unknown tokens distinctly from known-but-empty).
+function previewSubstitute(text, vars, knownKeys) {
+  if (text === null || text === undefined || String(text) === '') {
+    return '<span class="admin-preview-empty">(empty)</span>';
+  }
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const known = new Set(knownKeys || Object.keys(vars));
+  let out = '';
+  let last = 0;
+  const re = /\{\{([a-z_]+)\}\}/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    out += esc(text.slice(last, m.index));
+    const key = m[1];
+    if (Object.prototype.hasOwnProperty.call(vars, key)) {
+      const v = vars[key];
+      const disp = (v === null || v === undefined) ? '' : String(v);
+      out += '<span class="admin-preview-token">' + esc(disp) + '</span>';
+    } else if (known.has(key)) {
+      // Token is valid in this context but vars didn't supply a value \u2014 unlikely.
+      out += '<span class="admin-preview-token">(no value)</span>';
+    } else {
+      // Unknown in this context \u2014 the engine leaves it literal; we flag it.
+      out += '<span class="admin-preview-missing">' + esc(m[0]) + '</span>';
+    }
+    last = m.index + m[0].length;
+  }
+  out += esc(text.slice(last));
+  return out;
+}
+
+// Pick a sample lab value congruent with the finding's status, so the
+// substituted {{value}} reads naturally in the surrounding prose.
+function sampleValueForThreshold(threshold, status) {
+  if (!threshold) return null;
+  const lo = threshold.low_threshold == null ? null : Number(threshold.low_threshold);
+  const hi = threshold.high_threshold == null ? null : Number(threshold.high_threshold);
+  const s = String(status || '').toLowerCase();
+  if (s === 'low' && lo !== null)            return lo > 1 ? lo - 1 : Math.max(0, lo / 2);
+  if ((s === 'high' || s === 'watch') && hi !== null) return hi + Math.max(1, Math.round(hi * 0.05));
+  if (s === 'optimal' && lo !== null && hi !== null) return Math.round((lo + hi) / 2 * 100) / 100;
+  // low_only with status=optimal, or any fallback: pick something in/above the lo
+  if (lo !== null && hi !== null) return Math.round((lo + hi) / 2 * 100) / 100;
+  if (hi !== null) return Math.round(hi * 0.8 * 100) / 100;
+  if (lo !== null) return Math.round(lo * 1.2 * 100) / 100;
+  return null;
+}
+
+// Build the substitution vars for a finding row, picking the right context
+// (marker-finding vs ratio-finding) and pulling sample values from engineData.
+// Returns { vars, knownKeys, contextLabel } so the preview can also show
+// "which context" (helps admins understand the available token set).
+function buildFindingPreviewVars(findingRow, sex) {
+  const key = findingRow.marker_key;
+  // Try ratio context first \u2014 ratio_thresholds is keyed by ratio_key.
+  const ratioRow = (engineData && Array.isArray(engineData.ratio_thresholds))
+    ? engineData.ratio_thresholds.find(r => r.ratio_key === key)
+    : null;
+  if (ratioRow) {
+    const lo = Number(ratioRow.optimal_low);
+    const hi = Number(ratioRow.optimal_high);
+    // Pick a sample ratio congruent with status, mirroring sampleValue logic.
+    const s = String(findingRow.status || '').toLowerCase();
+    let ratio;
+    if (s === ratioRow.status_when_below_low && isFinite(lo))         ratio = +(lo - 0.5).toFixed(2);
+    else if (s === ratioRow.status_when_above_high && isFinite(hi))   ratio = +(hi + 0.5).toFixed(2);
+    else                                                              ratio = +((lo + hi) / 2).toFixed(2);
+    return {
+      vars: { ratio: String(ratio), ratio_target_low: lo, ratio_target_high: hi },
+      knownKeys: ['ratio', 'ratio_target_low', 'ratio_target_high'],
+      contextLabel: 'ratio-finding (tokens: ratio, ratio_target_low, ratio_target_high)'
+    };
+  }
+  // Otherwise: marker-finding. Pull the threshold row for the marker.
+  const threshold = (engineData && Array.isArray(engineData.thresholds))
+    ? engineData.thresholds.find(t =>
+        t.marker_key === key &&
+        (!t.sex || t.sex === 'all' || t.sex === sex)
+      )
+    : null;
+  const sampleVal = sampleValueForThreshold(threshold, findingRow.status);
+  const vars = {
+    value: sampleVal == null ? '' : sampleVal,
+    unit:  threshold ? (threshold.unit || '') : '',
+    optimal_low:  threshold ? threshold.low_threshold  : '',
+    optimal_high: threshold ? threshold.high_threshold : '',
+    sex_label:       sex === 'male' ? 'males' : 'females',
+    sex_label_short: sex === 'male' ? 'M' : 'F',
+  };
+  return {
+    vars,
+    knownKeys: ['value','unit','optimal_low','optimal_high','sex_label','sex_label_short'],
+    contextLabel: 'marker-finding (tokens: value, unit, optimal_low, optimal_high, sex_label, sex_label_short)'
+  };
+}
+
+// Build the substitution vars for a dose instructions row. Sex unused but
+// threaded for signature symmetry with the finding builder.
+function buildDosePreviewVars(doseRow) {
+  const wf = doseRow.weight_factor;
+  const wfPct = (wf !== null && wf !== undefined) ? Math.round(Number(wf) * 100) : null;
+  return {
+    vars: {
+      weight: PREVIEW_SAMPLE_WEIGHT,
+      max_dose_cap: doseRow.max_dose_cap == null ? '' : doseRow.max_dose_cap,
+      weight_factor_pct: wfPct == null ? '' : wfPct,
+    },
+    knownKeys: ['weight','max_dose_cap','weight_factor_pct'],
+    contextLabel: 'dose instructions (tokens: weight, max_dose_cap, weight_factor_pct)'
+  };
+}
+
+// Render a preview panel HTML block. `previewId` is the id of the body div
+// the live updater will write to. `showSexToggle` controls visibility of the
+// female/male toggle (dose previews don't need it).
+function renderPreviewPanel(previewId, hintText, showSexToggle, updateFnName) {
+  let html = '<div class="admin-preview-wrap">';
+  html += '<div class="admin-preview-head">';
+  html += '<span class="admin-preview-label">Preview</span>';
+  if (showSexToggle) {
+    html += '<span class="admin-preview-sex-toggle">';
+    html += '<button type="button" class="admin-preview-sex-btn' + (_previewSex === 'female' ? ' active' : '') +
+            '" onclick="setPreviewSex(\'female\', \'' + updateFnName + '\')">F</button>';
+    html += '<button type="button" class="admin-preview-sex-btn' + (_previewSex === 'male' ? ' active' : '') +
+            '" onclick="setPreviewSex(\'male\', \'' + updateFnName + '\')">M</button>';
+    html += '</span>';
+  }
+  if (hintText) {
+    html += '<span class="admin-thresh-hint" style="margin:0">' + hintText + '</span>';
+  }
+  html += '</div>';
+  html += '<div class="admin-preview-body" id="' + previewId + '"></div>';
+  html += '</div>';
+  return html;
+}
+
+// Sex-toggle click handler: update state and re-trigger the named updater.
+function setPreviewSex(sex, updateFnName) {
+  _previewSex = sex;
+  // Re-render the parent admin view so toggle button state updates too;
+  // the named update fn then rewrites the preview body with new vars.
+  // Findings: re-render the whole findings view. Doses: just rewrite body.
+  if (updateFnName === 'updateFindingPreview' && _editingFindingId != null) {
+    renderAdminFindings();
+  } else if (updateFnName === 'updateDosePreview' && _editingDoseId != null) {
+    renderAdminDoses();
+  }
+}
+
+// Live updater for a finding being edited. Reads the textarea, builds vars,
+// renders into the preview body div.
+function updateFindingPreview(id) {
+  const ta = document.getElementById('edit-ta-' + id);
+  const body = document.getElementById('preview-finding-' + id);
+  if (!ta || !body) return;
+  const row = (engineData && Array.isArray(engineData.findings))
+    ? engineData.findings.find(f => f.id === id) : null;
+  if (!row) { body.innerHTML = '<span class="admin-preview-empty">(no row)</span>'; return; }
+  const ctx = buildFindingPreviewVars(row, _previewSex);
+  body.innerHTML = previewSubstitute(ta.value, ctx.vars, ctx.knownKeys);
+}
+
+// Live updater for a dose row being edited.
+function updateDosePreview(id) {
+  const ta = document.getElementById('edit-dose-instr-' + id);
+  const body = document.getElementById('preview-dose-' + id);
+  if (!ta || !body) return;
+  const row = (engineData && Array.isArray(engineData.supplement_doses))
+    ? engineData.supplement_doses.find(d => String(d.id) === String(id)) : null;
+  if (!row) { body.innerHTML = '<span class="admin-preview-empty">(no row)</span>'; return; }
+  const ctx = buildDosePreviewVars(row);
+  body.innerHTML = previewSubstitute(ta.value, ctx.vars, ctx.knownKeys);
+}
+
 function renderAdminFindings() {
   const host = document.getElementById('admin-findings-list');
   if (!host) return;
@@ -1448,7 +1654,8 @@ function renderAdminFindings() {
         html += '</div>';
         html += '</div>';
         html += '<label class="admin-edit-label first" for="edit-ta-' + r.id + '">Interpretation text</label>';
-        html += '<textarea id="edit-ta-' + r.id + '" class="admin-edit-ta">' + esc(r.interpretation_text) + '</textarea>';
+        html += '<textarea id="edit-ta-' + r.id + '" class="admin-edit-ta" oninput="updateFindingPreview(\'' + r.id + '\')">' + esc(r.interpretation_text) + '</textarea>';
+        html += renderPreviewPanel('preview-finding-' + r.id, 'Sample values pulled from engineData. Highlighted spans are substituted tokens.', true, 'updateFindingPreview');
         html += '<label class="admin-edit-label" for="edit-notes-ta-' + r.id + '">Notes</label>';
         html += '<textarea id="edit-notes-ta-' + r.id + '" class="admin-edit-ta notes" placeholder="(no notes)">' + esc(r.notes) + '</textarea>';
         html += '<div class="admin-edit-actions">' +
@@ -1467,6 +1674,10 @@ function renderAdminFindings() {
     html += '</div>';
   });
   host.innerHTML = html;
+  // After DOM lands, populate the preview body for any row currently being edited.
+  if (_editingFindingId != null) {
+    updateFindingPreview(_editingFindingId);
+  }
 }
 let _editingFindingId = null;
 
@@ -1800,8 +2011,9 @@ function renderAdminDoses() {
       }
       // Instructions (shared between branches). Template-token reminder under it.
       html += '<label class="admin-edit-label" for="edit-dose-instr-' + esc(d.id) + '">Instructions</label>';
-      html += '<textarea id="edit-dose-instr-' + esc(d.id) + '" class="admin-edit-ta">' + esc(d.instructions || '') + '</textarea>';
+      html += '<textarea id="edit-dose-instr-' + esc(d.id) + '" class="admin-edit-ta" oninput="updateDosePreview(\'' + esc(d.id) + '\')">' + esc(d.instructions || '') + '</textarea>';
       html += '<div class="admin-thresh-hint">Template tokens like <code>{{weight}}</code> are substituted at report render time \u2014 leave them as-is.</div>';
+      html += renderPreviewPanel('preview-dose-' + esc(d.id), 'Sample weight: ' + PREVIEW_SAMPLE_WEIGHT + ' lb. Highlighted spans are substituted tokens.', false, 'updateDosePreview');
       html += '<div class="admin-edit-actions">' +
                 '<button class="admin-save-btn" onclick="saveEditDose(\'' + esc(d.id) + '\')">Save</button>' +
                 '<button class="admin-cancel-btn" onclick="cancelEditDose()">Cancel</button>' +
@@ -1813,6 +2025,10 @@ function renderAdminDoses() {
     html += '</div>'; // admin-card
   });
   host.innerHTML = html;
+  // After DOM lands, populate the preview body for any dose currently being edited.
+  if (_editingDoseId != null) {
+    updateDosePreview(_editingDoseId);
+  }
 }
 let _editingDoseId = null;
 
