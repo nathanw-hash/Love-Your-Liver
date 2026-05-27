@@ -289,7 +289,7 @@
   .admin-notes { font-size:12px; color:var(--muted, #999); font-style:italic; margin-top:6px; }
   .admin-action-title { font-size:14px; font-weight:600; margin-bottom:4px; }
   .admin-thresh-table { display:flex; flex-direction:column; }
-  .admin-thresh-row { display:grid; grid-template-columns:2fr 0.8fr 1.2fr 0.9fr 0.9fr 0.9fr; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:baseline; }
+  .admin-thresh-row { display:grid; grid-template-columns:2fr 0.8fr 1.2fr 0.9fr 0.9fr 0.9fr 0.7fr; gap:8px; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; align-items:baseline; }
   .admin-thresh-head { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted, #888); }
   .admin-ratio-table .admin-thresh-row { grid-template-columns:1.6fr 1.2fr 1.2fr 0.9fr 0.9fr 0.9fr 0.9fr; }
   .admin-toxic-table .admin-thresh-row { grid-template-columns:1.2fr 0.6fr 0.9fr 3fr; }
@@ -314,6 +314,19 @@
   .admin-engine-row { display:flex; gap:16px; flex-wrap:wrap; }
   .admin-engine-field { flex:1; min-width:120px; }
   .admin-engine-select { width:100%; font-size:14px; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#fff; font-family:inherit; box-sizing:border-box; }
+  .admin-thresh-row.editing { background:#fdf8f1; }
+  .admin-thresh-edit-cell { display:flex; align-items:center; justify-content:flex-end; }
+  .admin-thresh-edit-btn { font-size:11px; padding:2px 9px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; white-space:nowrap; }
+  .admin-thresh-edit-btn:hover { background:var(--bg, rgba(0,0,0,0.04)); }
+  .admin-thresh-editor { grid-column:1 / -1; border:1px solid #e7c9a3; background:#fdf8f1; border-radius:8px; padding:12px 14px; margin-top:8px; }
+  .admin-thresh-editor-warn { font-size:12px; color:#8a4b12; margin-bottom:10px; line-height:1.4; }
+  .admin-thresh-editor-row { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; }
+  .admin-thresh-editor-field { flex:1; min-width:110px; }
+  .admin-thresh-editor-field.dimmed { opacity:0.5; }
+  .admin-thresh-num { width:100%; font-size:14px; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#fff; font-family:inherit; box-sizing:border-box; }
+  .admin-thresh-num:disabled { background:#f1efe8; cursor:not-allowed; }
+  .admin-thresh-ro { font-size:13px; color:var(--muted, #5f5e5a); padding:6px 0; }
+  .admin-thresh-hint { font-size:11px; color:var(--muted, #999); margin-top:3px; line-height:1.3; }
   .admin-toggle { display:flex; gap:8px; margin-bottom:16px; }
   .admin-toggle-btn { font-size:14px; padding:6px 16px; border:1px solid var(--border); border-radius:8px; background:transparent; cursor:pointer; }
   .admin-toggle-btn.active { background:#2f6b43; color:#fff; border-color:#2f6b43; }
@@ -1525,25 +1538,75 @@ function renderAdminThresholds() {
   let html =
     '<div class="admin-head">' +
       '<div><div class="admin-title">Engine thresholds</div>' +
-      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math</div></div>' +
+      '<div class="admin-sub">Editable: low / high / unit \u00b7 engine math \u00b7 harness re-run required</div></div>' +
       '<div class="admin-counts">' +
         '<span class="admin-pill">' + thresholds.length + ' thresholds</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-thresh-save-note" class="admin-save-note" style="display:none"></div>';
   html += '<div class="admin-thresh-table">';
   html += '<div class="admin-thresh-row admin-thresh-head">' +
             '<span>Marker</span><span>Sex</span><span>Mode</span>' +
             '<span>Low</span><span>High</span><span>Unit</span>' +
+            '<span></span>' +
           '</div>';
   thresholds.forEach(t => {
-    html += '<div class="admin-thresh-row">' +
+    const editing = (_editingThresholdId === t.id);
+    const modeReadsLo = (t.evaluation_mode === 'standard' || t.evaluation_mode === 'low_only' || t.evaluation_mode === 'watch_high');
+    const modeReadsHi = (t.evaluation_mode === 'standard' || t.evaluation_mode === 'high_only' || t.evaluation_mode === 'watch_high');
+    html += '<div class="admin-thresh-row' + (editing ? ' editing' : '') + '">' +
               '<span class="admin-thresh-marker">' + esc(t.marker_key) + '</span>' +
               '<span>' + esc(t.sex || 'all') + '</span>' +
               '<span>' + esc(t.evaluation_mode || '\u2014') + '</span>' +
               '<span>' + esc(fmtNum(t.low_threshold)) + '</span>' +
               '<span>' + esc(fmtNum(t.high_threshold)) + '</span>' +
               '<span>' + esc(t.unit || '') + '</span>' +
-            '</div>';
+              '<span class="admin-thresh-edit-cell">';
+    if (t.id != null && !editing) {
+      html += '<button class="admin-thresh-edit-btn" onclick="startEditThreshold(\'' + esc(t.id) + '\')">Edit</button>';
+    }
+    html += '</span>';
+    if (editing) {
+      html += '<div class="admin-thresh-editor">';
+      html += '<div class="admin-thresh-editor-warn">\u26a0 Engine-math edit. The engine computes status from low/high thresholds. ' +
+              'After saving you MUST regenerate the harness snapshot and re-run the parity harness before trusting recommendations.</div>';
+      if (t.evaluation_mode === 'high_only' && t.marker_key === 'blood_copper') {
+        html += '<div class="admin-thresh-editor-warn">Note: blood_copper uses an inclusive (\u2265) comparison hardcoded in the engine. ' +
+                'Editing the number is safe, but the comparator itself is in code, not this row.</div>';
+      }
+      html += '<div class="admin-thresh-editor-row">';
+      // Marker + mode shown read-only for context.
+      html += '<div class="admin-thresh-editor-field" style="flex:1.4">' +
+                '<label class="admin-edit-label first">Marker / mode (read-only)</label>' +
+                '<div class="admin-thresh-ro">' + esc(t.marker_key) + ' \u00b7 ' + esc(t.sex || 'all') + ' \u00b7 ' + esc(t.evaluation_mode || '\u2014') + '</div>' +
+              '</div>';
+      // Low threshold.
+      html += '<div class="admin-thresh-editor-field' + (modeReadsLo ? '' : ' dimmed') + '">' +
+                '<label class="admin-edit-label first" for="edit-thr-lo-' + esc(t.id) + '">Low threshold</label>' +
+                '<input type="number" step="any" id="edit-thr-lo-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.low_threshold == null ? '' : t.low_threshold) + '"' + (modeReadsLo ? '' : ' disabled') + '>' +
+                (modeReadsLo ? '' : '<div class="admin-thresh-hint">not read in ' + esc(t.evaluation_mode) + ' mode</div>') +
+              '</div>';
+      // High threshold.
+      html += '<div class="admin-thresh-editor-field' + (modeReadsHi ? '' : ' dimmed') + '">' +
+                '<label class="admin-edit-label first" for="edit-thr-hi-' + esc(t.id) + '">High threshold</label>' +
+                '<input type="number" step="any" id="edit-thr-hi-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.high_threshold == null ? '' : t.high_threshold) + '"' + (modeReadsHi ? '' : ' disabled') + '>' +
+                (modeReadsHi ? '' : '<div class="admin-thresh-hint">not read in ' + esc(t.evaluation_mode) + ' mode</div>') +
+              '</div>';
+      // Unit (display metadata, never read by the engine).
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-thr-unit-' + esc(t.id) + '">Unit</label>' +
+                '<input type="text" id="edit-thr-unit-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.unit || '') + '">' +
+                '<div class="admin-thresh-hint">display only \u2014 not used in engine math</div>' +
+              '</div>';
+      html += '</div>'; // editor-row
+      html += '<div class="admin-edit-actions">' +
+                '<button class="admin-save-btn" onclick="saveEditThreshold(\'' + esc(t.id) + '\')">Save</button>' +
+                '<button class="admin-cancel-btn" onclick="cancelEditThreshold()">Cancel</button>' +
+                '<span class="admin-edit-status" id="edit-thr-status-' + esc(t.id) + '"></span>' +
+              '</div>';
+      html += '</div>'; // editor
+    }
+    html += '</div>'; // thresh-row
   });
   html += '</div>';
   host.innerHTML = html;
@@ -1844,6 +1907,136 @@ async function saveEditFinding(id) {
       } else {
         note.className = 'admin-save-note';
         note.textContent = 'Saved. This was a data edit (finding text/notes) — the parity harness guards engine-logic changes, not data, so a re-run isn\u2019t required here. Re-run it anyway for the habit, and always before editing thresholds or doses.';
+      }
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
+}
+
+// ── THRESHOLD NUMERIC EDITING ─────────────────────────────────────────────
+// Editable: low_threshold, high_threshold (numbers the engine computes status
+// from) and unit (display-only metadata). evaluation_mode / marker_key / sex
+// are NOT editable here — evaluation_mode is a branch selector in the compute
+// path and is deliberately out of scope this session. EVERY save is an
+// engine-math change, so the harness re-run is mandatory (no skip path).
+let _editingThresholdId = null;
+
+function startEditThreshold(id) {
+  _editingThresholdId = id;
+  renderAdminThresholds();
+}
+function cancelEditThreshold() {
+  _editingThresholdId = null;
+  renderAdminThresholds();
+}
+
+async function saveEditThreshold(id) {
+  const loEl   = document.getElementById('edit-thr-lo-' + id);
+  const hiEl   = document.getElementById('edit-thr-hi-' + id);
+  const unitEl = document.getElementById('edit-thr-unit-' + id);
+  const statusEl = document.getElementById('edit-thr-status-' + id);
+  const oldRow = (engineData.thresholds || []).find(t => String(t.id) === String(id));
+  if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found — reload the page.'; return; }
+
+  // Parse a numeric input: blank → null; otherwise must be a finite number.
+  // Returns { ok, value } so we can distinguish "blank" from "bad input".
+  function parseNum(el) {
+    if (!el) return { ok: true, value: undefined }; // field absent (disabled): leave unchanged
+    const raw = String(el.value).trim();
+    if (raw === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (!isFinite(n)) return { ok: false, value: null };
+    return { ok: true, value: n };
+  }
+
+  // Disabled inputs (mode doesn't read that field) are skipped — value:undefined
+  // means "don't touch this column".
+  const loParsed = (loEl && !loEl.disabled) ? parseNum(loEl) : { ok: true, value: undefined };
+  const hiParsed = (hiEl && !hiEl.disabled) ? parseNum(hiEl) : { ok: true, value: undefined };
+  if (!loParsed.ok || !hiParsed.ok) {
+    if (statusEl) statusEl.textContent = 'Low/High must be a number (or blank). Nothing saved.';
+    return;
+  }
+
+  const newLo   = loParsed.value;
+  const newHi   = hiParsed.value;
+  const newUnit = unitEl ? (String(unitEl.value).trim() === '' ? null : String(unitEl.value)) : undefined;
+
+  // Normalize for change-detection. Numbers compared numerically; null/'' equal.
+  const numEq = (a, b) => {
+    const an = (a === null || a === undefined || a === '') ? null : Number(a);
+    const bn = (b === null || b === undefined || b === '') ? null : Number(b);
+    return an === bn;
+  };
+  const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
+
+  const loChanged   = (newLo   !== undefined) && !numEq(oldRow.low_threshold,  newLo);
+  const hiChanged   = (newHi   !== undefined) && !numEq(oldRow.high_threshold, newHi);
+  const unitChanged = (newUnit !== undefined) && !strEq(oldRow.unit, newUnit);
+
+  if (!loChanged && !hiChanged && !unitChanged) {
+    cancelEditThreshold();
+    return;
+  }
+
+  // Sanity warn: lo > hi for modes that read both ends is almost certainly a typo.
+  const readsBoth = (oldRow.evaluation_mode === 'standard' || oldRow.evaluation_mode === 'watch_high');
+  const effLo = loChanged ? newLo : (oldRow.low_threshold == null ? null : Number(oldRow.low_threshold));
+  const effHi = hiChanged ? newHi : (oldRow.high_threshold == null ? null : Number(oldRow.high_threshold));
+  if (readsBoth && effLo !== null && effHi !== null && effLo > effHi) {
+    const okSwap = window.confirm(
+      'Low threshold (' + effLo + ') is greater than High threshold (' + effHi + ') for ' +
+      oldRow.marker_key + ' in ' + oldRow.evaluation_mode + ' mode.\n\n' +
+      'That inverts the optimal band and is almost certainly a typo. Save anyway?'
+    );
+    if (!okSwap) { if (statusEl) statusEl.textContent = 'Cancelled — low > high.'; return; }
+  }
+
+  // Engine-math confirm. Every threshold edit changes engine computation.
+  const parts = [];
+  if (loChanged)   parts.push('low_threshold: ' + (oldRow.low_threshold == null ? '\u2014' : oldRow.low_threshold) + ' \u2192 ' + (newLo == null ? '\u2014' : newLo));
+  if (hiChanged)   parts.push('high_threshold: ' + (oldRow.high_threshold == null ? '\u2014' : oldRow.high_threshold) + ' \u2192 ' + (newHi == null ? '\u2014' : newHi));
+  if (unitChanged) parts.push('unit: "' + (oldRow.unit || '') + '" \u2192 "' + (newUnit || '') + '" (display only)');
+  const engineMathChanged = loChanged || hiChanged;
+  if (engineMathChanged) {
+    const ok = window.confirm(
+      'You are editing engine thresholds for ' + oldRow.marker_key + ':\n\n  ' +
+      parts.join('\n  ') +
+      '\n\nThe engine computes status (low/optimal/high) from these numbers. ' +
+      'After saving you MUST regenerate engine_data.json from Supabase, regenerate ' +
+      'v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled — no changes saved.'; return; }
+  }
+
+  const changes = {};
+  if (loChanged)   changes.low_threshold  = newLo;
+  if (hiChanged)   changes.high_threshold = newHi;
+  if (unitChanged) changes.unit = newUnit;
+
+  if (statusEl) statusEl.textContent = 'Saving…';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_thresholds', id, Object.assign({}, changes, {
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    }));
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_thresholds', id, oldRow, changes, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingThresholdId = null;
+    renderAdminThresholds();
+    const note = document.getElementById('admin-thresh-save-note');
+    if (note) {
+      note.style.display = 'block';
+      if (engineMathChanged) {
+        note.className = 'admin-save-note admin-save-note-warn';
+        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (threshold numbers). This changes the status the engine computes. On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data — skipping this gives a false PASS), (2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate threshold change will show as an expected diff — add a whitelist entry documenting it. The change is logged and revertable from Edit history.';
+      } else {
+        note.className = 'admin-save-note';
+        note.textContent = 'Saved a unit label (display-only metadata — the engine does not read unit). No harness re-run required for this field.';
       }
     }
   } catch (err) {
