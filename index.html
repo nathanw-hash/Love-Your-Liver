@@ -1706,14 +1706,15 @@ function renderAdminDoses() {
   let html =
     '<div class="admin-head">' +
       '<div><div class="admin-title">Supplement doses</div>' +
-      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math</div></div>' +
+      '<div class="admin-sub">Editable: dose values + supplement name + instructions \u00b7 engine math (numbers) \u00b7 harness re-run required for numeric edits</div></div>' +
       '<div class="admin-counts">' +
         '<span class="admin-pill">' + rows.length + ' doses</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-dose-save-note" class="admin-save-note" style="display:none"></div>';
   rows.forEach((d, i) => {
     const computed = hasVal(d.weight_factor);
-    const last = i === rows.length - 1;
+    const editing = (_editingDoseId === d.id);
     html += '<div class="admin-card">';
     html += '<div class="admin-card-head"><span class="admin-marker">' + esc(d.supplement_name || '(unnamed)') + '</span>' +
             '<span class="admin-card-meta">' + (computed ? 'weight-computed' : 'fixed dose') + '</span></div>';
@@ -1721,28 +1722,99 @@ function renderAdminDoses() {
     html += '<div class="admin-badges">' +
               '<span class="admin-badge st-other">' + esc(d.trigger_marker_key || '\u2014') + '</span>' +
               '<span class="admin-badge ' + statusClass(d.trigger_status) + '">' + esc(d.trigger_status || '\u2014') + '</span>' +
-              '<span class="admin-badge st-sex">' + (computed ? 'computed' : 'fixed') + '</span>' +
-            '</div>';
-    if (computed) {
-      const pct = Math.round(Number(d.weight_factor) * 100);
-      const incr = hasVal(d.dose_increment) ? Number(d.dose_increment) : null;
-      const cap  = hasVal(d.max_dose_cap) ? Number(d.max_dose_cap) : null;
-      const unit = d.dose_unit || '';
-      let formula = pct + '% of body weight';
-      if (incr !== null) formula += ', rounded to ' + incr + unit + ' increments';
-      if (cap !== null)  formula += ', capped at ' + cap + unit;
-      html += '<div class="admin-action-title">' + esc(formula) + '</div>';
+              '<span class="admin-badge st-sex">' + (computed ? 'computed' : 'fixed') + '</span>';
+    if (d.id != null && !editing) {
+      html += '<button class="admin-edit-btn" onclick="startEditDose(\'' + esc(d.id) + '\')">Edit</button>';
+    }
+    html += '</div>';
+    if (!editing) {
+      // Read-only display (unchanged from prior behavior).
+      if (computed) {
+        const pct = Math.round(Number(d.weight_factor) * 100);
+        const incr = hasVal(d.dose_increment) ? Number(d.dose_increment) : null;
+        const cap  = hasVal(d.max_dose_cap) ? Number(d.max_dose_cap) : null;
+        const unit = d.dose_unit || '';
+        let formula = pct + '% of body weight';
+        if (incr !== null) formula += ', rounded to ' + incr + unit + ' increments';
+        if (cap !== null)  formula += ', capped at ' + cap + unit;
+        html += '<div class="admin-action-title">' + esc(formula) + '</div>';
+      } else {
+        html += '<div class="admin-action-title">' + esc(d.fixed_dose_text || '\u2014') + '</div>';
+      }
+      if (hasVal(d.instructions)) {
+        html += '<div class="admin-interp">' + esc(d.instructions) + '</div>';
+      }
     } else {
-      html += '<div class="admin-action-title">' + esc(d.fixed_dose_text || '\u2014') + '</div>';
+      // Inline editor. Engine-selection columns (trigger_marker_key, trigger_status)
+      // and the computed/fixed branch (presence of weight_factor) are read-only here
+      // \u2014 they reroute the engine and deserve their own dedicated editing pass.
+      html += '<div class="admin-thresh-editor">';
+      if (computed) {
+        html += '<div class="admin-thresh-editor-warn">\u26a0 Engine-math fields (weight factor / increment / cap / unit) feed dose computation. ' +
+                'After editing any of these you MUST regenerate the harness snapshot and re-run the parity harness.</div>';
+      } else {
+        html += '<div class="admin-thresh-editor-warn">Fixed-dose row. The engine outputs <code>fixed_dose_text</code> verbatim into the user\u2019s report \u2014 ' +
+                'no math, but no safety net either. Audit log + revert is your backstop for typos.</div>';
+      }
+      // Read-only context line covering the selection / branch columns.
+      html += '<div class="admin-thresh-editor-row">';
+      html += '<div class="admin-thresh-editor-field" style="flex:2">' +
+                '<label class="admin-edit-label first">Trigger / branch (read-only)</label>' +
+                '<div class="admin-thresh-ro">' + esc(d.trigger_marker_key || '\u2014') + ' \u00b7 ' +
+                esc(d.trigger_status || '\u2014') + ' \u00b7 ' + (computed ? 'computed' : 'fixed') + '</div>' +
+                '<div class="admin-thresh-hint">To re-route or switch branch, edit in Supabase + re-run harness.</div>' +
+              '</div>';
+      html += '</div>';
+      // Supplement name (shared between branches).
+      html += '<label class="admin-edit-label first" for="edit-dose-name-' + esc(d.id) + '">Supplement name</label>';
+      html += '<input type="text" id="edit-dose-name-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.supplement_name || '') + '">';
+      if (computed) {
+        // Computed-row numeric fields.
+        html += '<div class="admin-thresh-editor-row" style="margin-top:10px">';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-dose-wf-' + esc(d.id) + '">Weight factor</label>' +
+                  '<input type="number" step="any" id="edit-dose-wf-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.weight_factor == null ? '' : d.weight_factor) + '">' +
+                  '<div class="admin-thresh-hint">fraction of body weight (e.g. 0.40 = 40%)</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-dose-incr-' + esc(d.id) + '">Increment</label>' +
+                  '<input type="number" step="any" id="edit-dose-incr-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.dose_increment == null ? '' : d.dose_increment) + '">' +
+                  '<div class="admin-thresh-hint">rounded-to step (blank \u2192 no rounding)</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-dose-cap-' + esc(d.id) + '">Max cap</label>' +
+                  '<input type="number" step="any" id="edit-dose-cap-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.max_dose_cap == null ? '' : d.max_dose_cap) + '">' +
+                  '<div class="admin-thresh-hint">ceiling (blank \u2192 no cap)</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-dose-unit-' + esc(d.id) + '">Unit</label>' +
+                  '<input type="text" id="edit-dose-unit-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.dose_unit || '') + '">' +
+                  '<div class="admin-thresh-hint">appended to computed number (e.g. mg/day)</div>' +
+                '</div>';
+        html += '</div>';
+      } else {
+        // Fixed-row text field.
+        html += '<label class="admin-edit-label" for="edit-dose-fixed-' + esc(d.id) + '">Fixed dose text</label>';
+        html += '<input type="text" id="edit-dose-fixed-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.fixed_dose_text || '') + '">';
+        html += '<div class="admin-thresh-hint">written verbatim into the user\u2019s report (e.g. "150mcg/day")</div>';
+      }
+      // Instructions (shared between branches). Template-token reminder under it.
+      html += '<label class="admin-edit-label" for="edit-dose-instr-' + esc(d.id) + '">Instructions</label>';
+      html += '<textarea id="edit-dose-instr-' + esc(d.id) + '" class="admin-edit-ta">' + esc(d.instructions || '') + '</textarea>';
+      html += '<div class="admin-thresh-hint">Template tokens like <code>{{weight}}</code> are substituted at report render time \u2014 leave them as-is.</div>';
+      html += '<div class="admin-edit-actions">' +
+                '<button class="admin-save-btn" onclick="saveEditDose(\'' + esc(d.id) + '\')">Save</button>' +
+                '<button class="admin-cancel-btn" onclick="cancelEditDose()">Cancel</button>' +
+                '<span class="admin-edit-status" id="edit-dose-status-' + esc(d.id) + '"></span>' +
+              '</div>';
+      html += '</div>'; // editor
     }
-    if (hasVal(d.instructions)) {
-      html += '<div class="admin-interp">' + esc(d.instructions) + '</div>';
-    }
-    html += '</div>';
-    html += '</div>';
+    html += '</div>'; // admin-row
+    html += '</div>'; // admin-card
   });
   host.innerHTML = html;
 }
+let _editingDoseId = null;
 
 function renderAdminFlags() {
   const host = document.getElementById('admin-flags-list');
@@ -2037,6 +2109,184 @@ async function saveEditThreshold(id) {
       } else {
         note.className = 'admin-save-note';
         note.textContent = 'Saved a unit label (display-only metadata — the engine does not read unit). No harness re-run required for this field.';
+      }
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
+}
+
+// ── DOSE EDITING ──────────────────────────────────────────────────────────
+// Editable: supplement_name, instructions (shared); plus, by branch:
+//   computed rows: weight_factor, dose_increment, max_dose_cap, dose_unit
+//   fixed rows:    fixed_dose_text
+// NOT editable here: trigger_marker_key, trigger_status (engine-selection),
+// and the computed/fixed branch itself (presence of weight_factor) — those
+// reroute the engine and deserve their own dedicated editing pass.
+//
+// Harness gate: any numeric edit in a computed row, OR any edit to a fixed
+// row's dose text, fires the engine-math confirm + amber save-note. Pure
+// supplement_name / instructions edits get the benign save-note (data edit
+// not computation — harness re-run optional, matches findings text edits).
+// Note: fixed_dose_text is *written verbatim* into the user's report, so
+// while the harness doesn't compute on it, we still treat it as gated to
+// surface the typo risk to the admin.
+
+function startEditDose(id) {
+  _editingDoseId = id;
+  renderAdminDoses();
+}
+function cancelEditDose() {
+  _editingDoseId = null;
+  renderAdminDoses();
+}
+
+async function saveEditDose(id) {
+  const statusEl = document.getElementById('edit-dose-status-' + id);
+  const oldRow = (engineData.supplement_doses || []).find(d => String(d.id) === String(id));
+  if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
+  const isComputed = oldRow.weight_factor !== null && oldRow.weight_factor !== undefined;
+
+  // ── pull field values ──
+  const nameEl  = document.getElementById('edit-dose-name-' + id);
+  const instrEl = document.getElementById('edit-dose-instr-' + id);
+  const wfEl    = document.getElementById('edit-dose-wf-' + id);
+  const incrEl  = document.getElementById('edit-dose-incr-' + id);
+  const capEl   = document.getElementById('edit-dose-cap-' + id);
+  const unitEl  = document.getElementById('edit-dose-unit-' + id);
+  const fixedEl = document.getElementById('edit-dose-fixed-' + id);
+
+  // Numeric parser: blank \u2192 null; non-numeric \u2192 error. Disabled/missing \u2192 undefined.
+  function parseNum(el) {
+    if (!el) return { ok: true, value: undefined };
+    const raw = String(el.value).trim();
+    if (raw === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (!isFinite(n)) return { ok: false, value: null };
+    return { ok: true, value: n };
+  }
+  const textVal = el => el ? String(el.value) : undefined;
+  // Empty-string text fields are stored as null where the column is nullable.
+  const textOrNull = el => {
+    if (!el) return undefined;
+    const v = String(el.value);
+    return v.trim() === '' ? null : v;
+  };
+
+  // Parse all numeric inputs at once so we surface validation errors before any DB call.
+  const wf   = isComputed ? parseNum(wfEl)   : { ok: true, value: undefined };
+  const incr = isComputed ? parseNum(incrEl) : { ok: true, value: undefined };
+  const cap  = isComputed ? parseNum(capEl)  : { ok: true, value: undefined };
+  if (!wf.ok || !incr.ok || !cap.ok) {
+    if (statusEl) statusEl.textContent = 'Numeric fields must be a number (or blank). Nothing saved.';
+    return;
+  }
+  // weight_factor of 0 would zero-out the computation; warn separately below.
+
+  const newName  = textVal(nameEl);          // text, kept as-is (incl. blank \u2192 empty string)
+  const newInstr = textOrNull(instrEl);      // nullable text
+  const newUnit  = isComputed ? textOrNull(unitEl) : undefined;
+  const newFixed = !isComputed ? textVal(fixedEl) : undefined;
+  const newWf    = wf.value;
+  const newIncr  = incr.value;
+  const newCap   = cap.value;
+
+  // ── change detection ──
+  const numEq = (a, b) => {
+    const an = (a === null || a === undefined || a === '') ? null : Number(a);
+    const bn = (b === null || b === undefined || b === '') ? null : Number(b);
+    return an === bn;
+  };
+  const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
+
+  const nameChanged  = (newName  !== undefined) && !strEq(oldRow.supplement_name, newName);
+  const instrChanged = (newInstr !== undefined) && !strEq(oldRow.instructions, newInstr);
+  const unitChanged  = (newUnit  !== undefined) && !strEq(oldRow.dose_unit, newUnit);
+  const fixedChanged = (newFixed !== undefined) && !strEq(oldRow.fixed_dose_text, newFixed);
+  const wfChanged    = (newWf    !== undefined) && !numEq(oldRow.weight_factor,  newWf);
+  const incrChanged  = (newIncr  !== undefined) && !numEq(oldRow.dose_increment, newIncr);
+  const capChanged   = (newCap   !== undefined) && !numEq(oldRow.max_dose_cap,   newCap);
+
+  const numericChanged = wfChanged || incrChanged || capChanged || unitChanged;
+  const anyChanged = nameChanged || instrChanged || numericChanged || fixedChanged;
+  if (!anyChanged) { cancelEditDose(); return; }
+
+  // ── guard: zeroing weight_factor on a computed row ──
+  // The engine guards against null/undefined wf (line 3518) but not against 0,
+  // which would silently produce a 0-dose computation. Almost certainly a typo.
+  if (isComputed && wfChanged && (newWf === 0)) {
+    const okZero = window.confirm(
+      'weight_factor is being set to 0 for ' + (oldRow.supplement_name || oldRow.trigger_marker_key) + '.\n\n' +
+      'The engine will still treat this row as computed, but every dose will round to 0.\n' +
+      'If you meant to convert this to a fixed-dose row, that requires editing in Supabase ' +
+      '(this editor doesn\u2019t switch branches). Save 0 anyway?'
+    );
+    if (!okZero) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 weight_factor 0.'; return; }
+  }
+  // ── guard: clearing weight_factor on a computed row would flip the branch ──
+  // Setting it null switches the engine to the fixed branch, which has no fixed_dose_text on this row.
+  if (isComputed && wfChanged && newWf === null) {
+    if (statusEl) statusEl.textContent = 'Cannot blank weight_factor here \u2014 that would switch the row to the fixed branch. Edit in Supabase + re-run the harness.';
+    return;
+  }
+
+  // ── engine-math confirm ──
+  const engineMathChanged = numericChanged || fixedChanged;
+  if (engineMathChanged) {
+    const parts = [];
+    if (wfChanged)    parts.push('weight_factor: '  + (oldRow.weight_factor  == null ? '\u2014' : oldRow.weight_factor)  + ' \u2192 ' + (newWf   == null ? '\u2014' : newWf));
+    if (incrChanged)  parts.push('dose_increment: ' + (oldRow.dose_increment == null ? '\u2014' : oldRow.dose_increment) + ' \u2192 ' + (newIncr == null ? '\u2014' : newIncr));
+    if (capChanged)   parts.push('max_dose_cap: '   + (oldRow.max_dose_cap   == null ? '\u2014' : oldRow.max_dose_cap)   + ' \u2192 ' + (newCap  == null ? '\u2014' : newCap));
+    if (unitChanged)  parts.push('dose_unit: "'    + (oldRow.dose_unit || '') + '" \u2192 "' + (newUnit || '') + '"');
+    if (fixedChanged) parts.push('fixed_dose_text: "' + (oldRow.fixed_dose_text || '') + '" \u2192 "' + (newFixed || '') + '"');
+    const label = isComputed ? 'dose computation' : 'the dose text written verbatim into the user\u2019s report';
+    const ok = window.confirm(
+      'You are editing dose-output fields for ' + (oldRow.supplement_name || oldRow.trigger_marker_key) + ':\n\n  ' +
+      parts.join('\n  ') +
+      '\n\nThis changes ' + label + '. ' +
+      'After saving you MUST regenerate engine_data.json from Supabase, regenerate ' +
+      'v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+  }
+
+  // ── build payload ──
+  const changes = {};
+  if (nameChanged)  changes.supplement_name = newName;
+  if (instrChanged) changes.instructions    = newInstr;
+  if (unitChanged)  changes.dose_unit       = newUnit;
+  if (fixedChanged) changes.fixed_dose_text = newFixed;
+  if (wfChanged)    changes.weight_factor   = newWf;
+  if (incrChanged)  changes.dose_increment  = newIncr;
+  if (capChanged)   changes.max_dose_cap    = newCap;
+
+  if (statusEl) statusEl.textContent = 'Saving\u2026';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_supplement_doses', id, Object.assign({}, changes, {
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    }));
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_supplement_doses', id, oldRow, changes, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingDoseId = null;
+    renderAdminDoses();
+    const note = document.getElementById('admin-dose-save-note');
+    if (note) {
+      note.style.display = 'block';
+      if (engineMathChanged) {
+        note.className = 'admin-save-note admin-save-note-warn';
+        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (dose values). This changes ' +
+          (isComputed ? 'computed dose output' : 'the verbatim dose text in user reports') + '. ' +
+          'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
+          '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate dose change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
+          'The change is logged and revertable from Edit history.';
+      } else {
+        note.className = 'admin-save-note';
+        note.textContent = 'Saved a text edit (supplement name / instructions) \u2014 the parity harness guards engine-math, not data. ' +
+          'Re-run for the habit, and always before editing dose values. The change is logged and revertable from Edit history.';
       }
     }
   } catch (err) {
