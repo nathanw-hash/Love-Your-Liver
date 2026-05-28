@@ -1839,11 +1839,12 @@ function renderAdminRatios() {
   let html =
     '<div class="admin-head">' +
       '<div><div class="admin-title">Engine ratios</div>' +
-      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math</div></div>' +
+      '<div class="admin-sub">Editable: name / opt low / opt high \u00b7 bounds are engine math \u00b7 harness re-run required for bounds</div></div>' +
       '<div class="admin-counts">' +
         '<span class="admin-pill">' + rows.length + ' ratios</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-ratio-save-note" class="admin-save-note" style="display:none"></div>';
   html += '<div class="admin-thresh-table admin-ratio-table">';
   html += '<div class="admin-thresh-row admin-thresh-head">' +
             '<span>Ratio</span><span>Numerator</span><span>Denominator</span>' +
@@ -1851,20 +1852,198 @@ function renderAdminRatios() {
             '<span>If below</span><span>If above</span>' +
           '</div>';
   rows.forEach(r => {
-    html += '<div class="admin-thresh-row">' +
+    const editing = (_editingRatioId === r.id);
+    html += '<div class="admin-thresh-row' + (editing ? ' editing' : '') + '">' +
               '<span class="admin-thresh-marker">' + esc(r.display_name || r.ratio_key) + '</span>' +
               '<span>' + esc(r.numerator_marker_key) + '</span>' +
               '<span>' + esc(r.denominator_marker_key) + '</span>' +
               '<span>' + esc(fmtNum(r.optimal_low)) + '</span>' +
               '<span>' + esc(fmtNum(r.optimal_high)) + '</span>' +
               '<span>' + esc(r.status_when_below_low || '\u2014') + '</span>' +
-              '<span>' + esc(r.status_when_above_high || '\u2014') + '</span>' +
-            '</div>';
+              '<span>' + esc(r.status_when_above_high || '\u2014');
+    if (r.id != null && !editing) {
+      html += ' <button class="admin-thresh-edit-btn" style="margin-left:8px" onclick="startEditRatio(\'' + esc(r.id) + '\')">Edit</button>';
+    }
+    html += '</span>';
+    if (editing) {
+      html += '<div class="admin-thresh-editor">';
+      html += '<div class="admin-thresh-editor-warn">\u26a0 The engine computes ratio = numerator / denominator, then resolves status from these bounds ' +
+              '(below opt-low \u2192 below-status, above opt-high \u2192 above-status, else optimal). Editing a bound changes engine output \u2014 ' +
+              'after saving you MUST regenerate the harness snapshot and re-run the parity harness.</div>';
+      // Read-only context: the selection / branch columns (numerator, denominator, both status enums).
+      html += '<div class="admin-thresh-editor-row">';
+      html += '<div class="admin-thresh-editor-field" style="flex:2.4">' +
+                '<label class="admin-edit-label first">Routing / status (read-only)</label>' +
+                '<div class="admin-thresh-ro">' + esc(r.numerator_marker_key || '\u2014') + ' \u00f7 ' + esc(r.denominator_marker_key || '\u2014') +
+                ' \u00b7 below \u2192 ' + esc(r.status_when_below_low || '\u2014') + ' \u00b7 above \u2192 ' + esc(r.status_when_above_high || '\u2014') + '</div>' +
+                '<div class="admin-thresh-hint">To re-route the markers or change which status fires at each end, edit in Supabase + re-run harness. ' +
+                'A status with no matching finding row emits no interpretation.</div>' +
+              '</div>';
+      html += '</div>';
+      // Editable fields.
+      html += '<div class="admin-thresh-editor-row" style="margin-top:10px">';
+      html += '<div class="admin-thresh-editor-field" style="flex:1.6">' +
+                '<label class="admin-edit-label first" for="edit-ratio-name-' + esc(r.id) + '">Display name</label>' +
+                '<input type="text" id="edit-ratio-name-' + esc(r.id) + '" class="admin-thresh-num" value="' + esc(r.display_name || '') + '">' +
+                '<div class="admin-thresh-hint">admin-view label only \u2014 the report uses a hardcoded name, not this field</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-ratio-lo-' + esc(r.id) + '">Optimal low</label>' +
+                '<input type="number" step="any" id="edit-ratio-lo-' + esc(r.id) + '" class="admin-thresh-num" value="' + esc(r.optimal_low == null ? '' : r.optimal_low) + '">' +
+                '<div class="admin-thresh-hint">ratio below this \u2192 ' + esc(r.status_when_below_low || 'below-status') + '</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-ratio-hi-' + esc(r.id) + '">Optimal high</label>' +
+                '<input type="number" step="any" id="edit-ratio-hi-' + esc(r.id) + '" class="admin-thresh-num" value="' + esc(r.optimal_high == null ? '' : r.optimal_high) + '">' +
+                '<div class="admin-thresh-hint">ratio above this \u2192 ' + esc(r.status_when_above_high || 'above-status') + '</div>' +
+              '</div>';
+      html += '</div>';
+      html += '<div class="admin-edit-actions">' +
+                '<button class="admin-save-btn" onclick="saveEditRatio(\'' + esc(r.id) + '\')">Save</button>' +
+                '<button class="admin-cancel-btn" onclick="cancelEditRatio()">Cancel</button>' +
+                '<span class="admin-edit-status" id="edit-ratio-status-' + esc(r.id) + '"></span>' +
+              '</div>';
+      html += '</div>'; // editor
+    }
+    html += '</div>'; // thresh-row
   });
   html += '</div>';
   host.innerHTML = html;
 }
+// ── RATIO THRESHOLD EDITING ───────────────────────────────────────────────
+// Editable: display_name (admin-view label only — the report emits a hardcoded
+// name via MARKER_DISPLAY, NOT this field); optimal_low / optimal_high (engine
+// math — the engine resolves ratio status from these bounds).
+// NOT editable here: ratio_key, numerator_marker_key, denominator_marker_key
+// (engine-selection / routing) and status_when_below_low / status_when_above_high
+// (the status values the engine emits — changing one to a status with no matching
+// finding row silently produces no interpretation). All deferred to a dedicated
+// pass, mirroring the dose trigger/branch and toxic key/order deferrals.
+//
+// Harness gate: either bound change → amber engine-math save-note. Pure
+// display_name edit → benign data-edit note.
+let _editingRatioId = null;
 
+function startEditRatio(id) {
+  _editingRatioId = id;
+  renderAdminRatios();
+}
+function cancelEditRatio() {
+  _editingRatioId = null;
+  renderAdminRatios();
+}
+
+async function saveEditRatio(id) {
+  const nameEl = document.getElementById('edit-ratio-name-' + id);
+  const loEl   = document.getElementById('edit-ratio-lo-' + id);
+  const hiEl   = document.getElementById('edit-ratio-hi-' + id);
+  const statusEl = document.getElementById('edit-ratio-status-' + id);
+  const oldRow = (engineData.ratio_thresholds || []).find(r => String(r.id) === String(id));
+  if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
+
+  // Numeric parser: blank → null; non-numeric → error.
+  function parseNum(el) {
+    if (!el) return { ok: true, value: undefined };
+    const raw = String(el.value).trim();
+    if (raw === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (!isFinite(n)) return { ok: false, value: null };
+    return { ok: true, value: n };
+  }
+  const loParsed = parseNum(loEl);
+  const hiParsed = parseNum(hiEl);
+  if (!loParsed.ok || !hiParsed.ok) {
+    if (statusEl) statusEl.textContent = 'Opt low/high must be a number (or blank). Nothing saved.';
+    return;
+  }
+
+  const newName = nameEl ? String(nameEl.value) : undefined;
+  const newLo   = loParsed.value;
+  const newHi   = hiParsed.value;
+
+  const numEq = (a, b) => {
+    const an = (a === null || a === undefined || a === '') ? null : Number(a);
+    const bn = (b === null || b === undefined || b === '') ? null : Number(b);
+    return an === bn;
+  };
+  const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
+
+  const nameChanged = (newName !== undefined) && !strEq(oldRow.display_name, newName);
+  const loChanged   = (newLo   !== undefined) && !numEq(oldRow.optimal_low,  newLo);
+  const hiChanged   = (newHi   !== undefined) && !numEq(oldRow.optimal_high, newHi);
+
+  if (!nameChanged && !loChanged && !hiChanged) {
+    cancelEditRatio();
+    return;
+  }
+
+  // Sanity warn: opt_low > opt_high inverts the optimal band (the engine would
+  // never resolve 'optimal' for any ratio). Almost certainly a typo. Mirrors
+  // the threshold lo>hi guard.
+  const effLo = loChanged ? newLo : (oldRow.optimal_low  == null ? null : Number(oldRow.optimal_low));
+  const effHi = hiChanged ? newHi : (oldRow.optimal_high == null ? null : Number(oldRow.optimal_high));
+  if (effLo !== null && effHi !== null && effLo > effHi) {
+    const okSwap = window.confirm(
+      'Optimal low (' + effLo + ') is greater than optimal high (' + effHi + ') for ' +
+      (oldRow.display_name || oldRow.ratio_key) + '.\n\n' +
+      'That inverts the optimal band \u2014 the engine would never resolve "optimal" for any ratio. ' +
+      'Almost certainly a typo. Save anyway?'
+    );
+    if (!okSwap) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 opt low > opt high.'; return; }
+  }
+
+  // Engine-math confirm (bounds only).
+  const engineMathChanged = loChanged || hiChanged;
+  if (engineMathChanged) {
+    const parts = [];
+    if (loChanged) parts.push('optimal_low: '  + (oldRow.optimal_low  == null ? '\u2014' : oldRow.optimal_low)  + ' \u2192 ' + (newLo == null ? '\u2014' : newLo));
+    if (hiChanged) parts.push('optimal_high: ' + (oldRow.optimal_high == null ? '\u2014' : oldRow.optimal_high) + ' \u2192 ' + (newHi == null ? '\u2014' : newHi));
+    const ok = window.confirm(
+      'You are editing ratio bounds for ' + (oldRow.display_name || oldRow.ratio_key) + ':\n\n  ' +
+      parts.join('\n  ') +
+      '\n\nThe engine resolves ratio status (below / optimal / above) from these bounds. ' +
+      'After saving you MUST regenerate engine_data.json from Supabase, regenerate ' +
+      'v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+  }
+
+  const changes = {};
+  if (nameChanged) changes.display_name = newName;
+  if (loChanged)   changes.optimal_low  = newLo;
+  if (hiChanged)   changes.optimal_high = newHi;
+
+  if (statusEl) statusEl.textContent = 'Saving\u2026';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_ratio_thresholds', id, Object.assign({}, changes, {
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    }));
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_ratio_thresholds', id, oldRow, changes, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingRatioId = null;
+    renderAdminRatios();
+    const note = document.getElementById('admin-ratio-save-note');
+    if (note) {
+      note.style.display = 'block';
+      if (engineMathChanged) {
+        note.className = 'admin-save-note admin-save-note-warn';
+        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (ratio bounds). This changes the status the engine resolves from a ratio. ' +
+          'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
+          '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate bounds change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
+          'The change is logged and revertable from Edit history.';
+      } else {
+        note.className = 'admin-save-note';
+        note.textContent = 'Saved a display-name edit (admin-view label only \u2014 the report emits a hardcoded ratio name, not this field). No harness re-run required. The change is logged and revertable from Edit history.';
+      }
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
+}
 function renderAdminToxics() {
   const host = document.getElementById('admin-toxics-list');
   if (!host) return;
