@@ -1879,27 +1879,214 @@ function renderAdminToxics() {
   let html =
     '<div class="admin-head">' +
       '<div><div class="admin-title">Toxic element thresholds</div>' +
-      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 engine math \u00b7 triggers when value &gt; threshold</div></div>' +
+      '<div class="admin-sub">Editable: name / symbol / threshold / message \u00b7 threshold is engine math \u00b7 harness re-run required for threshold or message</div></div>' +
       '<div class="admin-counts">' +
         '<span class="admin-pill">' + rows.length + ' elements</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-toxic-save-note" class="admin-save-note" style="display:none"></div>';
   html += '<div class="admin-thresh-table admin-toxic-table">';
   html += '<div class="admin-thresh-row admin-thresh-head">' +
             '<span>Element</span><span>Symbol</span><span>Threshold (&gt;)</span><span>Message</span>' +
           '</div>';
   rows.forEach(t => {
-    html += '<div class="admin-thresh-row">' +
+    const editing = (_editingToxicId === t.id);
+    html += '<div class="admin-thresh-row' + (editing ? ' editing' : '') + '">' +
               '<span class="admin-thresh-marker">' + esc(t.display_name || t.toxic_key) + '</span>' +
               '<span>' + esc(t.symbol || '') + '</span>' +
               '<span>' + esc(fmtNum(t.threshold)) + '</span>' +
-              '<span class="admin-toxic-msg">' + esc(t.message || '') + '</span>' +
-            '</div>';
+              '<span class="admin-toxic-msg">' + esc(t.message || '');
+    if (t.id != null && !editing) {
+      html += ' <button class="admin-thresh-edit-btn" style="margin-left:8px" onclick="startEditToxic(\'' + esc(t.id) + '\')">Edit</button>';
+    }
+    html += '</span>';
+    if (editing) {
+      html += '<div class="admin-thresh-editor">';
+      html += '<div class="admin-thresh-editor-warn">\u26a0 The engine flags this element when a hair value is strictly greater than the threshold ' +
+              '(value &gt; threshold). Editing the threshold changes engine output \u2014 after saving you MUST regenerate the harness ' +
+              'snapshot and re-run the parity harness. The message is written verbatim into the user\u2019s report (finding + urgent action), ' +
+              'so a typo there lands unmediated; it is harness-gated for that reason.</div>';
+      // Read-only context: toxic_key + display_order (engine-selection / ordering, deferred).
+      html += '<div class="admin-thresh-editor-row">';
+      html += '<div class="admin-thresh-editor-field" style="flex:2">' +
+                '<label class="admin-edit-label first">Key / order (read-only)</label>' +
+                '<div class="admin-thresh-ro">' + esc(t.toxic_key || '\u2014') + ' \u00b7 display_order ' + esc(t.display_order == null ? '\u2014' : t.display_order) + '</div>' +
+                '<div class="admin-thresh-hint">To re-key or reorder, edit in Supabase + re-run harness.</div>' +
+              '</div>';
+      html += '</div>';
+      // Editable: display_name, symbol, threshold.
+      html += '<div class="admin-thresh-editor-row" style="margin-top:10px">';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-tox-name-' + esc(t.id) + '">Display name</label>' +
+                '<input type="text" id="edit-tox-name-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.display_name || '') + '">' +
+                '<div class="admin-thresh-hint">display only \u2014 not read by engine</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-tox-sym-' + esc(t.id) + '">Symbol</label>' +
+                '<input type="text" id="edit-tox-sym-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.symbol || '') + '">' +
+                '<div class="admin-thresh-hint">display only \u2014 not read by engine</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-tox-thr-' + esc(t.id) + '">Threshold (&gt;)</label>' +
+                '<input type="number" step="any" id="edit-tox-thr-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.threshold == null ? '' : t.threshold) + '">' +
+                '<div class="admin-thresh-hint">engine fires when value &gt; this</div>' +
+              '</div>';
+      html += '</div>';
+      // Editable: message (verbatim report text).
+      html += '<label class="admin-edit-label" for="edit-tox-msg-' + esc(t.id) + '">Message</label>';
+      html += '<textarea id="edit-tox-msg-' + esc(t.id) + '" class="admin-edit-ta">' + esc(t.message || '') + '</textarea>';
+      html += '<div class="admin-thresh-hint">written verbatim into the finding interpretation and the urgent action body \u2014 no template tokens here.</div>';
+      html += '<div class="admin-edit-actions">' +
+                '<button class="admin-save-btn" onclick="saveEditToxic(\'' + esc(t.id) + '\')">Save</button>' +
+                '<button class="admin-cancel-btn" onclick="cancelEditToxic()">Cancel</button>' +
+                '<span class="admin-edit-status" id="edit-tox-status-' + esc(t.id) + '"></span>' +
+              '</div>';
+      html += '</div>'; // editor
+    }
+    html += '</div>'; // thresh-row
   });
   html += '</div>';
   host.innerHTML = html;
 }
+// ── TOXIC THRESHOLD EDITING ───────────────────────────────────────────────
+// Editable: display_name, symbol (display-only metadata); threshold (engine
+// math — engine fires when value > threshold); message (verbatim report text).
+// NOT editable here: toxic_key (engine-selection key read from hair_toxics)
+// and display_order (controls consolidated-message ordering) — deferred to a
+// dedicated pass, mirroring the dose trigger/branch deferral.
+//
+// Harness gate: threshold OR message change → amber engine-gate save-note
+// (threshold changes computation; message is written verbatim into reports
+// with no harness safety net, so we surface the typo risk the same way
+// fixed_dose_text does). Pure name/symbol edits → benign data-edit note.
+let _editingToxicId = null;
 
+function startEditToxic(id) {
+  _editingToxicId = id;
+  renderAdminToxics();
+}
+function cancelEditToxic() {
+  _editingToxicId = null;
+  renderAdminToxics();
+}
+
+async function saveEditToxic(id) {
+  const nameEl = document.getElementById('edit-tox-name-' + id);
+  const symEl  = document.getElementById('edit-tox-sym-' + id);
+  const thrEl  = document.getElementById('edit-tox-thr-' + id);
+  const msgEl  = document.getElementById('edit-tox-msg-' + id);
+  const statusEl = document.getElementById('edit-tox-status-' + id);
+  const oldRow = (engineData.toxic_thresholds || []).find(t => String(t.id) === String(id));
+  if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
+
+  // Numeric parser for threshold: blank → null; non-numeric → error.
+  function parseNum(el) {
+    if (!el) return { ok: true, value: undefined };
+    const raw = String(el.value).trim();
+    if (raw === '') return { ok: true, value: null };
+    const n = Number(raw);
+    if (!isFinite(n)) return { ok: false, value: null };
+    return { ok: true, value: n };
+  }
+  const thrParsed = parseNum(thrEl);
+  if (!thrParsed.ok) {
+    if (statusEl) statusEl.textContent = 'Threshold must be a number (or blank). Nothing saved.';
+    return;
+  }
+
+  // Text fields: name/symbol kept as-is (blank → empty string); message
+  // nullable (blank → null) matching how the engine treats absent messages.
+  const newName = nameEl ? String(nameEl.value) : undefined;
+  const newSym  = symEl  ? String(symEl.value)  : undefined;
+  const newThr  = thrParsed.value;
+  const newMsg  = msgEl ? (String(msgEl.value).trim() === '' ? null : String(msgEl.value)) : undefined;
+
+  const numEq = (a, b) => {
+    const an = (a === null || a === undefined || a === '') ? null : Number(a);
+    const bn = (b === null || b === undefined || b === '') ? null : Number(b);
+    return an === bn;
+  };
+  const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
+
+  const nameChanged = (newName !== undefined) && !strEq(oldRow.display_name, newName);
+  const symChanged  = (newSym  !== undefined) && !strEq(oldRow.symbol, newSym);
+  const thrChanged  = (newThr  !== undefined) && !numEq(oldRow.threshold, newThr);
+  const msgChanged  = (newMsg  !== undefined) && !strEq(oldRow.message, newMsg);
+
+  if (!nameChanged && !symChanged && !thrChanged && !msgChanged) {
+    cancelEditToxic();
+    return;
+  }
+
+  // Sanity warn: a negative threshold would fire on every present value
+  // (any real measurement > a negative number). Almost certainly a typo.
+  if (thrChanged && newThr !== null && newThr < 0) {
+    const okNeg = window.confirm(
+      'Threshold for ' + (oldRow.display_name || oldRow.toxic_key) + ' is being set to ' + newThr + '.\n\n' +
+      'A negative threshold makes the engine flag this element for essentially any measured value. Save anyway?'
+    );
+    if (!okNeg) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 negative threshold.'; return; }
+  }
+
+  // Engine-gate confirm. threshold = computation; message = verbatim report text.
+  const engineGated = thrChanged || msgChanged;
+  if (engineGated) {
+    const parts = [];
+    if (thrChanged) parts.push('threshold: ' + (oldRow.threshold == null ? '\u2014' : oldRow.threshold) + ' \u2192 ' + (newThr == null ? '\u2014' : newThr));
+    if (msgChanged) parts.push('message: "' + (oldRow.message || '') + '" \u2192 "' + (newMsg || '') + '"');
+    const label = thrChanged
+      ? (msgChanged ? 'the toxic-flag threshold and the verbatim report message' : 'the toxic-flag threshold the engine computes against')
+      : 'the message written verbatim into the user\u2019s report';
+    const ok = window.confirm(
+      'You are editing toxic-element fields for ' + (oldRow.display_name || oldRow.toxic_key) + ':\n\n  ' +
+      parts.join('\n  ') +
+      '\n\nThis changes ' + label + '. ' +
+      'After saving you MUST regenerate engine_data.json from Supabase, regenerate ' +
+      'v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+  }
+
+  const changes = {};
+  if (nameChanged) changes.display_name = newName;
+  if (symChanged)  changes.symbol       = newSym;
+  if (thrChanged)  changes.threshold    = newThr;
+  if (msgChanged)  changes.message      = newMsg;
+
+  if (statusEl) statusEl.textContent = 'Saving\u2026';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_toxic_thresholds', id, Object.assign({}, changes, {
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    }));
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_toxic_thresholds', id, oldRow, changes, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingToxicId = null;
+    renderAdminToxics();
+    const note = document.getElementById('admin-toxic-save-note');
+    if (note) {
+      note.style.display = 'block';
+      if (engineGated) {
+        note.className = 'admin-save-note admin-save-note-warn';
+        note.textContent = '\u26a0 Saved an ENGINE-GATED edit (' +
+          (thrChanged && msgChanged ? 'threshold + message' : thrChanged ? 'threshold' : 'message') + '). ' +
+          (thrChanged ? 'The threshold changes which values the engine flags as toxic. ' : '') +
+          (msgChanged ? 'The message is written verbatim into the finding and urgent action in user reports. ' : '') +
+          'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
+          '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
+          'The change is logged and revertable from Edit history.';
+      } else {
+        note.className = 'admin-save-note';
+        note.textContent = 'Saved a display-only edit (name / symbol \u2014 the engine reads neither). No harness re-run required for these fields. The change is logged and revertable from Edit history.';
+      }
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
+}
 function renderAdminDoses() {
   const host = document.getElementById('admin-doses-list');
   if (!host) return;
