@@ -2424,12 +2424,13 @@ function renderAdminFlags() {
   let html =
     '<div class="admin-head">' +
       '<div><div class="admin-title">Profile flag actions</div>' +
-      '<div class="admin-sub">Read-only \u00b7 admin \u00b7 fired by profile flags</div></div>' +
+      '<div class="admin-sub">Editable: title / body \u00b7 both verbatim into reports \u00b7 harness re-run required</div></div>' +
       '<div class="admin-counts">' +
         '<span class="admin-pill">' + rows.length + ' flags</span>' +
         '<span class="admin-pill">' + bucketKeys.length + ' buckets</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-flag-save-note" class="admin-save-note" style="display:none"></div>';
   bucketKeys.forEach(bk => {
     const items = buckets[bk].slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     html += '<div class="admin-card">';
@@ -2437,23 +2438,168 @@ function renderAdminFlags() {
             '<span class="admin-card-meta">' + items.length + ' flags</span></div>';
     items.forEach((f, i) => {
       const last = i === items.length - 1;
+      const editing = (_editingFlagId === f.id);
       html += '<div class="admin-row' + (last ? ' last' : '') + '">';
       html += '<div class="admin-badges">' +
                 '<span class="admin-badge st-other">' + esc(f.flag_column || '\u2014') + '</span>' +
                 '<span class="admin-badge ' + priClass(f.priority) + '">priority: ' + esc(f.priority || '\u2014') + '</span>' +
-                '<span class="admin-badge st-sex">' + esc(f.applies_to_sex || 'all') + '</span>' +
-              '</div>';
-      if (hasVal(f.title)) {
-        html += '<div class="admin-action-title">' + esc(f.title) + '</div>';
+                '<span class="admin-badge st-sex">' + esc(f.applies_to_sex || 'all') + '</span>';
+      if (f.id != null && !editing) {
+        html += '<button class="admin-edit-btn" onclick="startEditFlag(\'' + esc(f.id) + '\')">Edit</button>';
       }
-      html += '<div class="admin-interp">' + esc(f.body) + '</div>';
       html += '</div>';
+      if (!editing) {
+        if (hasVal(f.title)) {
+          html += '<div class="admin-action-title">' + esc(f.title) + '</div>';
+        }
+        html += '<div class="admin-interp">' + esc(f.body) + '</div>';
+      } else {
+        html += '<div class="admin-thresh-editor">';
+        html += '<div class="admin-thresh-editor-warn">\u26a0 Both title and body are written verbatim into the user\u2019s report \u2014 ' +
+                (bk === 'fix_first'
+                  ? 'this row\u2019s body is joined into the consolidated \u201cFix These FIRST\u201d action.'
+                  : 'this row becomes a standalone action.') +
+                ' No math, but no harness safety net either, so a typo lands unmediated. After saving, re-run the parity harness for the habit; the audit log + revert is the real backstop.</div>';
+        // Read-only context: the selection / branch / routing columns.
+        html += '<div class="admin-thresh-editor-row">';
+        html += '<div class="admin-thresh-editor-field" style="flex:2.4">' +
+                  '<label class="admin-edit-label first">Routing (read-only)</label>' +
+                  '<div class="admin-thresh-ro">flag: ' + esc(f.flag_column || '\u2014') + ' \u00b7 bucket: ' + esc(f.bucket || '\u2014') +
+                  ' \u00b7 priority: ' + esc(f.priority || '\u2014') + ' \u00b7 sex: ' + esc(f.applies_to_sex || 'all') + '</div>' +
+                  '<div class="admin-thresh-hint">To change which profile flag fires this, move it between buckets, or change priority / sex gating, edit in Supabase + re-run harness.</div>' +
+                '</div>';
+        html += '</div>';
+        // Editable: title.
+        html += '<label class="admin-edit-label first" for="edit-flag-title-' + esc(f.id) + '">Title</label>';
+        html += '<input type="text" id="edit-flag-title-' + esc(f.id) + '" class="admin-thresh-num" value="' + esc(f.title || '') + '">';
+        html += '<div class="admin-thresh-hint">' +
+                (bk === 'fix_first'
+                  ? 'In the fix_first bucket the consolidated action uses one shared title across rows \u2014 editing it here changes that shared heading.'
+                  : 'Shown as the action heading in the report.') + '</div>';
+        // Editable: body.
+        html += '<label class="admin-edit-label" for="edit-flag-body-' + esc(f.id) + '">Body</label>';
+        html += '<textarea id="edit-flag-body-' + esc(f.id) + '" class="admin-edit-ta">' + esc(f.body || '') + '</textarea>';
+        html += '<div class="admin-thresh-hint">written verbatim into the report \u2014 no template tokens here.</div>';
+        html += '<div class="admin-edit-actions">' +
+                  '<button class="admin-save-btn" onclick="saveEditFlag(\'' + esc(f.id) + '\')">Save</button>' +
+                  '<button class="admin-cancel-btn" onclick="cancelEditFlag()">Cancel</button>' +
+                  '<span class="admin-edit-status" id="edit-flag-status-' + esc(f.id) + '"></span>' +
+                '</div>';
+        html += '</div>'; // editor
+      }
+      html += '</div>'; // admin-row
     });
-    html += '</div>';
+    html += '</div>'; // admin-card
   });
   host.innerHTML = html;
 }
+// ── PROFILE-FLAG-ACTION EDITING ───────────────────────────────────────────
+// Editable: title, body (both written verbatim into reports — fix_first bodies
+// are joined into the consolidated "Fix These FIRST" action; standalone rows
+// become an action directly). NOT editable here: flag_column (engine-selection
+// key tested as profile[flag_column]), bucket (branch selector between
+// processFixFirst and processStandaloneFlags), priority and applies_to_sex
+// (output/selection routing), display_order (ordering). All deferred to a
+// dedicated pass, mirroring the dose/toxic/ratio selection-column deferrals.
+//
+// Harness gate: any title or body edit → amber save-note. Both are verbatim
+// report text with no harness computation, gated the same way as toxics
+// message and fixed_dose_text to surface the typo risk. There is no benign
+// path here — every editable field is verbatim report output.
+let _editingFlagId = null;
 
+function startEditFlag(id) {
+  _editingFlagId = id;
+  renderAdminFlags();
+}
+function cancelEditFlag() {
+  _editingFlagId = null;
+  renderAdminFlags();
+}
+
+async function saveEditFlag(id) {
+  const titleEl = document.getElementById('edit-flag-title-' + id);
+  const bodyEl  = document.getElementById('edit-flag-body-' + id);
+  const statusEl = document.getElementById('edit-flag-status-' + id);
+  const oldRow = (engineData.profile_flag_actions || []).find(f => String(f.id) === String(id));
+  if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
+
+  // title: kept as-is (blank → empty string). body: nullable text (blank → null),
+  // matching how the engine tolerates an absent body.
+  const newTitle = titleEl ? String(titleEl.value) : undefined;
+  const newBody  = bodyEl ? (String(bodyEl.value).trim() === '' ? null : String(bodyEl.value)) : undefined;
+
+  const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
+  const titleChanged = (newTitle !== undefined) && !strEq(oldRow.title, newTitle);
+  const bodyChanged  = (newBody  !== undefined) && !strEq(oldRow.body, newBody);
+
+  if (!titleChanged && !bodyChanged) {
+    cancelEditFlag();
+    return;
+  }
+
+  // Guard: clearing body on a fix_first row. processFixFirst joins bodies with
+  // '\n'; an empty body would leave a blank line in the consolidated action.
+  // Not engine-breaking, but almost certainly unintended.
+  if (bodyChanged && newBody === null) {
+    const okBlank = window.confirm(
+      'Body for "' + (oldRow.title || oldRow.flag_column) + '" is being cleared.\n\n' +
+      (oldRow.bucket === 'fix_first'
+        ? 'This row\u2019s body is joined into the consolidated "Fix These FIRST" action \u2014 a blank body leaves an empty line there.'
+        : 'This row becomes a standalone action with no body text.') +
+      '\n\nSave with an empty body?'
+    );
+    if (!okBlank) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 empty body.'; return; }
+  }
+
+  // Engine-gate confirm. Both fields are verbatim report text (no math, no
+  // harness safety net), gated like toxics message / fixed_dose_text.
+  const parts = [];
+  if (titleChanged) parts.push('title: "' + (oldRow.title || '') + '" \u2192 "' + (newTitle || '') + '"');
+  if (bodyChanged)  parts.push('body: "' + (oldRow.body || '') + '" \u2192 "' + (newBody || '') + '"');
+  const ok = window.confirm(
+    'You are editing report text for the "' + (oldRow.flag_column || oldRow.title) + '" flag action:\n\n  ' +
+    parts.join('\n  ') +
+    '\n\nThis text is written verbatim into the user\u2019s report' +
+    (oldRow.bucket === 'fix_first' ? ' (joined into the consolidated "Fix These FIRST" action)' : ' as a standalone action') +
+    '. After saving, regenerate engine_data.json from Supabase, regenerate ' +
+    'v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+  );
+  if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+
+  const changes = {};
+  if (titleChanged) changes.title = newTitle;
+  if (bodyChanged)  changes.body  = newBody;
+
+  if (statusEl) statusEl.textContent = 'Saving\u2026';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_profile_flag_actions', id, Object.assign({}, changes, {
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    }));
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_profile_flag_actions', id, oldRow, changes, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingFlagId = null;
+    renderAdminFlags();
+    const note = document.getElementById('admin-flag-save-note');
+    if (note) {
+      note.style.display = 'block';
+      note.className = 'admin-save-note admin-save-note-warn';
+      note.textContent = '\u26a0 Saved an ENGINE-GATED edit (' +
+        (titleChanged && bodyChanged ? 'title + body' : titleChanged ? 'title' : 'body') + '). ' +
+        'This text is written verbatim into user reports' +
+        (oldRow.bucket === 'fix_first' ? ' via the consolidated "Fix These FIRST" action' : ' as a standalone action') + '. ' +
+        'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
+        '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate text change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
+        'The change is logged and revertable from Edit history.';
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
+}
 function startEditFinding(id) {
   _editingFindingId = id;
   renderAdminFindings();
