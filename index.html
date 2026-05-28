@@ -349,6 +349,9 @@
   .admin-log-old { color:var(--muted, #999); }
   .admin-log-new { color:var(--color-text-primary, #1a1a1a); }
   .admin-log-tag { display:inline-block; font-size:11px; padding:1px 6px; border-radius:6px; background:var(--bg, #f1efe8); color:var(--muted, #5f5e5a); margin-right:6px; }
+  .admin-log-revert { font-size:11px; padding:1px 7px; border-radius:8px; background:#fdf3e7; color:#8a4b12; border:1px solid #e7c9a3; }
+  .admin-log-fcount { font-size:11px; opacity:0.6; font-variant-numeric:tabular-nums; }
+  .admin-log-filter-btn { font-size:13px; padding:4px 12px; }
 
   /* CARDS */
   .card {
@@ -3059,6 +3062,8 @@ async function renderEditLog() {
       host.innerHTML = '<div class="admin-empty">No edits recorded yet.</div>';
       return;
     }
+
+    // Resolve editor names (unchanged).
     const ids = [...new Set(logRows.map(r => r.editor_id).filter(Boolean))];
     const nameById = {};
     for (const id of ids) {
@@ -3068,17 +3073,85 @@ async function renderEditLog() {
         if (row) nameById[id] = row.display_name || row.name || (id.slice(0, 8) + '…');
       } catch (e) { /* fall through to id */ }
     }
-    const fmt = ts => {
-      try { return new Date(ts).toLocaleString(); } catch (e) { return ts; }
+
+    // ── Net-zero ("reverted") detection ──────────────────────────────────
+    // For each (table, row, field) group, the field's CURRENT value is the
+    // newest edit's new_value; its BASELINE is the oldest edit's old_value.
+    // If they match, the field was returned to where it started — every edit
+    // in that group is part of a round-trip and gets a non-destructive badge.
+    // (Audit log: nothing is hidden or collapsed, only annotated.)
+    const norm = v => String(v == null ? '' : v);
+    const groups = {};
+    logRows.forEach(r => {
+      const key = r.table_name + '|' + r.row_id + '|' + r.field_name;
+      (groups[key] = groups[key] || []).push(r);
+    });
+    const revertedIds = new Set();
+    Object.keys(groups).forEach(key => {
+      const rows = groups[key];           // newest-first (matches desc order)
+      if (rows.length < 2) return;
+      const current  = norm(rows[0].new_value);
+      const baseline = norm(rows[rows.length - 1].old_value);
+      if (current === baseline) rows.forEach(r => revertedIds.add(r.id));
+    });
+
+    // ── Table filter state + counts ──────────────────────────────────────
+    const tableCounts = {};
+    logRows.forEach(r => { tableCounts[r.table_name] = (tableCounts[r.table_name] || 0) + 1; });
+    const tableKeys = Object.keys(tableCounts).sort();
+    // Friendly short labels for the filter buttons.
+    const tableLabel = t => ({
+      engine_findings: 'findings',
+      engine_thresholds: 'thresholds',
+      engine_supplement_doses: 'doses',
+      engine_toxic_thresholds: 'toxics',
+      engine_ratio_thresholds: 'ratios',
+      engine_profile_flag_actions: 'flags'
+    })[t] || t.replace(/^engine_/, '');
+
+    const fmtAbs = ts => { try { return new Date(ts).toLocaleString(); } catch (e) { return ts; } };
+    const fmtRel = ts => {
+      const then = new Date(ts).getTime();
+      if (isNaN(then)) return '';
+      const diff = Math.max(0, Date.now() - then);
+      const s = Math.floor(diff / 1000);
+      if (s < 45) return 'just now';
+      const m = Math.floor(s / 60);
+      if (m < 60) return m + 'm ago';
+      const h = Math.floor(m / 60);
+      if (h < 24) return h + 'h ago';
+      const d = Math.floor(h / 24);
+      if (d < 30) return d + 'd ago';
+      const mo = Math.floor(d / 30);
+      if (mo < 12) return mo + 'mo ago';
+      return Math.floor(mo / 12) + 'y ago';
     };
+
+    const revertedCount = revertedIds.size;
     let html = '<div class="admin-head"><div><div class="admin-title">Edit history</div>' +
-               '<div class="admin-sub">' + logRows.length + ' change' + (logRows.length === 1 ? '' : 's') + ' \u00b7 newest first</div></div></div>';
+               '<div class="admin-sub">' + logRows.length + ' change' + (logRows.length === 1 ? '' : 's') +
+               ' \u00b7 newest first' +
+               (revertedCount ? ' \u00b7 ' + revertedCount + ' in reverted round-trips' : '') +
+               '</div></div></div>';
+
+    // Filter bar: All + one button per table present in the log.
+    html += '<div class="admin-log-filter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">';
+    html += '<button class="admin-toggle-btn admin-log-filter-btn active" data-table="all" onclick="filterEditLog(\'all\')">All <span class="admin-log-fcount">' + logRows.length + '</span></button>';
+    tableKeys.forEach(t => {
+      html += '<button class="admin-toggle-btn admin-log-filter-btn" data-table="' + esc(t) + '" onclick="filterEditLog(\'' + esc(t) + '\')">' +
+              esc(tableLabel(t)) + ' <span class="admin-log-fcount">' + tableCounts[t] + '</span></button>';
+    });
+    html += '</div>';
+
     logRows.forEach(r => {
       const who = nameById[r.editor_id] || (r.editor_id ? r.editor_id.slice(0, 8) + '…' : 'unknown');
-      html += '<div class="admin-log-row">';
+      const isReverted = revertedIds.has(r.id);
+      html += '<div class="admin-log-row" data-table="' + esc(r.table_name) + '"' +
+              (isReverted ? ' data-reverted="1"' : '') + '>';
       html += '<div class="admin-log-meta">' +
-                '<span class="admin-log-when">' + esc(fmt(r.edited_at)) + '</span>' +
+                '<span class="admin-log-when" title="' + esc(fmtAbs(r.edited_at)) + '">' + esc(fmtRel(r.edited_at)) + '</span>' +
                 '<span class="admin-log-who">' + esc(who) + '</span>' +
+                (isReverted ? '<span class="admin-log-revert" title="This field was later returned to its original value — net-zero round-trip.">\u21a9 reverted</span>' : '') +
               '</div>';
       html += '<div class="admin-log-target"><span class="admin-marker">' + esc(r.table_name) + '</span>' +
               ' \u00b7 ' + esc(r.field_name) + '</div>';
@@ -3094,6 +3167,18 @@ async function renderEditLog() {
   }
 }
 
+// Client-side table filter for the edit log — shows/hides rows without a refetch.
+// Audit-safe: rows are hidden from view, never removed; clearing the filter
+// (or picking "All") restores every row.
+function filterEditLog(table) {
+  document.querySelectorAll('.admin-log-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-table') === table);
+  });
+  document.querySelectorAll('#admin-log-list .admin-log-row').forEach(row => {
+    const show = (table === 'all') || (row.getAttribute('data-table') === table);
+    row.style.display = show ? '' : 'none';
+  });
+}
 // Field definitions per kind — label + threshold logic shared with loadHistory pills
 const COMPARISON_FIELDS = {
   blood: [
