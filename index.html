@@ -1784,6 +1784,17 @@ function findingExistsFor(marker_key, status) {
 // Live handler for the threshold evaluation_mode dropdown. (1) re-dims low/high
 // to match which ends the new mode reads; (2) renders the reachability warning.
 // Pure UI — no save, no engine touch.
+// True if the engine can actually produce (marker_key, status): the marker has
+// at least one threshold row whose evaluation_mode can emit that status. A dose
+// keyed to a pair this returns false for never fires (silent orphan). Reused by
+// the doses branch-selector pass.
+function markerProducesStatus(marker_key, status) {
+  var thr = (window.engineData && engineData.thresholds) || [];
+  var rows = thr.filter(function (t) { return t.marker_key === marker_key; });
+  if (!rows.length) return false;
+  return rows.some(function (t) { return producibleStatuses(t.evaluation_mode).indexOf(status) !== -1; });
+}
+
 function onThresholdModeChange(id) {
   var sel = document.getElementById('edit-thr-mode-' + id);
   if (!sel) return;
@@ -2398,6 +2409,39 @@ async function saveEditToxic(id) {
     if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
   }
 }
+// Live handler for the dose trigger dropdowns (branch-selector pass). Warns if
+// the chosen (marker, status) is unreachable (the dose would never fire) or
+// collides with another dose (lookupDose returns the first match, shadowing one).
+function onDoseSelectionChange(id) {
+  var mEl = document.getElementById('edit-dose-trigmarker-' + id);
+  var sEl = document.getElementById('edit-dose-trigstatus-' + id);
+  var box = document.getElementById('edit-dose-reach-' + id);
+  if (!mEl || !sEl || !box) return;
+  var marker = mEl.value, status = sEl.value;
+  var doses = (window.engineData && engineData.supplement_doses) || [];
+  var html = '';
+  if (!markerProducesStatus(marker, status)) {
+    html += '<div class="admin-thresh-orphan">\u26a0 <strong>Orphan risk.</strong> The engine never produces (' +
+            marker + ', ' + status + ') \u2014 no threshold for this marker can emit this status, so this dose would never fire.' +
+            '<div class="admin-thresh-orphan-foot">Pick a (marker, status) the engine can produce, or adjust the threshold first. ' +
+            'Saving an unreachable route requires typing the supplement name to confirm.</div></div>';
+  }
+  var collide = doses.filter(function (x) {
+    return String(x.id) !== String(id) && x.trigger_marker_key === marker && x.trigger_status === status;
+  });
+  if (collide.length) {
+    html += '<div class="admin-thresh-orphan" style="margin-top:8px">\u26a0 <strong>Collision.</strong> ' +
+            collide.length + ' other dose' + (collide.length > 1 ? 's' : '') + ' already fire(s) on (' +
+            marker + ', ' + status + '): ' + collide.map(function (x) { return x.supplement_name || x.id; }).join(', ') +
+            '.<div class="admin-thresh-orphan-foot">lookupDose returns the first match, so one will be shadowed. ' +
+            'Saving requires typing the supplement name to confirm.</div></div>';
+  }
+  if (!html) {
+    html = '<div class="admin-thresh-hint" style="margin-top:8px">\u2713 (' + marker + ', ' + status + ') is reachable and unique.</div>';
+  }
+  box.innerHTML = html;
+}
+
 function renderAdminDoses() {
   const host = document.getElementById('admin-doses-list');
   if (!host) return;
@@ -2465,15 +2509,30 @@ function renderAdminDoses() {
         html += '<div class="admin-thresh-editor-warn">Fixed-dose row. The engine outputs <code>fixed_dose_text</code> verbatim into the user\u2019s report \u2014 ' +
                 'no math, but no safety net either. Audit log + revert is your backstop for typos.</div>';
       }
-      // Read-only context line covering the selection / branch columns.
+      // Engine-selection columns now editable: trigger_marker_key + trigger_status
+      // decide which (marker, status) the engine fires this dose on (lookupDose
+      // matches both exactly). The computed/fixed branch stays Supabase-only.
+      var __doseMarkers = Array.from(new Set((engineData.thresholds || []).map(function (t) { return t.marker_key; }).filter(Boolean))).sort();
+      var __dmSel = buildSelect('edit-dose-trigmarker-' + esc(d.id), __doseMarkers, d.trigger_marker_key).replace('<select ', '<select onchange="onDoseSelectionChange(\'' + esc(d.id) + '\')" ');
+      var __dsSel = buildSelect('edit-dose-trigstatus-' + esc(d.id), ['low','optimal','high','watch'], d.trigger_status).replace('<select ', '<select onchange="onDoseSelectionChange(\'' + esc(d.id) + '\')" ');
       html += '<div class="admin-thresh-editor-row">';
-      html += '<div class="admin-thresh-editor-field" style="flex:2">' +
-                '<label class="admin-edit-label first">Trigger / branch (read-only)</label>' +
-                '<div class="admin-thresh-ro">' + esc(d.trigger_marker_key || '\u2014') + ' \u00b7 ' +
-                esc(d.trigger_status || '\u2014') + ' \u00b7 ' + (computed ? 'computed' : 'fixed') + '</div>' +
-                '<div class="admin-thresh-hint">To re-route or switch branch, edit in Supabase + re-run harness.</div>' +
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-dose-trigmarker-' + esc(d.id) + '">Trigger marker</label>' +
+                __dmSel +
+                '<div class="admin-thresh-hint">the marker whose status fires this dose</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-dose-trigstatus-' + esc(d.id) + '">Trigger status</label>' +
+                __dsSel +
+                '<div class="admin-thresh-hint">fires when that marker resolves to this status</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first">Branch (read-only)</label>' +
+                '<div class="admin-thresh-ro">' + (computed ? 'computed' : 'fixed') + '</div>' +
+                '<div class="admin-thresh-hint">computed/fixed switch is Supabase-only</div>' +
               '</div>';
       html += '</div>';
+      html += '<div id="edit-dose-reach-' + esc(d.id) + '"></div>';
       // Supplement name (shared between branches).
       html += '<label class="admin-edit-label first" for="edit-dose-name-' + esc(d.id) + '">Supplement name</label>';
       html += '<input type="text" id="edit-dose-name-' + esc(d.id) + '" class="admin-thresh-num" value="' + esc(d.supplement_name || '') + '">';
@@ -3054,6 +3113,8 @@ async function saveEditDose(id) {
   const capEl   = document.getElementById('edit-dose-cap-' + id);
   const unitEl  = document.getElementById('edit-dose-unit-' + id);
   const fixedEl = document.getElementById('edit-dose-fixed-' + id);
+  const trigMarkerEl = document.getElementById('edit-dose-trigmarker-' + id);
+  const trigStatusEl = document.getElementById('edit-dose-trigstatus-' + id);
 
   // Numeric parser: blank \u2192 null; non-numeric \u2192 error. Disabled/missing \u2192 undefined.
   function parseNum(el) {
@@ -3105,9 +3166,14 @@ async function saveEditDose(id) {
   const wfChanged    = (newWf    !== undefined) && !numEq(oldRow.weight_factor,  newWf);
   const incrChanged  = (newIncr  !== undefined) && !numEq(oldRow.dose_increment, newIncr);
   const capChanged   = (newCap   !== undefined) && !numEq(oldRow.max_dose_cap,   newCap);
+  const newTrigMarker = trigMarkerEl ? String(trigMarkerEl.value) : undefined;
+  const newTrigStatus = trigStatusEl ? String(trigStatusEl.value) : undefined;
+  const trigMarkerChanged = (newTrigMarker !== undefined) && !strEq(oldRow.trigger_marker_key, newTrigMarker);
+  const trigStatusChanged = (newTrigStatus !== undefined) && !strEq(oldRow.trigger_status, newTrigStatus);
+  const selectionChanged = trigMarkerChanged || trigStatusChanged;
 
   const numericChanged = wfChanged || incrChanged || capChanged || unitChanged;
-  const anyChanged = nameChanged || instrChanged || numericChanged || fixedChanged;
+  const anyChanged = nameChanged || instrChanged || numericChanged || fixedChanged || selectionChanged;
   if (!anyChanged) { cancelEditDose(); return; }
 
   // ── guard: zeroing weight_factor on a computed row ──
@@ -3127,6 +3193,44 @@ async function saveEditDose(id) {
   if (isComputed && wfChanged && newWf === null) {
     if (statusEl) statusEl.textContent = 'Cannot blank weight_factor here \u2014 that would switch the row to the fixed branch. Edit in Supabase + re-run the harness.';
     return;
+  }
+
+  // ── engine-selection gate (re-routing trigger_marker_key / trigger_status) ──
+  // Type-the-name gate ONLY when the new route orphans the dose (unreachable
+  // pair) or collides with another dose (shadowing). Benign re-routes skip it.
+  if (selectionChanged) {
+    const effMarker = trigMarkerChanged ? newTrigMarker : oldRow.trigger_marker_key;
+    const effStatus = trigStatusChanged ? newTrigStatus : oldRow.trigger_status;
+    const unreachable = !markerProducesStatus(effMarker, effStatus);
+    const collide = (engineData.supplement_doses || []).filter(x =>
+      String(x.id) !== String(id) && x.trigger_marker_key === effMarker && x.trigger_status === effStatus);
+    if (unreachable || collide.length) {
+      const reason = unreachable
+        ? 'The engine never produces (' + effMarker + ', ' + effStatus + '), so this dose would never fire.'
+        : 'Another dose (' + collide.map(x => x.supplement_name || x.id).join(', ') + ') already fires on (' + effMarker + ', ' + effStatus + '); one will be shadowed.';
+      const typed = window.prompt(
+        'ENGINE-SELECTION WARNING for ' + (oldRow.supplement_name || oldRow.trigger_marker_key) + '\n\n' +
+        reason + '\n\nTo confirm, type the supplement name exactly:\n(' + (oldRow.supplement_name || '') + ')'
+      );
+      if (typed === null) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 re-route aborted.'; return; }
+      if (String(typed).trim() !== String(oldRow.supplement_name || '').trim()) {
+        if (statusEl) statusEl.textContent = 'Supplement name did not match \u2014 nothing saved.'; return;
+      }
+    }
+  }
+
+  // Engine-selection confirm (re-routing always changes which dose the engine fires).
+  if (selectionChanged) {
+    const sparts = [];
+    if (trigMarkerChanged) sparts.push('trigger_marker_key: ' + (oldRow.trigger_marker_key || '\u2014') + ' \u2192 ' + newTrigMarker);
+    if (trigStatusChanged) sparts.push('trigger_status: ' + (oldRow.trigger_status || '\u2014') + ' \u2192 ' + newTrigStatus);
+    const ok = window.confirm(
+      'You are re-routing which (marker, status) fires the "' + (oldRow.supplement_name || oldRow.trigger_marker_key) + '" dose:\n\n  ' +
+      sparts.join('\n  ') +
+      '\n\nThis changes engine selection. After saving you MUST regenerate engine_data.json from Supabase, regenerate ' +
+      'v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
   }
 
   // ── engine-math confirm ──
@@ -3158,6 +3262,8 @@ async function saveEditDose(id) {
   if (wfChanged)    changes.weight_factor   = newWf;
   if (incrChanged)  changes.dose_increment  = newIncr;
   if (capChanged)   changes.max_dose_cap    = newCap;
+  if (trigMarkerChanged) changes.trigger_marker_key = newTrigMarker;
+  if (trigStatusChanged) changes.trigger_status     = newTrigStatus;
 
   if (statusEl) statusEl.textContent = 'Saving\u2026';
   try {
@@ -3175,9 +3281,9 @@ async function saveEditDose(id) {
     const note = document.getElementById('admin-dose-save-note');
     if (note) {
       note.style.display = 'block';
-      if (engineMathChanged) {
+      if (engineMathChanged || selectionChanged) {
         note.className = 'admin-save-note admin-save-note-warn';
-        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (dose values). This changes ' +
+        note.textContent = '\u26a0 Saved an ENGINE edit (dose values / trigger routing). This changes ' +
           (isComputed ? 'computed dose output' : 'the verbatim dose text in user reports') + '. ' +
           'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
           '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate dose change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
