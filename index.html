@@ -2306,6 +2306,29 @@ async function saveEditRatio(id) {
     if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
   }
 }
+// Keys of the hair_toxics measurement object the engine indexes via
+// toxics[toxic_key] (mirrors the hair_toxics object built in getHairValues).
+// A toxic_key outside this set makes labs.hair_toxics[key] undefined, so that
+// row never flags \u2014 a silent orphan. Keep in sync if the toxic panel changes.
+const TOXIC_MEASUREMENT_KEYS = ['mercury', 'lead', 'cadmium', 'arsenic', 'aluminum', 'uranium'];
+
+// Live handler for the toxic_key dropdown (branch-selector pass). Warns if the
+// chosen key isn't a measured hair-toxic element (the row would never flag).
+function onToxicSelectionChange(id) {
+  var box = document.getElementById('edit-tox-reach-' + id);
+  if (!box) return;
+  var sel = document.getElementById('edit-tox-key-' + id);
+  if (!sel) return;
+  var key = sel.value;
+  if (TOXIC_MEASUREMENT_KEYS.indexOf(key) === -1) {
+    box.innerHTML = '<div class="admin-thresh-orphan">\u26a0 <strong>Orphan risk.</strong> "' + key +
+      '" is not a measured hair-toxic element \u2014 labs.hair_toxics["' + key + '"] is undefined, so this row never flags (no error, just dropped).' +
+      '<div class="admin-thresh-orphan-foot">Pick a measured element. Saving an off-list key requires typing the toxic key to confirm.</div></div>';
+  } else {
+    box.innerHTML = '<div class="admin-thresh-hint" style="margin-top:8px">\u2713 "' + key + '" is a measured hair-toxic element.</div>';
+  }
+}
+
 function renderAdminToxics() {
   const host = document.getElementById('admin-toxics-list');
   if (!host) return;
@@ -2347,14 +2370,23 @@ function renderAdminToxics() {
               '(value &gt; threshold). Editing the threshold changes engine output \u2014 after saving you MUST regenerate the harness ' +
               'snapshot and re-run the parity harness. The message is written verbatim into the user\u2019s report (finding + urgent action), ' +
               'so a typo there lands unmediated; it is harness-gated for that reason.</div>';
-      // Read-only context: toxic_key + display_order (engine-selection / ordering, deferred).
+      // Engine-selection columns now editable: toxic_key indexes hair_toxics
+      // (an off-list key makes the row never flag); display_order sets the order
+      // elements appear in the consolidated message (harness-visible output).
+      var __toxKeySel = buildSelect('edit-tox-key-' + esc(t.id), TOXIC_MEASUREMENT_KEYS, t.toxic_key).replace('<select ', '<select onchange="onToxicSelectionChange(\'' + esc(t.id) + '\')" ');
       html += '<div class="admin-thresh-editor-row">';
-      html += '<div class="admin-thresh-editor-field" style="flex:2">' +
-                '<label class="admin-edit-label first">Key / order (read-only)</label>' +
-                '<div class="admin-thresh-ro">' + esc(t.toxic_key || '\u2014') + ' \u00b7 display_order ' + esc(t.display_order == null ? '\u2014' : t.display_order) + '</div>' +
-                '<div class="admin-thresh-hint">To re-key or reorder, edit in Supabase + re-run harness.</div>' +
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-tox-key-' + esc(t.id) + '">Toxic key</label>' +
+                __toxKeySel +
+                '<div class="admin-thresh-hint">which hair_toxics element this row flags</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-tox-order-' + esc(t.id) + '">Display order</label>' +
+                '<input type="number" step="1" id="edit-tox-order-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.display_order == null ? '' : t.display_order) + '">' +
+                '<div class="admin-thresh-hint">position in the consolidated message (harness-visible)</div>' +
               '</div>';
       html += '</div>';
+      html += '<div id="edit-tox-reach-' + esc(t.id) + '"></div>';
       // Editable: display_name, symbol, threshold.
       html += '<div class="admin-thresh-editor-row" style="margin-top:10px">';
       html += '<div class="admin-thresh-editor-field">' +
@@ -2392,9 +2424,10 @@ function renderAdminToxics() {
 // ── TOXIC THRESHOLD EDITING ───────────────────────────────────────────────
 // Editable: display_name, symbol (display-only metadata); threshold (engine
 // math — engine fires when value > threshold); message (verbatim report text).
-// NOT editable here: toxic_key (engine-selection key read from hair_toxics)
-// and display_order (controls consolidated-message ordering) — deferred to a
-// dedicated pass, mirroring the dose trigger/branch deferral.
+// Engine-selection columns are now editable (branch-selector pass): toxic_key
+// (indexes hair_toxics; an off-list key makes the row never flag) and
+// display_order (sets the consolidated-message order — harness-visible). Gated by
+// a reachability warning + type-the-toxic-key confirm on an off-list key.
 //
 // Harness gate: threshold OR message change → amber engine-gate save-note
 // (threshold changes computation; message is written verbatim into reports
@@ -2416,6 +2449,8 @@ async function saveEditToxic(id) {
   const symEl  = document.getElementById('edit-tox-sym-' + id);
   const thrEl  = document.getElementById('edit-tox-thr-' + id);
   const msgEl  = document.getElementById('edit-tox-msg-' + id);
+  const keyEl   = document.getElementById('edit-tox-key-' + id);
+  const orderEl = document.getElementById('edit-tox-order-' + id);
   const statusEl = document.getElementById('edit-tox-status-' + id);
   const oldRow = (engineData.toxic_thresholds || []).find(t => String(t.id) === String(id));
   if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
@@ -2432,6 +2467,11 @@ async function saveEditToxic(id) {
   const thrParsed = parseNum(thrEl);
   if (!thrParsed.ok) {
     if (statusEl) statusEl.textContent = 'Threshold must be a number (or blank). Nothing saved.';
+    return;
+  }
+  const orderParsed = parseNum(orderEl);
+  if (!orderParsed.ok) {
+    if (statusEl) statusEl.textContent = 'Display order must be a number (or blank). Nothing saved.';
     return;
   }
 
@@ -2453,8 +2493,13 @@ async function saveEditToxic(id) {
   const symChanged  = (newSym  !== undefined) && !strEq(oldRow.symbol, newSym);
   const thrChanged  = (newThr  !== undefined) && !numEq(oldRow.threshold, newThr);
   const msgChanged  = (newMsg  !== undefined) && !strEq(oldRow.message, newMsg);
+  const newKey   = keyEl ? String(keyEl.value) : undefined;
+  const newOrder = orderParsed.value;
+  const keyChanged   = (newKey   !== undefined) && !strEq(oldRow.toxic_key, newKey);
+  const orderChanged = (newOrder !== undefined) && !numEq(oldRow.display_order, newOrder);
+  const selectionChanged = keyChanged || orderChanged;
 
-  if (!nameChanged && !symChanged && !thrChanged && !msgChanged) {
+  if (!nameChanged && !symChanged && !thrChanged && !msgChanged && !selectionChanged) {
     cancelEditToxic();
     return;
   }
@@ -2467,6 +2512,40 @@ async function saveEditToxic(id) {
       'A negative threshold makes the engine flag this element for essentially any measured value. Save anyway?'
     );
     if (!okNeg) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 negative threshold.'; return; }
+  }
+
+  // ── engine-selection gate (toxic_key re-key / display_order reorder) ──
+  // Type-the-key gate ONLY when toxic_key points off the hair_toxics set (the
+  // row would silently never flag). A valid re-key or a reorder is engine-
+  // affecting but reachable, so it skips the type gate.
+  if (selectionChanged) {
+    const effKey = keyChanged ? newKey : oldRow.toxic_key;
+    if (TOXIC_MEASUREMENT_KEYS.indexOf(effKey) === -1) {
+      const typed = window.prompt(
+        'ENGINE-SELECTION WARNING for ' + (oldRow.display_name || oldRow.toxic_key) + '\n\n' +
+        'toxic_key "' + effKey + '" is not a measured hair_toxics element, so labs.hair_toxics["' + effKey + '"] is undefined and this row never flags.\n\n' +
+        'To confirm, type the toxic key exactly:\n(' + oldRow.toxic_key + ')'
+      );
+      if (typed === null) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 re-key aborted.'; return; }
+      if (String(typed).trim() !== String(oldRow.toxic_key)) {
+        if (statusEl) statusEl.textContent = 'Toxic key did not match \u2014 nothing saved.'; return;
+      }
+    }
+  }
+
+  // Engine-selection confirm (re-key changes which element fires; reorder changes message order).
+  if (selectionChanged) {
+    const sparts = [];
+    if (keyChanged)   sparts.push('toxic_key: ' + (oldRow.toxic_key || '\u2014') + ' \u2192 ' + newKey);
+    if (orderChanged) sparts.push('display_order: ' + (oldRow.display_order == null ? '\u2014' : oldRow.display_order) + ' \u2192 ' + (newOrder == null ? '\u2014' : newOrder));
+    const ok = window.confirm(
+      'You are changing engine selection/order for ' + (oldRow.display_name || oldRow.toxic_key) + ':\n\n  ' +
+      sparts.join('\n  ') +
+      '\n\n' + (keyChanged ? 'Re-keying changes which hair element this row flags. ' : '') +
+      (orderChanged ? 'display_order sets where this element appears in the consolidated toxic message. ' : '') +
+      'After saving you MUST regenerate engine_data.json from Supabase, regenerate v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
   }
 
   // Engine-gate confirm. threshold = computation; message = verbatim report text.
@@ -2493,6 +2572,8 @@ async function saveEditToxic(id) {
   if (symChanged)  changes.symbol       = newSym;
   if (thrChanged)  changes.threshold    = newThr;
   if (msgChanged)  changes.message      = newMsg;
+  if (keyChanged)   changes.toxic_key     = newKey;
+  if (orderChanged) changes.display_order = newOrder;
 
   if (statusEl) statusEl.textContent = 'Saving\u2026';
   try {
@@ -2510,12 +2591,14 @@ async function saveEditToxic(id) {
     const note = document.getElementById('admin-toxic-save-note');
     if (note) {
       note.style.display = 'block';
-      if (engineGated) {
+      if (engineGated || selectionChanged) {
         note.className = 'admin-save-note admin-save-note-warn';
-        note.textContent = '\u26a0 Saved an ENGINE-GATED edit (' +
-          (thrChanged && msgChanged ? 'threshold + message' : thrChanged ? 'threshold' : 'message') + '). ' +
+        note.textContent = '\u26a0 Saved an ENGINE edit (' +
+          [thrChanged && 'threshold', msgChanged && 'message', keyChanged && 'toxic_key', orderChanged && 'display_order'].filter(Boolean).join(' + ') + '). ' +
           (thrChanged ? 'The threshold changes which values the engine flags as toxic. ' : '') +
           (msgChanged ? 'The message is written verbatim into the finding and urgent action in user reports. ' : '') +
+          (keyChanged ? 'The toxic_key changes which hair element this row flags. ' : '') +
+          (orderChanged ? 'display_order changes where this element appears in the consolidated message. ' : '') +
           'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
           '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
           'The change is logged and revertable from Edit history.';
