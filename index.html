@@ -2791,6 +2791,51 @@ function renderAdminDoses() {
 }
 let _editingDoseId = null;
 
+// Valid profile-flag columns the engine tests as profile[flag_column] (from the
+// FLAGS array the profile form uses). An off-list flag_column is always falsy,
+// so the row never triggers. Buckets the engine actually processes:
+const FLAG_COLUMN_KEYS = FLAGS.map(function (f) { return f.id; });
+const FLAG_BUCKETS = ['fix_first', 'standalone'];
+
+// Live handler for the flag selection/branch dropdowns (branch-selector pass).
+// Warns on an off-list flag_column (never triggers), an off-vocab bucket (no
+// branch processes it), a bucket branch switch, and applies_to_sex set on a
+// fix_first row (which processFixFirst ignores).
+function onFlagSelectionChange(id) {
+  var box = document.getElementById('edit-flag-reach-' + id);
+  if (!box) return;
+  var oldRow = (engineData.profile_flag_actions || []).find(function (f) { return String(f.id) === String(id); });
+  var colEl = document.getElementById('edit-flag-col-' + id);
+  var bucketEl = document.getElementById('edit-flag-bucket-' + id);
+  var sexEl = document.getElementById('edit-flag-sex-' + id);
+  var html = '';
+  if (colEl && FLAG_COLUMN_KEYS.indexOf(colEl.value) === -1) {
+    html += '<div class="admin-thresh-orphan">\u26a0 <strong>Orphan risk.</strong> flag_column "' + colEl.value +
+            '" is not a profile flag \u2014 profile["' + colEl.value + '"] is always falsy, so this row never triggers.' +
+            '<div class="admin-thresh-orphan-foot">Pick a real profile flag. Saving an off-list column requires typing the flag column to confirm.</div></div>';
+  }
+  if (bucketEl && FLAG_BUCKETS.indexOf(bucketEl.value) === -1) {
+    html += '<div class="admin-thresh-orphan" style="margin-top:8px">\u26a0 <strong>Orphan risk.</strong> bucket "' + bucketEl.value +
+            '" is neither fix_first nor standalone \u2014 no branch processes it, so this row is dropped entirely.</div>';
+  } else if (bucketEl && oldRow && bucketEl.value !== oldRow.bucket) {
+    html += '<div class="admin-thresh-orphan" style="margin-top:8px">\u26a0 <strong>Branch switch.</strong> Moving ' +
+            (oldRow.bucket || '\u2014') + ' \u2192 ' + bucketEl.value + ': ' +
+            (bucketEl.value === 'fix_first'
+              ? 'the body joins the consolidated "Fix These FIRST" action (unshifted to the front; applies_to_sex ignored).'
+              : 'this becomes a separate standalone action (applies_to_sex respected).') +
+            '<div class="admin-thresh-orphan-foot">Saving a bucket change requires typing the flag column to confirm.</div></div>';
+  }
+  var effBucket = bucketEl ? bucketEl.value : (oldRow && oldRow.bucket);
+  if (sexEl && effBucket === 'fix_first' && sexEl.value && sexEl.value !== 'all') {
+    html += '<div class="admin-thresh-editor-warn" style="margin-top:8px">Note: processFixFirst ignores applies_to_sex, so "' +
+            sexEl.value + '" has no effect while this row is in fix_first.</div>';
+  }
+  if (!html) {
+    html = '<div class="admin-thresh-hint" style="margin-top:8px">\u2713 Routing is reachable.</div>';
+  }
+  box.innerHTML = html;
+}
+
 function renderAdminFlags() {
   const host = document.getElementById('admin-flags-list');
   if (!host) return;
@@ -2853,15 +2898,42 @@ function renderAdminFlags() {
                   ? 'this row\u2019s body is joined into the consolidated \u201cFix These FIRST\u201d action.'
                   : 'this row becomes a standalone action.') +
                 ' No math, but no harness safety net either, so a typo lands unmediated. After saving, re-run the parity harness for the habit; the audit log + revert is the real backstop.</div>';
-        // Read-only context: the selection / branch / routing columns.
+        // Engine-selection / branch columns now editable. flag_column is tested
+        // as profile[flag_column] (off-list -> never triggers); bucket is the
+        // branch switch between processFixFirst (consolidated, applies_to_sex
+        // ignored) and processStandaloneFlags (separate action, sex respected).
+        var __flagColSel = buildSelect('edit-flag-col-' + esc(f.id), FLAG_COLUMN_KEYS, f.flag_column).replace('<select ', '<select onchange="onFlagSelectionChange(\'' + esc(f.id) + '\')" ');
+        var __flagBucketSel = buildSelect('edit-flag-bucket-' + esc(f.id), FLAG_BUCKETS, f.bucket).replace('<select ', '<select onchange="onFlagSelectionChange(\'' + esc(f.id) + '\')" ');
+        var __flagPriSel = buildSelect('edit-flag-pri-' + esc(f.id), ['urgent','action','watch','info'], f.priority).replace('<select ', '<select onchange="onFlagSelectionChange(\'' + esc(f.id) + '\')" ');
+        var __flagSexSel = buildSelect('edit-flag-sex-' + esc(f.id), ['all','female','male'], f.applies_to_sex || 'all').replace('<select ', '<select onchange="onFlagSelectionChange(\'' + esc(f.id) + '\')" ');
         html += '<div class="admin-thresh-editor-row">';
-        html += '<div class="admin-thresh-editor-field" style="flex:2.4">' +
-                  '<label class="admin-edit-label first">Routing (read-only)</label>' +
-                  '<div class="admin-thresh-ro">flag: ' + esc(f.flag_column || '\u2014') + ' \u00b7 bucket: ' + esc(f.bucket || '\u2014') +
-                  ' \u00b7 priority: ' + esc(f.priority || '\u2014') + ' \u00b7 sex: ' + esc(f.applies_to_sex || 'all') + '</div>' +
-                  '<div class="admin-thresh-hint">To change which profile flag fires this, move it between buckets, or change priority / sex gating, edit in Supabase + re-run harness.</div>' +
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-flag-col-' + esc(f.id) + '">Flag column</label>' +
+                  __flagColSel +
+                  '<div class="admin-thresh-hint">profile boolean that fires this row</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-flag-bucket-' + esc(f.id) + '">Bucket (branch)</label>' +
+                  __flagBucketSel +
+                  '<div class="admin-thresh-hint">fix_first = consolidated \u00b7 standalone = separate</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-flag-pri-' + esc(f.id) + '">Priority</label>' +
+                  __flagPriSel +
+                  '<div class="admin-thresh-hint">urgent / action / watch (else styled info)</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-flag-sex-' + esc(f.id) + '">Applies to sex</label>' +
+                  __flagSexSel +
+                  '<div class="admin-thresh-hint">standalone only; fix_first ignores this</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-flag-order-' + esc(f.id) + '">Display order</label>' +
+                  '<input type="number" step="1" id="edit-flag-order-' + esc(f.id) + '" class="admin-thresh-num" value="' + esc(f.display_order == null ? '' : f.display_order) + '">' +
+                  '<div class="admin-thresh-hint">order within the bucket</div>' +
                 '</div>';
         html += '</div>';
+        html += '<div id="edit-flag-reach-' + esc(f.id) + '"></div>';
         // Editable: title.
         html += '<label class="admin-edit-label first" for="edit-flag-title-' + esc(f.id) + '">Title</label>';
         html += '<input type="text" id="edit-flag-title-' + esc(f.id) + '" class="admin-thresh-num" value="' + esc(f.title || '') + '">';
@@ -2889,11 +2961,12 @@ function renderAdminFlags() {
 // ── PROFILE-FLAG-ACTION EDITING ───────────────────────────────────────────
 // Editable: title, body (both written verbatim into reports — fix_first bodies
 // are joined into the consolidated "Fix These FIRST" action; standalone rows
-// become an action directly). NOT editable here: flag_column (engine-selection
-// key tested as profile[flag_column]), bucket (branch selector between
-// processFixFirst and processStandaloneFlags), priority and applies_to_sex
-// (output/selection routing), display_order (ordering). All deferred to a
-// dedicated pass, mirroring the dose/toxic/ratio selection-column deferrals.
+// become an action directly). Engine-selection / branch columns are now editable
+// (branch-selector pass): flag_column (tested as profile[flag_column]; off-list
+// never triggers), bucket (the branch switch between processFixFirst and
+// processStandaloneFlags), priority, applies_to_sex (standalone only — fix_first
+// ignores it), and display_order. Gated by a reachability/branch warning + a
+// type-the-flag-column confirm on an orphan or bucket switch.
 //
 // Harness gate: any title or body edit → amber save-note. Both are verbatim
 // report text with no harness computation, gated the same way as toxics
@@ -2913,6 +2986,11 @@ function cancelEditFlag() {
 async function saveEditFlag(id) {
   const titleEl = document.getElementById('edit-flag-title-' + id);
   const bodyEl  = document.getElementById('edit-flag-body-' + id);
+  const colEl    = document.getElementById('edit-flag-col-' + id);
+  const bucketEl = document.getElementById('edit-flag-bucket-' + id);
+  const priEl    = document.getElementById('edit-flag-pri-' + id);
+  const sexEl    = document.getElementById('edit-flag-sex-' + id);
+  const orderEl  = document.getElementById('edit-flag-order-' + id);
   const statusEl = document.getElementById('edit-flag-status-' + id);
   const oldRow = (engineData.profile_flag_actions || []).find(f => String(f.id) === String(id));
   if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
@@ -2925,8 +3003,33 @@ async function saveEditFlag(id) {
   const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
   const titleChanged = (newTitle !== undefined) && !strEq(oldRow.title, newTitle);
   const bodyChanged  = (newBody  !== undefined) && !strEq(oldRow.body, newBody);
+  const numEq = (a, b) => {
+    const an = (a === null || a === undefined || a === '') ? null : Number(a);
+    const bn = (b === null || b === undefined || b === '') ? null : Number(b);
+    return an === bn;
+  };
+  const newCol    = colEl    ? String(colEl.value)    : undefined;
+  const newBucket = bucketEl ? String(bucketEl.value) : undefined;
+  const newPri    = priEl    ? String(priEl.value)    : undefined;
+  const newSex    = sexEl    ? String(sexEl.value)    : undefined;
+  let newOrder = undefined;
+  if (orderEl) {
+    const raw = String(orderEl.value).trim();
+    if (raw === '') { newOrder = null; }
+    else {
+      const n = Number(raw);
+      if (!isFinite(n)) { if (statusEl) statusEl.textContent = 'Display order must be a number (or blank). Nothing saved.'; return; }
+      newOrder = n;
+    }
+  }
+  const colChanged    = (newCol    !== undefined) && !strEq(oldRow.flag_column, newCol);
+  const bucketChanged = (newBucket !== undefined) && !strEq(oldRow.bucket, newBucket);
+  const priChanged    = (newPri    !== undefined) && !strEq(oldRow.priority, newPri);
+  const sexChanged    = (newSex    !== undefined) && !strEq(oldRow.applies_to_sex, newSex);
+  const orderChanged  = (newOrder  !== undefined) && !numEq(oldRow.display_order, newOrder);
+  const selectionChanged = colChanged || bucketChanged || priChanged || sexChanged || orderChanged;
 
-  if (!titleChanged && !bodyChanged) {
+  if (!titleChanged && !bodyChanged && !selectionChanged) {
     cancelEditFlag();
     return;
   }
@@ -2945,12 +3048,56 @@ async function saveEditFlag(id) {
     if (!okBlank) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 empty body.'; return; }
   }
 
+  // ── engine-selection / branch gate ──
+  // Type-the-flag-column gate when the edit ORPHANS the row (flag_column not a
+  // real profile flag, or bucket outside fix_first/standalone) OR switches the
+  // bucket branch. Priority / sex / order changes are reachable, so no type gate.
+  if (selectionChanged) {
+    const effCol    = colChanged    ? newCol    : oldRow.flag_column;
+    const effBucket = bucketChanged ? newBucket : oldRow.bucket;
+    const reasons = [];
+    if (FLAG_COLUMN_KEYS.indexOf(effCol) === -1) reasons.push('flag_column "' + effCol + '" is not a profile flag (profile["' + effCol + '"] is always falsy, so the row never triggers)');
+    if (FLAG_BUCKETS.indexOf(effBucket) === -1) reasons.push('bucket "' + effBucket + '" is neither fix_first nor standalone (no branch processes it, so the row is dropped)');
+    else if (bucketChanged) reasons.push('bucket branch switch: ' + (oldRow.bucket || '\u2014') + ' \u2192 ' + effBucket + (effBucket === 'fix_first' ? ' (consolidated; applies_to_sex ignored)' : ' (standalone; applies_to_sex respected)'));
+    if (reasons.length) {
+      const typed = window.prompt(
+        'ENGINE-SELECTION / BRANCH WARNING for "' + (oldRow.flag_column || oldRow.title) + '"\n\n' +
+        reasons.map(x => '\u2022 ' + x).join('\n') + '\n\n' +
+        'To confirm, type the flag column exactly:\n(' + (oldRow.flag_column || '') + ')'
+      );
+      if (typed === null) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 change aborted.'; return; }
+      if (String(typed).trim() !== String(oldRow.flag_column || '')) {
+        if (statusEl) statusEl.textContent = 'Flag column did not match \u2014 nothing saved.'; return;
+      }
+    }
+  }
+
+  // Engine-selection confirm (routing/branch always changes engine behavior).
+  if (selectionChanged) {
+    const sparts = [];
+    if (colChanged)    sparts.push('flag_column: ' + (oldRow.flag_column || '\u2014') + ' \u2192 ' + newCol);
+    if (bucketChanged) sparts.push('bucket: ' + (oldRow.bucket || '\u2014') + ' \u2192 ' + newBucket);
+    if (priChanged)    sparts.push('priority: ' + (oldRow.priority || '\u2014') + ' \u2192 ' + newPri);
+    if (sexChanged)    sparts.push('applies_to_sex: ' + (oldRow.applies_to_sex || 'all') + ' \u2192 ' + newSex);
+    if (orderChanged)  sparts.push('display_order: ' + (oldRow.display_order == null ? '\u2014' : oldRow.display_order) + ' \u2192 ' + (newOrder == null ? '\u2014' : newOrder));
+    const effBucket2 = bucketChanged ? newBucket : oldRow.bucket;
+    const extra = (sexChanged && effBucket2 === 'fix_first' && newSex && newSex !== 'all')
+      ? ' Note: processFixFirst ignores applies_to_sex, so it has no effect while this row is in fix_first.' : '';
+    const ok = window.confirm(
+      'You are changing engine selection/branch for the "' + (oldRow.flag_column || oldRow.title) + '" flag action:\n\n  ' +
+      sparts.join('\n  ') + '\n\n' +
+      'This changes which profile flag fires the row, which branch it runs through, and/or its output.' + extra +
+      '\n\nAfter saving you MUST regenerate engine_data.json from Supabase, regenerate v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+  }
+
   // Engine-gate confirm. Both fields are verbatim report text (no math, no
   // harness safety net), gated like toxics message / fixed_dose_text.
   const parts = [];
   if (titleChanged) parts.push('title: "' + (oldRow.title || '') + '" \u2192 "' + (newTitle || '') + '"');
   if (bodyChanged)  parts.push('body: "' + (oldRow.body || '') + '" \u2192 "' + (newBody || '') + '"');
-  const ok = window.confirm(
+  const ok = (!titleChanged && !bodyChanged) ? true : window.confirm(
     'You are editing report text for the "' + (oldRow.flag_column || oldRow.title) + '" flag action:\n\n  ' +
     parts.join('\n  ') +
     '\n\nThis text is written verbatim into the user\u2019s report' +
@@ -2963,6 +3110,11 @@ async function saveEditFlag(id) {
   const changes = {};
   if (titleChanged) changes.title = newTitle;
   if (bodyChanged)  changes.body  = newBody;
+  if (colChanged)    changes.flag_column    = newCol;
+  if (bucketChanged) changes.bucket         = newBucket;
+  if (priChanged)    changes.priority       = newPri;
+  if (sexChanged)    changes.applies_to_sex = newSex;
+  if (orderChanged)  changes.display_order  = newOrder;
 
   if (statusEl) statusEl.textContent = 'Saving\u2026';
   try {
@@ -2981,10 +3133,10 @@ async function saveEditFlag(id) {
     if (note) {
       note.style.display = 'block';
       note.className = 'admin-save-note admin-save-note-warn';
-      note.textContent = '\u26a0 Saved an ENGINE-GATED edit (' +
-        (titleChanged && bodyChanged ? 'title + body' : titleChanged ? 'title' : 'body') + '). ' +
-        'This text is written verbatim into user reports' +
-        (oldRow.bucket === 'fix_first' ? ' via the consolidated "Fix These FIRST" action' : ' as a standalone action') + '. ' +
+      note.textContent = '\u26a0 Saved an ENGINE edit (' +
+        [titleChanged && 'title', bodyChanged && 'body', colChanged && 'flag_column', bucketChanged && 'bucket', priChanged && 'priority', sexChanged && 'applies_to_sex', orderChanged && 'display_order'].filter(Boolean).join(' + ') + '). ' +
+        ((titleChanged || bodyChanged) ? ('Report text is written verbatim' + (oldRow.bucket === 'fix_first' ? ' via the consolidated "Fix These FIRST" action' : ' as a standalone action') + '. ') : '') +
+        (selectionChanged ? 'Selection/branch routing changed which flag fires the row, which branch it runs through, and/or its output. ' : '') +
         'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
         '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate text change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
         'The change is logged and revertable from Edit history.';
