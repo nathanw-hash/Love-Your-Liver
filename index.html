@@ -1781,9 +1781,6 @@ function findingExistsFor(marker_key, status) {
   return findings.some(function (r) { return r.marker_key === marker_key && r.status === status; });
 }
 
-// Live handler for the threshold evaluation_mode dropdown. (1) re-dims low/high
-// to match which ends the new mode reads; (2) renders the reachability warning.
-// Pure UI — no save, no engine touch.
 // True if the engine can actually produce (marker_key, status): the marker has
 // at least one threshold row whose evaluation_mode can emit that status. A dose
 // keyed to a pair this returns false for never fires (silent orphan). Reused by
@@ -1795,6 +1792,9 @@ function markerProducesStatus(marker_key, status) {
   return rows.some(function (t) { return producibleStatuses(t.evaluation_mode).indexOf(status) !== -1; });
 }
 
+// Live handler for the threshold evaluation_mode dropdown. (1) re-dims low/high
+// to match which ends the new mode reads; (2) renders the reachability warning.
+// Pure UI — no save, no engine touch.
 function onThresholdModeChange(id) {
   var sel = document.getElementById('edit-thr-mode-' + id);
   if (!sel) return;
@@ -1966,6 +1966,43 @@ function renderAdminThresholds() {
   host.innerHTML = html;
 }
 
+// Live handler for the ratio selection dropdowns (branch-selector pass).
+// numerator/denominator must be measured lab keys or labs[key] is undefined and
+// the engine returns early (the whole ratio emits nothing); status_when_* feed
+// lookupFinding(ratio_key, status) \u2014 a status with no finding row renders blank.
+function onRatioSelectionChange(id) {
+  var box = document.getElementById('edit-ratio-reach-' + id);
+  if (!box) return;
+  var oldRow = (engineData.ratio_thresholds || []).find(function (r) { return String(r.id) === String(id); });
+  if (!oldRow) return;
+  var numEl = document.getElementById('edit-ratio-num-' + id);
+  var denEl = document.getElementById('edit-ratio-den-' + id);
+  var belowEl = document.getElementById('edit-ratio-below-' + id);
+  var aboveEl = document.getElementById('edit-ratio-above-' + id);
+  var labKeys = (typeof MARKER_VALUE_SOURCE !== 'undefined') ? Object.values(MARKER_VALUE_SOURCE) : null;
+  var html = '';
+  [['Numerator', numEl], ['Denominator', denEl]].forEach(function (pair) {
+    var el = pair[1];
+    if (el && labKeys && labKeys.indexOf(el.value) === -1) {
+      html += '<div class="admin-thresh-orphan">\u26a0 <strong>Orphan risk.</strong> ' + pair[0] + ' "' + el.value +
+              '" is not a measured lab value \u2014 labs["' + el.value + '"] is undefined, so the engine returns early and the whole ratio emits nothing.' +
+              '<div class="admin-thresh-orphan-foot">Pick a measured marker. Saving requires typing the ratio key to confirm.</div></div>';
+    }
+  });
+  [['below opt-low', belowEl], ['above opt-high', aboveEl]].forEach(function (pair) {
+    var el = pair[1];
+    if (el && el.value && !findingExistsFor(oldRow.ratio_key, el.value)) {
+      html += '<div class="admin-thresh-orphan" style="margin-top:8px">\u26a0 <strong>No finding row.</strong> Status ' + pair[0] + " = '" + el.value +
+              "' has no finding for (" + oldRow.ratio_key + ', ' + el.value + '), so that branch renders a blank interpretation.' +
+              '<div class="admin-thresh-orphan-foot">Add the finding row, or pick a status that has one. Saving requires typing the ratio key to confirm.</div></div>';
+    }
+  });
+  if (!html) {
+    html = '<div class="admin-thresh-hint" style="margin-top:8px">\u2713 Routing and both statuses are reachable.</div>';
+  }
+  box.innerHTML = html;
+}
+
 function renderAdminRatios() {
   const host = document.getElementById('admin-ratios-list');
   if (!host) return;
@@ -2013,16 +2050,37 @@ function renderAdminRatios() {
       html += '<div class="admin-thresh-editor-warn">\u26a0 The engine computes ratio = numerator / denominator, then resolves status from these bounds ' +
               '(below opt-low \u2192 below-status, above opt-high \u2192 above-status, else optimal). Editing a bound changes engine output \u2014 ' +
               'after saving you MUST regenerate the harness snapshot and re-run the parity harness.</div>';
-      // Read-only context: the selection / branch columns (numerator, denominator, both status enums).
+      // Engine-selection columns now editable: numerator/denominator route the
+      // ratio inputs (a key not in labs makes the whole ratio emit nothing);
+      // status_when_* feed lookupFinding (a status with no finding row = blank).
+      var __ratioLabKeys = (typeof MARKER_VALUE_SOURCE !== 'undefined') ? Array.from(new Set(Object.values(MARKER_VALUE_SOURCE))).sort() : [];
+      var __numSel   = buildSelect('edit-ratio-num-' + esc(r.id), __ratioLabKeys, r.numerator_marker_key).replace('<select ', '<select onchange="onRatioSelectionChange(\'' + esc(r.id) + '\')" ');
+      var __denSel   = buildSelect('edit-ratio-den-' + esc(r.id), __ratioLabKeys, r.denominator_marker_key).replace('<select ', '<select onchange="onRatioSelectionChange(\'' + esc(r.id) + '\')" ');
+      var __belowSel = buildSelect('edit-ratio-below-' + esc(r.id), ['low','optimal','high','watch'], r.status_when_below_low).replace('<select ', '<select onchange="onRatioSelectionChange(\'' + esc(r.id) + '\')" ');
+      var __aboveSel = buildSelect('edit-ratio-above-' + esc(r.id), ['low','optimal','high','watch'], r.status_when_above_high).replace('<select ', '<select onchange="onRatioSelectionChange(\'' + esc(r.id) + '\')" ');
       html += '<div class="admin-thresh-editor-row">';
-      html += '<div class="admin-thresh-editor-field" style="flex:2.4">' +
-                '<label class="admin-edit-label first">Routing / status (read-only)</label>' +
-                '<div class="admin-thresh-ro">' + esc(r.numerator_marker_key || '\u2014') + ' \u00f7 ' + esc(r.denominator_marker_key || '\u2014') +
-                ' \u00b7 below \u2192 ' + esc(r.status_when_below_low || '\u2014') + ' \u00b7 above \u2192 ' + esc(r.status_when_above_high || '\u2014') + '</div>' +
-                '<div class="admin-thresh-hint">To re-route the markers or change which status fires at each end, edit in Supabase + re-run harness. ' +
-                'A status with no matching finding row emits no interpretation.</div>' +
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-ratio-num-' + esc(r.id) + '">Numerator marker</label>' +
+                __numSel +
+                '<div class="admin-thresh-hint">ratio = numerator \u00f7 denominator</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-ratio-den-' + esc(r.id) + '">Denominator marker</label>' +
+                __denSel +
+                '<div class="admin-thresh-hint">must be a measured lab value</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-ratio-below-' + esc(r.id) + '">Status when below opt-low</label>' +
+                __belowSel +
+                '<div class="admin-thresh-hint">needs a finding row for (' + esc(r.ratio_key) + ', status)</div>' +
+              '</div>';
+      html += '<div class="admin-thresh-editor-field">' +
+                '<label class="admin-edit-label first" for="edit-ratio-above-' + esc(r.id) + '">Status when above opt-high</label>' +
+                __aboveSel +
+                '<div class="admin-thresh-hint">needs a finding row for (' + esc(r.ratio_key) + ', status)</div>' +
               '</div>';
       html += '</div>';
+      html += '<div id="edit-ratio-reach-' + esc(r.id) + '"></div>';
       // Editable fields.
       html += '<div class="admin-thresh-editor-row" style="margin-top:10px">';
       html += '<div class="admin-thresh-editor-field" style="flex:1.6">' +
@@ -2057,11 +2115,11 @@ function renderAdminRatios() {
 // Editable: display_name (admin-view label only — the report emits a hardcoded
 // name via MARKER_DISPLAY, NOT this field); optimal_low / optimal_high (engine
 // math — the engine resolves ratio status from these bounds).
-// NOT editable here: ratio_key, numerator_marker_key, denominator_marker_key
-// (engine-selection / routing) and status_when_below_low / status_when_above_high
-// (the status values the engine emits — changing one to a status with no matching
-// finding row silently produces no interpretation). All deferred to a dedicated
-// pass, mirroring the dose trigger/branch and toxic key/order deferrals.
+// Engine-selection columns are now editable (branch-selector pass):
+// numerator_marker_key / denominator_marker_key (a key not in labs makes the
+// whole ratio emit nothing) and status_when_below_low / status_when_above_high
+// (a status with no finding row for this ratio renders blank). Gated by a
+// reachability warning + type-the-ratio-key confirm. Only ratio_key stays fixed.
 //
 // Harness gate: either bound change → amber engine-math save-note. Pure
 // display_name edit → benign data-edit note.
@@ -2080,6 +2138,10 @@ async function saveEditRatio(id) {
   const nameEl = document.getElementById('edit-ratio-name-' + id);
   const loEl   = document.getElementById('edit-ratio-lo-' + id);
   const hiEl   = document.getElementById('edit-ratio-hi-' + id);
+  const numEl   = document.getElementById('edit-ratio-num-' + id);
+  const denEl   = document.getElementById('edit-ratio-den-' + id);
+  const belowEl = document.getElementById('edit-ratio-below-' + id);
+  const aboveEl = document.getElementById('edit-ratio-above-' + id);
   const statusEl = document.getElementById('edit-ratio-status-' + id);
   const oldRow = (engineData.ratio_thresholds || []).find(r => String(r.id) === String(id));
   if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
@@ -2114,8 +2176,17 @@ async function saveEditRatio(id) {
   const nameChanged = (newName !== undefined) && !strEq(oldRow.display_name, newName);
   const loChanged   = (newLo   !== undefined) && !numEq(oldRow.optimal_low,  newLo);
   const hiChanged   = (newHi   !== undefined) && !numEq(oldRow.optimal_high, newHi);
+  const newNum   = numEl   ? String(numEl.value)   : undefined;
+  const newDen   = denEl   ? String(denEl.value)   : undefined;
+  const newBelow = belowEl ? String(belowEl.value) : undefined;
+  const newAbove = aboveEl ? String(aboveEl.value) : undefined;
+  const numChanged   = (newNum   !== undefined) && !strEq(oldRow.numerator_marker_key,   newNum);
+  const denChanged   = (newDen   !== undefined) && !strEq(oldRow.denominator_marker_key, newDen);
+  const belowChanged = (newBelow !== undefined) && !strEq(oldRow.status_when_below_low,  newBelow);
+  const aboveChanged = (newAbove !== undefined) && !strEq(oldRow.status_when_above_high, newAbove);
+  const selectionChanged = numChanged || denChanged || belowChanged || aboveChanged;
 
-  if (!nameChanged && !loChanged && !hiChanged) {
+  if (!nameChanged && !loChanged && !hiChanged && !selectionChanged) {
     cancelEditRatio();
     return;
   }
@@ -2133,6 +2204,50 @@ async function saveEditRatio(id) {
       'Almost certainly a typo. Save anyway?'
     );
     if (!okSwap) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 opt low > opt high.'; return; }
+  }
+
+  // ── engine-selection gate (numerator/denominator routing + status_when_*) ──
+  // Type-the-ratio-key gate ONLY when the new selection orphans output: a
+  // numerator/denominator that isn't a measured lab key (whole ratio emits
+  // nothing), or a status_when_* with no finding row for this ratio (blank).
+  if (selectionChanged) {
+    const labKeys = (typeof MARKER_VALUE_SOURCE !== 'undefined') ? Object.values(MARKER_VALUE_SOURCE) : null;
+    const effNum   = numChanged   ? newNum   : oldRow.numerator_marker_key;
+    const effDen   = denChanged   ? newDen   : oldRow.denominator_marker_key;
+    const effBelow = belowChanged ? newBelow : oldRow.status_when_below_low;
+    const effAbove = aboveChanged ? newAbove : oldRow.status_when_above_high;
+    const problems = [];
+    if (labKeys && labKeys.indexOf(effNum) === -1) problems.push('numerator "' + effNum + '" is not a measured lab value (whole ratio emits nothing)');
+    if (labKeys && labKeys.indexOf(effDen) === -1) problems.push('denominator "' + effDen + '" is not a measured lab value (whole ratio emits nothing)');
+    if (effBelow && !findingExistsFor(oldRow.ratio_key, effBelow)) problems.push("status_when_below_low '" + effBelow + "' has no finding row for " + oldRow.ratio_key + ' (blank interpretation)');
+    if (effAbove && !findingExistsFor(oldRow.ratio_key, effAbove)) problems.push("status_when_above_high '" + effAbove + "' has no finding row for " + oldRow.ratio_key + ' (blank interpretation)');
+    if (problems.length) {
+      const typed = window.prompt(
+        'ENGINE-SELECTION WARNING for ' + (oldRow.display_name || oldRow.ratio_key) + '\n\n' +
+        problems.map(p => '\u2022 ' + p).join('\n') + '\n\n' +
+        'To confirm, type the ratio key exactly:\n(' + oldRow.ratio_key + ')'
+      );
+      if (typed === null) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 re-route aborted.'; return; }
+      if (String(typed).trim() !== String(oldRow.ratio_key)) {
+        if (statusEl) statusEl.textContent = 'Ratio key did not match \u2014 nothing saved.'; return;
+      }
+    }
+  }
+
+  // Engine-selection confirm (re-routing always changes engine output).
+  if (selectionChanged) {
+    const sparts = [];
+    if (numChanged)   sparts.push('numerator_marker_key: '   + (oldRow.numerator_marker_key   || '\u2014') + ' \u2192 ' + newNum);
+    if (denChanged)   sparts.push('denominator_marker_key: ' + (oldRow.denominator_marker_key || '\u2014') + ' \u2192 ' + newDen);
+    if (belowChanged) sparts.push('status_when_below_low: '  + (oldRow.status_when_below_low  || '\u2014') + ' \u2192 ' + newBelow);
+    if (aboveChanged) sparts.push('status_when_above_high: ' + (oldRow.status_when_above_high || '\u2014') + ' \u2192 ' + newAbove);
+    const ok = window.confirm(
+      'You are changing engine selection for the ' + (oldRow.display_name || oldRow.ratio_key) + ' ratio:\n\n  ' +
+      sparts.join('\n  ') +
+      '\n\nThis changes which inputs the ratio uses and/or which status it emits. After saving you MUST regenerate ' +
+      'engine_data.json from Supabase, regenerate v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
   }
 
   // Engine-math confirm (bounds only).
@@ -2155,6 +2270,10 @@ async function saveEditRatio(id) {
   if (nameChanged) changes.display_name = newName;
   if (loChanged)   changes.optimal_low  = newLo;
   if (hiChanged)   changes.optimal_high = newHi;
+  if (numChanged)   changes.numerator_marker_key   = newNum;
+  if (denChanged)   changes.denominator_marker_key = newDen;
+  if (belowChanged) changes.status_when_below_low  = newBelow;
+  if (aboveChanged) changes.status_when_above_high = newAbove;
 
   if (statusEl) statusEl.textContent = 'Saving\u2026';
   try {
@@ -2172,9 +2291,9 @@ async function saveEditRatio(id) {
     const note = document.getElementById('admin-ratio-save-note');
     if (note) {
       note.style.display = 'block';
-      if (engineMathChanged) {
+      if (engineMathChanged || selectionChanged) {
         note.className = 'admin-save-note admin-save-note-warn';
-        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (ratio bounds). This changes the status the engine resolves from a ratio. ' +
+        note.textContent = '\u26a0 Saved an ENGINE edit (ratio bounds / routing). This changes how the engine resolves and interprets a ratio. ' +
           'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
           '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate bounds change will show as an expected diff \u2014 add a whitelist entry documenting it. ' +
           'The change is logged and revertable from Edit history.';
