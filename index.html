@@ -2101,6 +2101,10 @@ function onThresholdModeChange(id) {
   setField('lo', readsLo);
   setField('hi', readsHi);
 
+  // (1b) The high comparator toggle only applies in high_only mode.
+  var incField = document.getElementById('edit-thr-inc-field-' + id);
+  if (incField) incField.style.display = (newMode === 'high_only') ? '' : 'none';
+
   // (2) Reachability warning.
   var box = document.getElementById('edit-thr-reach-' + id);
   if (!box) return;
@@ -2230,6 +2234,16 @@ function renderAdminThresholds() {
                 '<label class="admin-edit-label first" for="edit-thr-unit-' + esc(t.id) + '">Unit</label>' +
                 '<input type="text" id="edit-thr-unit-' + esc(t.id) + '" class="admin-thresh-num" value="' + esc(t.unit || '') + '">' +
                 '<div class="admin-thresh-hint">display only \u2014 not used in engine math</div>' +
+              '</div>';
+      // High comparator (inclusive >= vs strict >). Data-driven via the
+      // high_inclusive column; the engine reads it only in high_only mode,
+      // so it is shown only for that mode (onThresholdModeChange toggles it live).
+      var incCurrent = (t.high_inclusive === true || (t.high_inclusive == null && t.marker_key === 'blood_copper')) ? 'inclusive' : 'exclusive';
+      var __incSel = buildSelect('edit-thr-inc-' + esc(t.id), ['exclusive', 'inclusive'], incCurrent);
+      html += '<div id="edit-thr-inc-field-' + esc(t.id) + '" class="admin-thresh-editor-field"' + (t.evaluation_mode === 'high_only' ? '' : ' style="display:none"') + '>' +
+                '<label class="admin-edit-label first" for="edit-thr-inc-' + esc(t.id) + '">High comparator</label>' +
+                __incSel +
+                '<div class="admin-thresh-hint">\u2265 inclusive vs &gt; strict at the high threshold \u2014 only read in high_only mode</div>' +
               '</div>';
       html += '</div>'; // editor-row
       html += '<div id="edit-thr-reach-' + esc(t.id) + '"></div>';
@@ -3562,6 +3576,7 @@ async function saveEditThreshold(id) {
   const unitEl = document.getElementById('edit-thr-unit-' + id);
   const statusEl = document.getElementById('edit-thr-status-' + id);
   const modeEl   = document.getElementById('edit-thr-mode-' + id);
+  const incEl    = document.getElementById('edit-thr-inc-' + id);
   const oldRow = (engineData.thresholds || []).find(t => String(t.id) === String(id));
   if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found — reload the page.'; return; }
 
@@ -3602,8 +3617,16 @@ async function saveEditThreshold(id) {
   const unitChanged = (newUnit !== undefined) && !strEq(oldRow.unit, newUnit);
   const newMode     = modeEl ? String(modeEl.value) : undefined;
   const modeChanged = (newMode !== undefined) && (newMode !== oldRow.evaluation_mode);
+  // High comparator toggle. Only meaningful in high_only mode (the only mode
+  // the engine reads high_inclusive in), and compared against the displayed
+  // default so an untouched toggle never writes — including pre-backfill
+  // blood_copper, whose displayed default is inclusive via the fallback.
+  const effModeInc = (newMode !== undefined ? newMode : oldRow.evaluation_mode);
+  const dispInc = (oldRow.high_inclusive === true || (oldRow.high_inclusive == null && oldRow.marker_key === 'blood_copper'));
+  const newInc  = incEl ? (incEl.value === 'inclusive') : undefined;
+  const incChanged = (newInc !== undefined) && (newInc !== dispInc) && (effModeInc === 'high_only');
 
-  if (!loChanged && !hiChanged && !unitChanged && !modeChanged) {
+  if (!loChanged && !hiChanged && !unitChanged && !modeChanged && !incChanged) {
     cancelEditThreshold();
     return;
   }
@@ -3661,7 +3684,8 @@ async function saveEditThreshold(id) {
   if (hiChanged)   parts.push('high_threshold: ' + (oldRow.high_threshold == null ? '\u2014' : oldRow.high_threshold) + ' \u2192 ' + (newHi == null ? '\u2014' : newHi));
   if (unitChanged) parts.push('unit: "' + (oldRow.unit || '') + '" \u2192 "' + (newUnit || '') + '" (display only)');
   if (modeChanged) parts.push('evaluation_mode: ' + oldRow.evaluation_mode + ' \u2192 ' + newMode);
-  const engineMathChanged = loChanged || hiChanged || modeChanged;
+  if (incChanged)  parts.push('high comparator: ' + (dispInc ? '\u2265' : '>') + ' \u2192 ' + (newInc ? '\u2265' : '>') + ' at high threshold (engine-math)');
+  const engineMathChanged = loChanged || hiChanged || modeChanged || incChanged;
   if (engineMathChanged) {
     const ok = window.confirm(
       'You are editing engine thresholds for ' + oldRow.marker_key + ':\n\n  ' +
@@ -3678,6 +3702,7 @@ async function saveEditThreshold(id) {
   if (hiChanged)   changes.high_threshold = newHi;
   if (unitChanged) changes.unit = newUnit;
   if (modeChanged) changes.evaluation_mode = newMode;
+  if (incChanged) changes.high_inclusive = newInc;
 
   if (statusEl) statusEl.textContent = 'Saving…';
   try {
@@ -3697,7 +3722,7 @@ async function saveEditThreshold(id) {
       note.style.display = 'block';
       if (engineMathChanged) {
         note.className = 'admin-save-note admin-save-note-warn';
-        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (threshold numbers / evaluation mode). This changes the status the engine computes. On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data — skipping this gives a false PASS), (2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate threshold change will show as an expected diff — add a whitelist entry documenting it. The change is logged and revertable from Edit history.';
+        note.textContent = '\u26a0 Saved an ENGINE-MATH edit (threshold numbers / evaluation mode / high comparator). This changes the status the engine computes. On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data — skipping this gives a false PASS), (2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate threshold change will show as an expected diff — add a whitelist entry documenting it. The change is logged and revertable from Edit history.';
       } else {
         note.className = 'admin-save-note';
         note.textContent = 'Saved a unit label (display-only metadata — the engine does not read unit). No harness re-run required for this field.';
