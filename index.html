@@ -2193,9 +2193,9 @@ function renderAdminThresholds() {
       html += '<div class="admin-thresh-editor">';
       html += '<div class="admin-thresh-editor-warn">\u26a0 Engine-math edit. The engine computes status from low/high thresholds. ' +
               'After saving you MUST regenerate the harness snapshot and re-run the parity harness before trusting recommendations.</div>';
-      if (t.evaluation_mode === 'high_only' && t.marker_key === 'blood_copper') {
-        html += '<div class="admin-thresh-editor-warn">Note: blood_copper uses an inclusive (\u2265) comparison hardcoded in the engine. ' +
-                'Editing the number is safe, but the comparator itself is in code, not this row.</div>';
+      if (t.evaluation_mode === 'high_only' && (t.high_inclusive === true || (t.high_inclusive == null && t.marker_key === 'blood_copper'))) {
+        html += '<div class="admin-thresh-editor-warn">Note: this marker uses an inclusive (\u2265) high comparison, now data-driven via the ' +
+                'high_inclusive column (a transitional fallback keeps blood_copper inclusive until the column is backfilled).</div>';
       }
       html += '<div class="admin-thresh-editor-row">';
       // Marker shown read-only; evaluation_mode is an editable dropdown below.
@@ -5752,14 +5752,15 @@ function evaluateStatus(value, threshold) {
   }
 
   if (mode === 'high_only') {
-    // blood_copper uses inclusive >=90 in the original engine.
-    // serum_retinol uses strict >20.
-    // Distinguish by marker_key.
-    if (threshold.marker_key === 'blood_copper') {
-      return value >= hi ? 'high' : 'optimal';
-    }
-    // Strict > for all other high_only markers
-    return value > hi ? 'high' : 'optimal';
+    // Inclusive (>=) vs strict (>) high comparison is data-driven via the
+    // high_inclusive column. While that column is absent/null in the snapshot
+    // (pre-migration), fall back to the historical blood_copper special-case
+    // so output is identical before and after the migration.
+    const inc = threshold.high_inclusive;
+    const inclusiveHigh = (inc == null)
+      ? (threshold.marker_key === 'blood_copper')
+      : (inc === true || inc === 'true' || inc === 1);
+    return (inclusiveHigh ? value >= hi : value > hi) ? 'high' : 'optimal';
   }
 
   if (mode === 'low_only') {
