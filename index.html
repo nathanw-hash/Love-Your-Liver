@@ -1889,7 +1889,7 @@ async function saveEditAction(id) {
     const bn = (b === null || b === undefined || b === '') ? null : Number(b);
     return an === bn;
   };
-  const textOrNull = el => { if (!el) return undefined; const v = String(el.value); return v.trim() === '' ? null : v; };
+  const textOrNull = el => { if (!el) return undefined; const v = String(el.value).trim(); return v.trim() === '' ? null : v; };
 
   const newMarker = markerEl    ? String(markerEl.value)    : undefined;
   const newStatus = statusSelEl ? String(statusSelEl.value) : undefined;
@@ -2442,7 +2442,7 @@ async function saveEditRatio(id) {
     return;
   }
 
-  const newName = nameEl ? String(nameEl.value) : undefined;
+  const newName = nameEl ? String(nameEl.value).trim() : undefined;
   const newLo   = loParsed.value;
   const newHi   = hiParsed.value;
 
@@ -2757,10 +2757,10 @@ async function saveEditToxic(id) {
 
   // Text fields: name/symbol kept as-is (blank → empty string); message
   // nullable (blank → null) matching how the engine treats absent messages.
-  const newName = nameEl ? String(nameEl.value) : undefined;
-  const newSym  = symEl  ? String(symEl.value)  : undefined;
+  const newName = nameEl ? String(nameEl.value).trim() : undefined;
+  const newSym  = symEl  ? String(symEl.value).trim()  : undefined;
   const newThr  = thrParsed.value;
-  const newMsg  = msgEl ? (String(msgEl.value).trim() === '' ? null : String(msgEl.value)) : undefined;
+  const newMsg  = msgEl ? (String(msgEl.value).trim() === '' ? null : String(msgEl.value).trim()) : undefined;
 
   const numEq = (a, b) => {
     const an = (a === null || a === undefined || a === '') ? null : Number(a);
@@ -3277,8 +3277,8 @@ async function saveEditFlag(id) {
 
   // title: kept as-is (blank → empty string). body: nullable text (blank → null),
   // matching how the engine tolerates an absent body.
-  const newTitle = titleEl ? String(titleEl.value) : undefined;
-  const newBody  = bodyEl ? (String(bodyEl.value).trim() === '' ? null : String(bodyEl.value)) : undefined;
+  const newTitle = titleEl ? String(titleEl.value).trim() : undefined;
+  const newBody  = bodyEl ? (String(bodyEl.value).trim() === '' ? null : String(bodyEl.value).trim()) : undefined;
 
   const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
   const titleChanged = (newTitle !== undefined) && !strEq(oldRow.title, newTitle);
@@ -3441,8 +3441,8 @@ async function saveEditFinding(id) {
   const sexSel = document.getElementById('edit-sex-sel-' + id);
   const statusEl = document.getElementById('edit-status-' + id);
   if (!ta) return;
-  const newText = ta.value;
-  const newNotes = notesTa ? notesTa.value : null;
+  const newText = ta.value.trim();
+  const newNotes = notesTa ? notesTa.value.trim() : null;
   const newStatus = statusSel ? statusSel.value : null;
   const newSex = sexSel ? sexSel.value : null;
   const oldRow = (engineData.findings || []).find(f => f.id === id);
@@ -3587,7 +3587,7 @@ async function saveEditThreshold(id) {
 
   const newLo   = loParsed.value;
   const newHi   = hiParsed.value;
-  const newUnit = unitEl ? (String(unitEl.value).trim() === '' ? null : String(unitEl.value)) : undefined;
+  const newUnit = unitEl ? (String(unitEl.value).trim() === '' ? null : String(unitEl.value).trim()) : undefined;
 
   // Normalize for change-detection. Numbers compared numerically; null/'' equal.
   const numEq = (a, b) => {
@@ -3759,11 +3759,12 @@ async function saveEditDose(id) {
     if (!isFinite(n)) return { ok: false, value: null };
     return { ok: true, value: n };
   }
-  const textVal = el => el ? String(el.value) : undefined;
+  // .trim() on save: stray leading/trailing whitespace was drifting into report text (Selenium/Molybdenum trailing-space incident).
+  const textVal = el => el ? String(el.value).trim() : undefined;
   // Empty-string text fields are stored as null where the column is nullable.
   const textOrNull = el => {
     if (!el) return undefined;
-    const v = String(el.value);
+    const v = String(el.value).trim();
     return v.trim() === '' ? null : v;
   };
 
