@@ -1704,15 +1704,19 @@ function renderAdminActions() {
   });
   const markerKeys = Object.keys(groups).sort();
   const statusClass = s => ({ low: 'st-low', high: 'st-high', optimal: 'st-opt' })[String(s || '').toLowerCase()] || 'st-other';
+  const priClass = p => ({ urgent: 'st-high', action: 'st-low', watch: 'st-other' })[String(p || '').toLowerCase()] || 'st-other';
+  const hasVal = v => v !== null && v !== undefined && String(v).trim() !== '';
+  const markerOptions = Array.from(new Set((engineData.thresholds || []).map(t => t.marker_key).filter(Boolean))).sort();
   let html =
     '<div class="admin-head">' +
       '<div><div class="admin-title">Engine actions</div>' +
-      '<div class="admin-sub">Read-only \u00b7 admin</div></div>' +
+      '<div class="admin-sub">Editable: marker/status routing \u00b7 sex \u00b7 priority \u00b7 title/body \u00b7 harness re-run required</div></div>' +
       '<div class="admin-counts">' +
         '<span class="admin-pill">' + actions.length + ' actions</span>' +
         '<span class="admin-pill">' + markerKeys.length + ' markers</span>' +
       '</div>' +
     '</div>';
+  html += '<div id="admin-action-save-note" class="admin-save-note" style="display:none"></div>';
   markerKeys.forEach(mk => {
     const rows = groups[mk].slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     html += '<div class="admin-card">';
@@ -1720,23 +1724,299 @@ function renderAdminActions() {
             '<span class="admin-card-meta">' + rows.length + ' actions</span></div>';
     rows.forEach((a, i) => {
       const last = i === rows.length - 1;
+      const editing = (_editingActionId === a.id);
       html += '<div class="admin-row' + (last ? ' last' : '') + '">';
       html += '<div class="admin-badges">' +
                 '<span class="admin-badge ' + statusClass(a.trigger_status) + '">' + esc(a.trigger_status) + '</span>' +
                 '<span class="admin-badge st-sex">' + esc(a.applies_to_sex || 'all') + '</span>';
-      if (a.priority != null && String(a.priority).trim() !== '') {
-        html += '<span class="admin-badge st-other">priority: ' + esc(a.priority) + '</span>';
+      if (hasVal(a.priority)) {
+        html += '<span class="admin-badge ' + priClass(a.priority) + '">priority: ' + esc(a.priority) + '</span>';
+      }
+      if (a.id != null && !editing) {
+        html += '<button class="admin-edit-btn" onclick="startEditAction(\'' + esc(a.id) + '\')">Edit</button>';
       }
       html += '</div>';
-      if (a.title != null && String(a.title).trim() !== '') {
-        html += '<div class="admin-action-title">' + esc(a.title) + '</div>';
+      if (!editing) {
+        if (hasVal(a.title)) {
+          html += '<div class="admin-action-title">' + esc(a.title) + '</div>';
+        }
+        html += '<div class="admin-interp">' + esc(a.body) + '</div>';
+      } else {
+        html += '<div class="admin-thresh-editor">';
+        html += '<div class="admin-thresh-editor-warn">\u26a0 title and body are written verbatim into the user\u2019s report (only the {{computed_dose}} token is substituted). No math, but no harness safety net either \u2014 a typo lands unmediated. After saving, re-run the parity harness; the audit log + revert is the real backstop.</div>';
+        // Engine-selection / branch columns. marker_key + trigger_status select
+        // which (marker, status) fires the row (lookupActions fires ALL matches,
+        // so no first-match collision concept). applies_to_sex is a branch switch
+        // (a sex-specific row shadows the 'all' rows for that sex). priority and
+        // display_order are reachable re-styles.
+        var __amSel = buildSelect('edit-action-marker-' + esc(a.id), markerOptions, a.marker_key).replace('<select ', '<select onchange="onActionSelectionChange(\'' + esc(a.id) + '\')" ');
+        var __asSel = buildSelect('edit-action-status-' + esc(a.id), ['low','optimal','high','watch'], a.trigger_status).replace('<select ', '<select onchange="onActionSelectionChange(\'' + esc(a.id) + '\')" ');
+        var __axSel = buildSelect('edit-action-sex-' + esc(a.id), ['all','female','male'], a.applies_to_sex || 'all').replace('<select ', '<select onchange="onActionSelectionChange(\'' + esc(a.id) + '\')" ');
+        var __apSel = buildSelect('edit-action-pri-' + esc(a.id), ['urgent','action','watch','info'], a.priority);
+        html += '<div class="admin-thresh-editor-row">';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-action-marker-' + esc(a.id) + '">Marker key</label>' +
+                  __amSel +
+                  '<div class="admin-thresh-hint">which marker\u2019s status fires this action</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-action-status-' + esc(a.id) + '">Trigger status</label>' +
+                  __asSel +
+                  '<div class="admin-thresh-hint">status that fires it (must be reachable)</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-action-sex-' + esc(a.id) + '">Applies to sex (branch)</label>' +
+                  __axSel +
+                  '<div class="admin-thresh-hint">a sex-specific row shadows the \u2018all\u2019 rows for that sex</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-action-pri-' + esc(a.id) + '">Priority</label>' +
+                  __apSel +
+                  '<div class="admin-thresh-hint">urgent / action / watch (else styled info)</div>' +
+                '</div>';
+        html += '<div class="admin-thresh-editor-field">' +
+                  '<label class="admin-edit-label first" for="edit-action-order-' + esc(a.id) + '">Display order</label>' +
+                  '<input type="number" step="1" id="edit-action-order-' + esc(a.id) + '" class="admin-thresh-num" value="' + esc(a.display_order == null ? '' : a.display_order) + '">' +
+                  '<div class="admin-thresh-hint">order within the marker group</div>' +
+                '</div>';
+        html += '</div>';
+        html += '<div id="edit-action-reach-' + esc(a.id) + '"></div>';
+        html += '<label class="admin-edit-label first" for="edit-action-title-' + esc(a.id) + '">Title</label>';
+        html += '<input type="text" id="edit-action-title-' + esc(a.id) + '" class="admin-thresh-num" value="' + esc(a.title || '') + '">';
+        html += '<div class="admin-thresh-hint">action heading in the report \u2014 supports the {{computed_dose}} token.</div>';
+        html += '<label class="admin-edit-label" for="edit-action-body-' + esc(a.id) + '">Body</label>';
+        html += '<textarea id="edit-action-body-' + esc(a.id) + '" class="admin-edit-ta">' + esc(a.body || '') + '</textarea>';
+        html += '<div class="admin-thresh-hint">written verbatim \u2014 supports the {{computed_dose}} token.</div>';
+        html += '<div class="admin-edit-actions">' +
+                  '<button class="admin-save-btn" onclick="saveEditAction(\'' + esc(a.id) + '\')">Save</button>' +
+                  '<button class="admin-cancel-btn" onclick="cancelEditAction()">Cancel</button>' +
+                  '<span class="admin-edit-status" id="edit-action-status-' + esc(a.id) + '"></span>' +
+                '</div>';
+        html += '</div>'; // editor
       }
-      html += '<div class="admin-interp">' + esc(a.body) + '</div>';
-      html += '</div>';
+      html += '</div>'; // admin-row
     });
-    html += '</div>';
+    html += '</div>'; // admin-card
   });
   host.innerHTML = html;
+}
+
+// ── ENGINE-ACTION EDITING (branch-selector pass — final engine table) ──────
+// engine_actions was the last read-only engine table. Rows are keyed on
+// (marker_key, trigger_status) like doses, but the engine fires ALL matching
+// rows (lookupActions returns an array), so there is NO first-match collision
+// concept here — multiple actions per pair is the intended design. The one
+// sharp behavior is applies_to_sex: lookupActions returns sex-specific rows if
+// ANY exist for the pair, else falls back to 'all'. So a sex-specific row
+// shadows the 'all' rows for that sex — flipping one row all->male can
+// silently drop sibling 'all' actions from male reports. Editable: marker_key,
+// trigger_status, applies_to_sex, priority, display_order, title, body. Title
+// and body run through the engine's substitute() ({{computed_dose}} is the only
+// var actions receive). Gated by a live reachability/branch warning + a
+// type-the-marker-key confirm on an unreachable route OR any applies_to_sex
+// change. priority / display_order are reachable re-styles (no type gate).
+let _editingActionId = null;
+
+function startEditAction(id) {
+  _editingActionId = id;
+  renderAdminActions();
+}
+function cancelEditAction() {
+  _editingActionId = null;
+  renderAdminActions();
+}
+
+// Live reachability/branch handler for the action selection dropdowns. Pure UI
+// — no save, no engine touch. Mirrors onDoseSelectionChange's orphan check
+// (reused markerProducesStatus) minus the collision case, plus the sex-shadow
+// branch note.
+function onActionSelectionChange(id) {
+  var box = document.getElementById('edit-action-reach-' + id);
+  if (!box) return;
+  var oldRow = (engineData.actions || []).find(function (a) { return String(a.id) === String(id); });
+  var mEl = document.getElementById('edit-action-marker-' + id);
+  var sEl = document.getElementById('edit-action-status-' + id);
+  var xEl = document.getElementById('edit-action-sex-' + id);
+  if (!mEl || !sEl || !xEl) return;
+  var marker = mEl.value, status = sEl.value, sex = xEl.value;
+  var html = '';
+  if (!markerProducesStatus(marker, status)) {
+    html += '<div class="admin-thresh-orphan">\u26a0 <strong>Orphan risk.</strong> The engine never produces (' +
+            marker + ', ' + status + ') \u2014 no threshold for this marker can emit this status, so this action would never fire.' +
+            '<div class="admin-thresh-orphan-foot">Pick a (marker, status) the engine can produce, or adjust the threshold first. ' +
+            'Saving an unreachable route requires typing the marker key to confirm.</div></div>';
+  }
+  if (oldRow && sex !== (oldRow.applies_to_sex || 'all')) {
+    var fromSex = oldRow.applies_to_sex || 'all';
+    var note;
+    if (sex === 'all') {
+      note = 'Widening to \u2018all\u2019: this row is considered for both sexes. If it was the only sex-specific row for (' +
+             marker + ', ' + status + '), the \u2018all\u2019 rows there stop being shadowed for that sex.';
+    } else {
+      var siblings = (engineData.actions || []).filter(function (a) {
+        return String(a.id) !== String(id) && a.marker_key === marker && a.trigger_status === status && (a.applies_to_sex || 'all') === 'all';
+      });
+      note = 'Narrowing to \u2018' + sex + '\u2019: this row leaves the other sex entirely, and because a sex-specific row now exists for (' +
+             marker + ', ' + status + '), lookupActions stops falling back to \u2018all\u2019 for ' + sex + ' reports' +
+             (siblings.length ? ' \u2014 ' + siblings.length + ' \u2018all\u2019 sibling action' + (siblings.length > 1 ? 's' : '') + ' would be dropped from ' + sex + ' reports.' : '.');
+    }
+    html += '<div class="admin-thresh-orphan" style="margin-top:8px">\u26a0 <strong>Branch switch.</strong> applies_to_sex ' +
+            fromSex + ' \u2192 ' + sex + '. ' + note +
+            '<div class="admin-thresh-orphan-foot">Saving an applies_to_sex change requires typing the marker key to confirm.</div></div>';
+  }
+  if (!html) {
+    html = '<div class="admin-thresh-hint" style="margin-top:8px">\u2713 (' + marker + ', ' + status + ') is reachable; sex routing unchanged.</div>';
+  }
+  box.innerHTML = html;
+}
+
+async function saveEditAction(id) {
+  const statusEl = document.getElementById('edit-action-status-' + id);
+  const oldRow = (engineData.actions || []).find(a => String(a.id) === String(id));
+  if (!oldRow) { if (statusEl) statusEl.textContent = 'Row not found \u2014 reload the page.'; return; }
+
+  const markerEl    = document.getElementById('edit-action-marker-' + id);
+  const statusSelEl = document.getElementById('edit-action-status-' + id);
+  const sexEl       = document.getElementById('edit-action-sex-' + id);
+  const priEl       = document.getElementById('edit-action-pri-' + id);
+  const orderEl     = document.getElementById('edit-action-order-' + id);
+  const titleEl     = document.getElementById('edit-action-title-' + id);
+  const bodyEl      = document.getElementById('edit-action-body-' + id);
+
+  const strEq = (a, b) => String(a == null ? '' : a) === String(b == null ? '' : b);
+  const numEq = (a, b) => {
+    const an = (a === null || a === undefined || a === '') ? null : Number(a);
+    const bn = (b === null || b === undefined || b === '') ? null : Number(b);
+    return an === bn;
+  };
+  const textOrNull = el => { if (!el) return undefined; const v = String(el.value); return v.trim() === '' ? null : v; };
+
+  const newMarker = markerEl    ? String(markerEl.value)    : undefined;
+  const newStatus = statusSelEl ? String(statusSelEl.value) : undefined;
+  const newSex    = sexEl       ? String(sexEl.value)       : undefined;
+  const newPri    = priEl       ? String(priEl.value)       : undefined;
+  const newTitle  = textOrNull(titleEl);
+  const newBody   = textOrNull(bodyEl);
+  let newOrder = undefined;
+  if (orderEl) {
+    const raw = String(orderEl.value).trim();
+    if (raw === '') { newOrder = null; }
+    else {
+      const n = Number(raw);
+      if (!isFinite(n)) { if (statusEl) statusEl.textContent = 'Display order must be a number (or blank). Nothing saved.'; return; }
+      newOrder = n;
+    }
+  }
+
+  const markerChanged = (newMarker !== undefined) && !strEq(oldRow.marker_key, newMarker);
+  const statusChanged = (newStatus !== undefined) && !strEq(oldRow.trigger_status, newStatus);
+  const sexChanged    = (newSex    !== undefined) && !strEq(oldRow.applies_to_sex || 'all', newSex);
+  const priChanged    = (newPri    !== undefined) && !strEq(oldRow.priority, newPri);
+  const orderChanged  = (newOrder  !== undefined) && !numEq(oldRow.display_order, newOrder);
+  const titleChanged  = (newTitle  !== undefined) && !strEq(oldRow.title, newTitle);
+  const bodyChanged   = (newBody   !== undefined) && !strEq(oldRow.body, newBody);
+  const routeChanged     = markerChanged || statusChanged;
+  const selectionChanged = routeChanged || sexChanged || priChanged || orderChanged;
+
+  if (!selectionChanged && !titleChanged && !bodyChanged) { cancelEditAction(); return; }
+
+  // ── engine-selection / branch gate ──
+  // Type-the-marker-key confirm when the new (marker, status) is unreachable
+  // (orphan) OR any applies_to_sex change (branch switch: a sex-specific row
+  // shadows the 'all' rows for that sex). priority / display_order are
+  // reachable re-styles, so they skip the type gate.
+  if (routeChanged || sexChanged) {
+    const effMarker = markerChanged ? newMarker : oldRow.marker_key;
+    const effStatus = statusChanged ? newStatus : oldRow.trigger_status;
+    const reasons = [];
+    if (!markerProducesStatus(effMarker, effStatus)) {
+      reasons.push('the engine never produces (' + effMarker + ', ' + effStatus + '), so this action would never fire');
+    }
+    if (sexChanged) {
+      reasons.push('applies_to_sex ' + (oldRow.applies_to_sex || 'all') + ' \u2192 ' + newSex +
+        ' is a branch switch \u2014 a sex-specific row shadows the \u2018all\u2019 rows for that sex, so siblings can silently drop from one sex\u2019s reports');
+    }
+    if (reasons.length) {
+      const typed = window.prompt(
+        'ENGINE-SELECTION / BRANCH WARNING for the "' + (oldRow.title || oldRow.marker_key) + '" action\n\n' +
+        reasons.map(x => '\u2022 ' + x).join('\n') + '\n\n' +
+        'To confirm, type the marker key exactly:\n(' + (oldRow.marker_key || '') + ')'
+      );
+      if (typed === null) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 change aborted.'; return; }
+      if (String(typed).trim() !== String(oldRow.marker_key || '').trim()) {
+        if (statusEl) statusEl.textContent = 'Marker key did not match \u2014 nothing saved.'; return;
+      }
+    }
+  }
+
+  // Engine-selection confirm (routing / branch / priority / order all change engine output).
+  if (selectionChanged) {
+    const sparts = [];
+    if (markerChanged) sparts.push('marker_key: ' + (oldRow.marker_key || '\u2014') + ' \u2192 ' + newMarker);
+    if (statusChanged) sparts.push('trigger_status: ' + (oldRow.trigger_status || '\u2014') + ' \u2192 ' + newStatus);
+    if (sexChanged)    sparts.push('applies_to_sex: ' + (oldRow.applies_to_sex || 'all') + ' \u2192 ' + newSex);
+    if (priChanged)    sparts.push('priority: ' + (oldRow.priority || '\u2014') + ' \u2192 ' + newPri);
+    if (orderChanged)  sparts.push('display_order: ' + (oldRow.display_order == null ? '\u2014' : oldRow.display_order) + ' \u2192 ' + (newOrder == null ? '\u2014' : newOrder));
+    const ok = window.confirm(
+      'You are changing engine selection/branch for the "' + (oldRow.title || oldRow.marker_key) + '" action:\n\n  ' +
+      sparts.join('\n  ') +
+      '\n\nThis changes which (marker, status) fires the row, which sex sees it, and/or its emitted priority/order. ' +
+      'After saving you MUST regenerate engine_data.json from Supabase, regenerate v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+  }
+
+  // Content confirm — title/body are verbatim report text (only {{computed_dose}} substituted).
+  if (titleChanged || bodyChanged) {
+    const parts = [];
+    if (titleChanged) parts.push('title: "' + (oldRow.title || '') + '" \u2192 "' + (newTitle || '') + '"');
+    if (bodyChanged)  parts.push('body: "' + (oldRow.body || '') + '" \u2192 "' + (newBody || '') + '"');
+    const ok = window.confirm(
+      'You are editing report text for the "' + (oldRow.title || oldRow.marker_key) + '" action:\n\n  ' +
+      parts.join('\n  ') +
+      '\n\nThis text is written verbatim into the user\u2019s report (only {{computed_dose}} is substituted). ' +
+      'After saving, regenerate engine_data.json from Supabase, regenerate v2_engine_extract.js, then re-run the parity harness before trusting recommendations.\n\nProceed?'
+    );
+    if (!ok) { if (statusEl) statusEl.textContent = 'Cancelled \u2014 no changes saved.'; return; }
+  }
+
+  const changes = {};
+  if (markerChanged) changes.marker_key     = newMarker;
+  if (statusChanged) changes.trigger_status = newStatus;
+  if (sexChanged)    changes.applies_to_sex = newSex;
+  if (priChanged)    changes.priority       = newPri;
+  if (orderChanged)  changes.display_order  = newOrder;
+  if (titleChanged)  changes.title          = newTitle;
+  if (bodyChanged)   changes.body           = newBody;
+
+  if (statusEl) statusEl.textContent = 'Saving\u2026';
+  try {
+    const profileId = await getCurrentProfileId();
+    const { error: updErr } = await dbUpdate('engine_actions', id, Object.assign({}, changes, {
+      updated_at: new Date().toISOString(),
+      updated_by: profileId
+    }));
+    if (updErr) { if (statusEl) statusEl.textContent = 'Save failed: ' + JSON.stringify(updErr); return; }
+    const { error: logErr } = await logEngineEdit('engine_actions', id, oldRow, changes, profileId);
+    if (logErr) { if (statusEl) statusEl.textContent = 'Saved, but logging failed: ' + JSON.stringify(logErr); }
+    await loadEngineData();
+    _editingActionId = null;
+    renderAdminActions();
+    const note = document.getElementById('admin-action-save-note');
+    if (note) {
+      note.style.display = 'block';
+      note.className = 'admin-save-note admin-save-note-warn';
+      note.textContent = '\u26a0 Saved an ENGINE edit (' +
+        [markerChanged && 'marker_key', statusChanged && 'trigger_status', sexChanged && 'applies_to_sex', priChanged && 'priority', orderChanged && 'display_order', titleChanged && 'title', bodyChanged && 'body'].filter(Boolean).join(' + ') + '). ' +
+        (selectionChanged ? 'Selection/branch routing changed which (marker, status) fires the row, which sex sees it, and/or its emitted priority/order. ' : '') +
+        ((titleChanged || bodyChanged) ? 'Report text is written verbatim (only {{computed_dose}} substituted). ' : '') +
+        'On your laptop: (1) regenerate engine_data.json from Supabase (the harness reads the snapshot, NOT live data \u2014 skipping this gives a false PASS), ' +
+        '(2) regenerate v2_engine_extract.js, then (3) re-run the parity harness. A deliberate change shows as an expected diff \u2014 add a whitelist entry documenting it. ' +
+        'The change is logged and revertable from Edit history.';
+    }
+  } catch (err) {
+    if (statusEl) statusEl.textContent = 'Save error: ' + (err && err.message ? err.message : String(err));
+  }
 }
 
 // ── ENGINE-SELECTION REACHABILITY (branch-selector pass) ─────────────────
