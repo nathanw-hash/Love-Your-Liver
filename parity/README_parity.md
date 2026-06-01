@@ -15,7 +15,8 @@ deliberately nasty synthetic inputs that real users won't reliably hit.
 - `v1_engine.js` — the original engine, extracted verbatim from commit
   `70606b0~1` (last commit before the V2 switch). The reference implementation.
 - `load_v2.js` — loads `generateRecommendationsV2` out of a raw script extract
-  using Node's `vm` module (strips the trailing `</script></body></html>`).
+  using Node's `vm` module (strips a trailing `</script></body></html>` if
+  present).
 - `fixtures.js` — 83 synthetic test cases covering threshold boundaries, null
   markers, both sexes, unknown/null sex, dose math at many weights, ratio
   markers, toxics, profile flags, and realistic full panels.
@@ -26,30 +27,40 @@ deliberately nasty synthetic inputs that real users won't reliably hit.
 
 ### 1. `v2_engine_extract.js` — the current V2 engine from index.html
 
-From the repo root, in PowerShell:
+From the repo root, in PowerShell. This finds the engine's start and end *by
+content*, so it keeps working no matter how many lines get added above the
+engine (new tabs, panels, helpers in the app shell, etc.):
 
 ```powershell
-Get-Content index.html | Select-Object -Skip 2542 -First 520 | Set-Content parity\v2_engine_extract.js
+$lines = Get-Content index.html
+$start = ($lines | Select-String '^const MARKER_ORDER').LineNumber
+$end   = ($lines | Select-String '^</script>' | Select-Object -Last 1).LineNumber
+$lines[($start-1)..($end-2)] | Set-Content parity\v2_engine_extract.js
 ```
 
-`-Skip 2542` starts at line 2543 (the `const MARKER_ORDER = [` line). If the
-engine has moved since this was written, find the right start line with:
-
-```powershell
-Select-String "^const MARKER_ORDER" index.html
-```
-
-and set `-Skip` to (that line number − 1). The `-First 520` grabs through the
-end of the engine plus the trailing `</script></body></html>`, which the loader
-strips automatically. Confirm the tail looks right:
+`$start` is the `const MARKER_ORDER = [` line (top of the engine block); `$end`
+is the final `</script>` (the close of the main app script). The slice takes
+everything between — from `MARKER_ORDER` through the last engine function — and
+stops one line short of `</script>`, so the extract is clean JS with nothing for
+the loader to strip. Confirm the tail looks right:
 
 ```powershell
 Get-Content parity\v2_engine_extract.js | Select-Object -Last 5
 ```
 
-You should see the close of `processStandaloneFlags` (a `}`) followed by
-`</script>`, `</body>`, `</html>`. If the function looks cut off mid-body,
-increase `-First`.
+You should see the close of `processStandaloneFlags` (a `}`) as the last
+non-blank line, with **no** `</script>`/`</body>`/`</html>` after it. If the
+function looks cut off mid-body, the `</script>` anchor matched the wrong tag —
+check that the only two `</script>` lines are the PDF-worker config near the top
+of the file and the main script close at the very end.
+
+> **Why this method changed.** The harness used to use a fixed
+> `-Skip N -First 520` window, with `-Skip` recomputed by hand from the
+> `MARKER_ORDER` line number. That breaks whenever lines are added above the
+> engine: the start line drifts (so a stale `-Skip` grabs unrelated code) and
+> the fixed `-First` truncates the engine mid-function, surfacing as a confusing
+> `SyntaxError: Unexpected end of input`. The content-anchored slice above
+> removes the manual arithmetic entirely and survives edits above the engine.
 
 ### 2. `engine_data.json` — the seven engine_* tables
 
@@ -120,10 +131,13 @@ a real V2 regression worth investigating:
 
 ## When to re-run
 
-- After any change to the engine_* tables via the CMS (Week 2). The CMS edits
-  the data V2 reads; this harness confirms those edits didn't break parity in
-  some unexpected way.
+- After any change to the engine_* tables via the CMS. The CMS edits the data
+  V2 reads; this harness confirms those edits didn't break parity in some
+  unexpected way.
 - After any change to `generateRecommendationsV2` code.
+- After any edit to `index.html` that touches engine logic or engine data
+  (and as a cheap regression check after UI-only edits — the engine bytes
+  shouldn't move).
 - Before any deploy that touches engine logic or engine data.
 
 ## Adding a new intended divergence
