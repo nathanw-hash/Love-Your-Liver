@@ -17,6 +17,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="intake_form.js"></script>
+<script src="intake_renderer.js"></script>
 <script>
   // Configure PDF.js worker — required for getDocument to work
   if (window.pdfjsLib) {
@@ -717,6 +719,7 @@
     <div class="topbar-logo"><img src="/nd-icon.png" alt="Nutrition Detective" class="topbar-logo-img">Love Your Liver</div>
     <div class="tabs">
       <button class="tab active" onclick="showTab('profile')">Profile</button>
+      <button class="tab" onclick="showTab('intake')">Intake</button>
       <button class="tab" onclick="showTab('labs')">Enter Labs</button>
       <button class="tab" onclick="showTab('report')">Report</button>
       <button class="tab" onclick="showTab('history')">History</button>
@@ -807,6 +810,18 @@
           <button class="btn btn-accent" onclick="saveProfile()">Save profile</button>
           <button class="btn btn-outline mobile-only-signout" onclick="signOut()" style="color:var(--red);border-color:var(--red)">Sign out</button>
         </div>
+      </div>
+    </div>
+
+    <!-- INTAKE TAB -->
+    <div class="panel" id="panel-intake">
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Intake questionnaire</span>
+          <span id="intake-status" style="font-size:12px;font-weight:500;color:var(--muted,#888);"></span>
+        </div>
+        <p style="color:var(--muted,#666);font-size:14px;margin:6px 0 16px;">Your answers help Dr. Smith focus your consult. Your progress saves automatically, so you can leave and come back.</p>
+        <div id="intake-root"></div>
       </div>
     </div>
 
@@ -1084,6 +1099,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
     <span>Profile</span>
   </button>
+  <button class="bnav-tab" data-tab="intake" onclick="showTab('intake')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg>
+    <span>Intake</span>
+  </button>
   <button class="bnav-tab" data-tab="labs" onclick="showTab('labs')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
     <span>Enter</span>
@@ -1159,6 +1178,41 @@ async function getCurrentProfileId() {
   const row = Array.isArray(data) ? data[0] : data;
   _currentProfileId = row ? row.id : null;
   return _currentProfileId;
+}
+
+let _currentClientId = null;
+async function getCurrentClientId() {
+  if (_currentClientId) return _currentClientId;
+  const profileId = await getCurrentProfileId();
+  if (!profileId) return null;
+  const { data } = await dbSelect('clients', { profile_id: 'eq.' + profileId, limit: '1' });
+  const row = Array.isArray(data) ? data[0] : data;
+  _currentClientId = row ? row.id : null;
+  return _currentClientId;
+}
+
+let _intakeMounted = false;
+async function initIntake() {
+  if (_intakeMounted) return;
+  const root = document.getElementById('intake-root');
+  const statusEl = document.getElementById('intake-status');
+  if (!root) return;
+  const clientId = await getCurrentClientId();
+  if (!clientId) {
+    root.innerHTML = '<p style="color:var(--red,#8a1f1f)">We could not find your client record yet. Please contact your provider.</p>';
+    return;
+  }
+  _intakeMounted = true;
+  window.LYLIntakeRenderer.mount({
+    db: { select: dbSelect, insert: dbInsert, update: dbUpdate },
+    clientId: clientId,
+    mountEl: root,
+    form: window.LYL_INTAKE,
+    onStatus: function (s) {
+      if (!statusEl) return;
+      statusEl.textContent = s === 'saving' ? 'Saving...' : s === 'saved' ? 'Saved' : s === 'error' ? 'Save failed' : '';
+    }
+  });
 }
 
 async function logEngineEdit(tableName, rowId, oldRow, newValues, editorProfileId) {
@@ -1307,6 +1361,7 @@ async function signOut() {
   // Reset session flags so next sign-in re-reads their preferences
   _historyFilterLoaded = false;
   _historyFilter = 'all';
+  _currentProfileId = null; _currentClientId = null; _intakeMounted = false;
 }
 
 function showAuthError(msg, info=false) {
@@ -1359,13 +1414,14 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.bnav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
-  const tabIndex = { profile: 0, labs: 1, report: 2, history: 3 }[name];
+  const tabIndex = { profile: 0, intake: 1, labs: 2, report: 3, history: 4 }[name];
   if (tabIndex !== undefined) {
     const topTab = document.querySelectorAll('.tab')[tabIndex];
     if (topTab) topTab.classList.add('active');
   }
   const bnavBtn = document.querySelector('.bnav-tab[data-tab="' + name + '"]');
   if (bnavBtn) bnavBtn.classList.add('active');
+  if (name === 'intake' && currentUser) initIntake();
   if (name === 'history' && currentUser) { loadHistory(); loadEvents(); }
   if (name === 'report' && currentUser) {
     if (_historyContext) {
