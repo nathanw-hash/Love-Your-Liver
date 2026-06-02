@@ -104,13 +104,13 @@
         { id: 'vitals_weight', type: 'number', label: 'Current weight',
           unit: 'lbs', unitOptions: ['lbs', 'kg'] },   // mirrored to weight_lbs (kg converted)
         { id: 'vitals_pulse', type: 'number', label: 'Pulse (heart beats per minute)',
-          help: { text: 'How To Take Your Pulse', url: '' } },
+          help: { text: 'How To Take Your Pulse', url: 'https://www.drugs.com/cg/how-to-take-a-pulse.html' } },
         { id: 'vitals_respiratory_rate', type: 'number', label: 'Respiratory rate (breaths per minute)',
-          help: { text: 'How To Measure Your Respiratory Rate', url: '' } },
+          help: { text: 'How To Measure Your Respiratory Rate', url: 'https://www.beaconhealthsystem.org/library/articles/how-to-measure-your-respiratory-rate?content_id=ART-20482580' } },
         { id: 'vitals_blood_pressure', type: 'text', label: 'Blood pressure (e.g. 120/80) — or note if unable',
-          help: { text: 'How To Measure Your Blood Pressure', url: '' } },
+          help: { text: 'How To Measure Your Blood Pressure', url: 'https://www.cdc.gov/high-blood-pressure/measure/?CDC_AAref_Val=https://www.cdc.gov/bloodpressure/measure.htm' } },
         { id: 'vitals_temperature', type: 'text', label: 'Temperature — or note if unable',
-          help: { text: 'How To Take A Temperature', url: '' } }
+          help: { text: 'How To Take A Temperature', url: 'https://www.drugs.com/cg/how-to-take-a-temperature.html' } }
       ]
     },
 
