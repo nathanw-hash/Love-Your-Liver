@@ -726,6 +726,7 @@
       <button class="tab admin-only" style="display:none" onclick="showTab('admin')">Admin</button>
     </div>
     <div class="user-menu">
+      <select id="client-picker" class="provider-only" style="display:none;margin-right:10px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;max-width:200px;" onchange="onClientPick(this.value)"></select>
       <span class="user-email" id="user-email-display"></span>
       <button class="btn-signout" onclick="signOut()">Sign out</button>
     </div>
@@ -1191,6 +1192,11 @@ async function getCurrentClientId() {
   return _currentClientId;
 }
 
+let _activeLabUserId = null;
+function getActiveLabUserId() {
+  return _activeLabUserId || (currentUser ? currentUser.id : null);
+}
+
 let _intakeMounted = false;
 async function initIntake() {
   if (_intakeMounted) return;
@@ -1361,7 +1367,7 @@ async function signOut() {
   // Reset session flags so next sign-in re-reads their preferences
   _historyFilterLoaded = false;
   _historyFilter = 'all';
-  _currentProfileId = null; _currentClientId = null; _intakeMounted = false;
+  _currentProfileId = null; _currentClientId = null; _intakeMounted = false; _activeLabUserId = null;
 }
 
 function showAuthError(msg, info=false) {
@@ -1389,24 +1395,77 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let isAdminUser = false;
+let isProviderUser = false;
+let _clientPickerMap = {};
 
 async function refreshAdminStatus() {
   try {
     const { data: sessionData } = await sb.auth.getSession();
     if (!sessionData.session?.user) {
-      isAdminUser = false;
+      isAdminUser = false; isProviderUser = false;
     } else {
       const { data, error } = await sb.rpc('is_admin');
       if (error) throw error;
       isAdminUser = data === true;
+      try {
+        const { data: pd, error: pe } = await sb.rpc('is_provider');
+        if (pe) throw pe;
+        isProviderUser = pd === true;
+      } catch (perr) {
+        console.error('[admin] is_provider check failed:', perr);
+        isProviderUser = false;
+      }
     }
   } catch (err) {
     console.error('[admin] is_admin check failed:', err);
-    isAdminUser = false;
+    isAdminUser = false; isProviderUser = false;
   }
   document.querySelectorAll('.admin-only').forEach(el => {
     el.style.display = isAdminUser ? '' : 'none';
   });
+  const canPick = isAdminUser || isProviderUser;
+  document.querySelectorAll('.provider-only').forEach(el => {
+    el.style.display = canPick ? '' : 'none';
+  });
+  if (canPick) { await buildClientPicker(); }
+}
+
+async function buildClientPicker() {
+  const sel = document.getElementById('client-picker');
+  if (!sel) return;
+  const { data } = await dbSelect('clients', { order: 'last_name.asc,first_name.asc' });
+  const rows = Array.isArray(data) ? data : [];
+  _clientPickerMap = {};
+  let html = '<option value="">— Myself —</option>';
+  rows.forEach(c => {
+    _clientPickerMap[c.id] = c;
+    let name = ((c.first_name || '') + ' ' + (c.last_name || '')).trim() || c.email || c.id;
+    name = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html += '<option value="' + c.id + '">' + name + '</option>';
+  });
+  sel.innerHTML = html;
+  sel.value = '';
+}
+
+async function onClientPick(clientId) {
+  if (!clientId) {
+    _activeLabUserId = null;
+  } else {
+    const c = _clientPickerMap[clientId];
+    let uid = null;
+    if (c && c.profile_id) {
+      const { data } = await dbSelect('profiles', { id: 'eq.' + c.profile_id, limit: '1' });
+      const row = Array.isArray(data) ? data[0] : data;
+      uid = row ? row.user_id : null;
+    }
+    _activeLabUserId = uid;
+    if (!uid) { toast('That client has no login yet — a client account is needed before labs.'); }
+  }
+  await loadProfile();
+  await loadHistory();
+  await loadEvents();
+  const active = document.querySelector('.panel.active');
+  if (active && active.id === 'panel-report') await generateAndShowReport();
 }
 
 function showTab(name) {
@@ -4355,7 +4414,7 @@ function toggleFlag(el) {
 
 // â”€â”€ PROFILE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function loadProfile() {
-  const { data: profileArr } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
+  const { data: profileArr } = await dbSelect('profiles', { user_id: 'eq.' + getActiveLabUserId() });
   const data = Array.isArray(profileArr) ? profileArr[0] : profileArr;
   document.getElementById('p-name').value = data.name || '';
   document.getElementById('p-sex').value    = data.sex    || '';
@@ -4373,7 +4432,7 @@ async function saveProfile() {
   const flagVals = {};
   FLAGS.forEach(f => { flagVals[f.id] = document.getElementById(f.id)?.checked || false; });
   const payload = {
-    user_id: currentUser.id,
+    user_id: getActiveLabUserId(),
     name: document.getElementById('p-name').value,
     sex: document.getElementById('p-sex').value || null,
     weight_lbs: parseFloat(document.getElementById('p-weight').value) || null,
@@ -4461,7 +4520,7 @@ async function saveBloodTest() {
     toast('Blood test updated');
     cancelEdit();
   } else {
-    const { error } = await dbInsert('blood_tests', { user_id: currentUser.id, ...blood });
+    const { error } = await dbInsert('blood_tests', { user_id: getActiveLabUserId(), ...blood });
     if (error) { toast('Error saving blood test: ' + error.message); return; }
     toast('Blood test saved');
   }
@@ -4480,7 +4539,7 @@ async function saveHairTest() {
     toast('Hair test updated');
     cancelEdit();
   } else {
-    const { error } = await dbInsert('hair_tests', { user_id: currentUser.id, ...hair });
+    const { error } = await dbInsert('hair_tests', { user_id: getActiveLabUserId(), ...hair });
     if (error) { toast('Error saving hair test: ' + error.message); return; }
     toast('Hair test saved');
   }
@@ -4570,11 +4629,11 @@ function updateEditModeUI() {
 }
 
 async function generateAndShowReport() {
-  const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc', limit: '1' });
-  const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + currentUser.id, order: 'test_date.desc', limit: '1' });
+  const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + getActiveLabUserId(), order: 'test_date.desc', limit: '1' });
+  const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + getActiveLabUserId(), order: 'test_date.desc', limit: '1' });
   const blood = Array.isArray(bloodArr) && bloodArr[0] ? bloodArr[0] : null;
   const hair  = Array.isArray(hairArr)  && hairArr[0]  ? hairArr[0]  : null;
-  const { data: profileData } = await dbSelect('profiles', { user_id: 'eq.' + currentUser.id });
+  const { data: profileData } = await dbSelect('profiles', { user_id: 'eq.' + getActiveLabUserId() });
   const profile = Array.isArray(profileData) ? profileData[0] : profileData || {};
   const combined = combineLabs(blood, hair);
   const rec = generateRecommendationsV2(combined, profile, engineData);
@@ -4692,7 +4751,7 @@ function renderReport(labs, rec, profile, blood, hair) {
 let allEvents = [];
 
 async function loadEvents() {
-  const { data } = await dbSelect('events', { user_id: 'eq.' + currentUser.id, order: 'event_date.desc' });
+  const { data } = await dbSelect('events', { user_id: 'eq.' + getActiveLabUserId(), order: 'event_date.desc' });
   allEvents = Array.isArray(data) ? data : [];
   renderEventList();
 }
@@ -4770,7 +4829,7 @@ async function saveEvent() {
     if (error) { toast('Error updating event'); return; }
     toast('Event updated');
   } else {
-    const { error } = await dbInsert('events', { user_id: currentUser.id, ...payload });
+    const { error } = await dbInsert('events', { user_id: getActiveLabUserId(), ...payload });
     if (error) { toast('Error saving event'); return; }
     toast('Event saved');
   }
@@ -4811,8 +4870,8 @@ async function loadHistory() {
       b.style.fontWeight = isActive ? '600' : '500';
     });
   }
-  const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
-  const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + currentUser.id, order: 'test_date.desc' });
+  const { data: bloodArr } = await dbSelect('blood_tests', { user_id: 'eq.' + getActiveLabUserId(), order: 'test_date.desc' });
+  const { data: hairArr }  = await dbSelect('hair_tests',  { user_id: 'eq.' + getActiveLabUserId(), order: 'test_date.desc' });
   const bloodTests = Array.isArray(bloodArr) ? bloodArr.map(r => ({ ...r, _kind: 'blood' })) : [];
   const hairTests  = Array.isArray(hairArr)  ? hairArr.map(r  => ({ ...r, _kind: 'hair' }))  : [];
   allLabResults = [...bloodTests, ...hairTests].sort((a, b) => (a.test_date < b.test_date ? 1 : -1));
