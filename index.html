@@ -1214,6 +1214,7 @@ async function initIntake() {
     clientId: clientId,
     mountEl: root,
     form: window.LYL_INTAKE,
+    sectionIds: window.LYL_INTAKE.sections.map(s => s.id),
     onStatus: function (s) {
       if (!statusEl) return;
       statusEl.textContent = s === 'saving' ? 'Saving...' : s === 'saved' ? 'Saved' : s === 'error' ? 'Save failed' : '';
