@@ -204,8 +204,4 @@
  * 4. Email / Name are prefilled from the logged-in client's profile (editable).
  * 5. GENITOURINARY has no "None"/"Neither" option in the source form — preserved
  *    as-is (only its symptom options + Other). Flag if you want a "None" added.
- *
- * NEEDS YOUR INPUT:
- *  - The four vitals help links (pulse / respiratory rate / BP / temperature)
- *    have empty url:'' — paste the real URLs from the Google Form when handy.
  * ==========================================================================*/

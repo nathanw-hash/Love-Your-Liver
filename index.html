@@ -824,6 +824,7 @@
         </div>
         <p style="color:var(--muted,#666);font-size:14px;margin:6px 0 16px;">Your answers help Dr. Smith focus your consult. Your progress saves automatically, so you can leave and come back.</p>
         <div id="intake-root"></div>
+      <div id="intake-footer" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -1213,41 +1214,11 @@ async function getActiveClientId() {
 }
 
 let _intakeMounted = false;
-async function initIntake() {
-  if (_intakeMounted) return;
-  const root = document.getElementById('intake-root');
-  const statusEl = document.getElementById('intake-status');
-  if (!root) return;
-  const clientId = await getCurrentClientId();
-  if (!clientId) {
-    root.innerHTML = '<p style="color:var(--red,#8a1f1f)">We could not find your client record yet. Please contact your provider.</p>';
-    return;
-  }
-  _intakeMounted = true;
-  window.LYLIntakeRenderer.mount({
-    db: { select: dbSelect, insert: dbInsert, update: dbUpdate },
-    clientId: clientId,
-    mountEl: root,
-    form: window.LYL_INTAKE,
-    sectionIds: window.LYL_INTAKE.sections.map(s => s.id),
-    onStatus: function (s) {
-      if (!statusEl) return;
-      statusEl.textContent = s === 'saving' ? 'Saving...' : s === 'saved' ? 'Saved' : s === 'error' ? 'Save failed' : '';
-    }
-  });
-}
+let _intakeHandle = null;
+let _intakeCompletedId = null;
 
-async function loadClientIntake() {
-  const root = document.getElementById('clientintake-root');
-  if (!root) return;
+function intakeSubmissionHTML(sub) {
   const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const cid = await getActiveClientId();
-  if (!cid) { root.innerHTML = '<p style="color:var(--muted,#666)">No client selected.</p>'; return; }
-  root.innerHTML = '<p style="color:var(--muted,#666)">Loading...</p>';
-  const { data, error } = await dbSelect('intake_submissions', { client_id: 'eq.' + cid, order: 'created_at.desc', limit: '1' });
-  if (error) { root.innerHTML = '<p style="color:var(--red,#8a1f1f)">Could not load intake (' + esc(error.message || 'permission or network error') + ').</p>'; return; }
-  const sub = Array.isArray(data) ? data[0] : data;
-  if (!sub) { root.innerHTML = '<p style="color:var(--muted,#666)">This client has not started an intake yet.</p>'; return; }
   const answers = sub.answers || {};
   const fmt = v => { try { return new Date(v).toLocaleString(); } catch (_) { return String(v); } };
   const completed = sub.status === 'completed';
@@ -1288,7 +1259,88 @@ async function loadClientIntake() {
       html += '</div>';
     });
   }
-  root.innerHTML = html;
+  return html;
+}
+
+async function initIntake() {
+  const root = document.getElementById('intake-root');
+  const footer = document.getElementById('intake-footer');
+  const statusEl = document.getElementById('intake-status');
+  if (!root) return;
+  const clientId = await getCurrentClientId();
+  if (!clientId) {
+    root.innerHTML = '<p style="color:var(--red,#8a1f1f)">We could not find your client record yet. Please contact your provider.</p>';
+    if (footer) footer.innerHTML = '';
+    return;
+  }
+  const { data } = await dbSelect('intake_submissions', { client_id: 'eq.' + clientId, order: 'updated_at.desc', limit: '1' });
+  const latest = Array.isArray(data) ? data[0] : data;
+  if (latest && latest.status === 'completed') {
+    _intakeMounted = false;
+    _intakeCompletedId = latest.id;
+    if (statusEl) statusEl.textContent = 'Submitted';
+    root.innerHTML = '<p style="color:var(--muted,#666);font-size:14px;margin:0 0 16px;">You have submitted your intake. It is locked for your provider to review. You can re-open it if you need to make changes.</p>' + intakeSubmissionHTML(latest);
+    if (footer) footer.innerHTML = '<button class="btn btn-outline" onclick="reopenIntake()">Edit again</button>';
+    return;
+  }
+  if (_intakeMounted) return;
+  _intakeMounted = true;
+  _intakeHandle = await window.LYLIntakeRenderer.mount({
+    db: { select: dbSelect, insert: dbInsert, update: dbUpdate },
+    clientId: clientId,
+    mountEl: root,
+    form: window.LYL_INTAKE,
+    sectionIds: window.LYL_INTAKE.sections.map(s => s.id),
+    onStatus: function (s) {
+      if (!statusEl) return;
+      statusEl.textContent = s === 'saving' ? 'Saving...' : s === 'saved' ? 'Saved' : s === 'error' ? 'Save failed' : '';
+    }
+  });
+  if (footer) footer.innerHTML = '<button class="btn btn-accent" onclick="completeIntake()">Submit intake</button><span style="margin-left:10px;font-size:12px;color:var(--muted,#888);">You can keep editing until you submit.</span>';
+}
+
+async function completeIntake() {
+  if (!_intakeHandle || !_intakeHandle.submissionId) return;
+  const emailEl = document.getElementById('iq_email');
+  const cc1El = document.getElementById('iq_cc_1');
+  if ((!emailEl || !emailEl.value.trim()) || (!cc1El || !cc1El.value.trim())) {
+    toast('Please fill in your email and your first main concern before submitting.');
+    return;
+  }
+  try {
+    if (_intakeHandle.flush) await _intakeHandle.flush();
+    const { error } = await dbUpdate('intake_submissions', _intakeHandle.submissionId, { status: 'completed', completed_at: new Date().toISOString() });
+    if (error) { toast('Could not submit intake. Please try again.'); return; }
+    _intakeMounted = false;
+    _intakeHandle = null;
+    await initIntake();
+  } catch (e) {
+    toast('Could not submit intake. Please try again.');
+  }
+}
+
+async function reopenIntake() {
+  if (!_intakeCompletedId) return;
+  const { error } = await dbUpdate('intake_submissions', _intakeCompletedId, { status: 'in_progress', completed_at: null });
+  if (error) { toast('Could not re-open intake. Please try again.'); return; }
+  _intakeCompletedId = null;
+  _intakeMounted = false;
+  _intakeHandle = null;
+  await initIntake();
+}
+
+async function loadClientIntake() {
+  const root = document.getElementById('clientintake-root');
+  if (!root) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const cid = await getActiveClientId();
+  if (!cid) { root.innerHTML = '<p style="color:var(--muted,#666)">No client selected.</p>'; return; }
+  root.innerHTML = '<p style="color:var(--muted,#666)">Loading...</p>';
+  const { data, error } = await dbSelect('intake_submissions', { client_id: 'eq.' + cid, order: 'created_at.desc', limit: '1' });
+  if (error) { root.innerHTML = '<p style="color:var(--red,#8a1f1f)">Could not load intake (' + esc(error.message || 'permission or network error') + ').</p>'; return; }
+  const sub = Array.isArray(data) ? data[0] : data;
+  if (!sub) { root.innerHTML = '<p style="color:var(--muted,#666)">This client has not started an intake yet.</p>'; return; }
+root.innerHTML = intakeSubmissionHTML(sub);
 }
 
 async function logEngineEdit(tableName, rowId, oldRow, newValues, editorProfileId) {
