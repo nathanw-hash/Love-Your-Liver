@@ -724,6 +724,7 @@
       <button class="tab" onclick="showTab('report')">Report</button>
       <button class="tab" onclick="showTab('history')">History</button>
       <button class="tab admin-only" style="display:none" onclick="showTab('admin')">Admin</button>
+      <button class="tab provider-only" style="display:none" onclick="showTab('clientintake')">Client Intake</button>
     </div>
     <div class="user-menu">
       <select id="client-picker" class="provider-only" style="display:none;margin-right:10px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;max-width:200px;" onchange="onClientPick(this.value)"></select>
@@ -823,6 +824,15 @@
         </div>
         <p style="color:var(--muted,#666);font-size:14px;margin:6px 0 16px;">Your answers help Dr. Smith focus your consult. Your progress saves automatically, so you can leave and come back.</p>
         <div id="intake-root"></div>
+      </div>
+    </div>
+
+    <!-- CLIENT INTAKE (provider read-only) TAB -->
+    <div class="panel" id="panel-clientintake">
+      <div class="card">
+        <div class="card-title">Client intake (read-only)</div>
+        <p style="color:var(--muted,#666);font-size:14px;margin:6px 0 16px;">The selected client's submitted intake. Pick a client from the menu above. This view is read-only.</p>
+        <div id="clientintake-root"></div>
       </div>
     </div>
 
@@ -1197,6 +1207,11 @@ function getActiveLabUserId() {
   return _activeLabUserId || (currentUser ? currentUser.id : null);
 }
 
+let _activeClientId = null;
+async function getActiveClientId() {
+  return _activeClientId || await getCurrentClientId();
+}
+
 let _intakeMounted = false;
 async function initIntake() {
   if (_intakeMounted) return;
@@ -1220,6 +1235,60 @@ async function initIntake() {
       statusEl.textContent = s === 'saving' ? 'Saving...' : s === 'saved' ? 'Saved' : s === 'error' ? 'Save failed' : '';
     }
   });
+}
+
+async function loadClientIntake() {
+  const root = document.getElementById('clientintake-root');
+  if (!root) return;
+  const esc = str => String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const cid = await getActiveClientId();
+  if (!cid) { root.innerHTML = '<p style="color:var(--muted,#666)">No client selected.</p>'; return; }
+  root.innerHTML = '<p style="color:var(--muted,#666)">Loading...</p>';
+  const { data, error } = await dbSelect('intake_submissions', { client_id: 'eq.' + cid, order: 'created_at.desc', limit: '1' });
+  if (error) { root.innerHTML = '<p style="color:var(--red,#8a1f1f)">Could not load intake (' + esc(error.message || 'permission or network error') + ').</p>'; return; }
+  const sub = Array.isArray(data) ? data[0] : data;
+  if (!sub) { root.innerHTML = '<p style="color:var(--muted,#666)">This client has not started an intake yet.</p>'; return; }
+  const answers = sub.answers || {};
+  const fmt = v => { try { return new Date(v).toLocaleString(); } catch (_) { return String(v); } };
+  const completed = sub.status === 'completed';
+  const statusLabel = completed ? 'Completed' : 'In progress';
+  const statusColor = completed ? 'var(--accent,#2a7d4f)' : 'var(--muted,#888)';
+  const when = sub.completed_at ? ' &middot; completed ' + esc(fmt(sub.completed_at)) : (sub.started_at ? ' &middot; started ' + esc(fmt(sub.started_at)) : '');
+  let html = '<div style="margin-bottom:14px;">';
+  html += '<span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;color:#fff;background:' + statusColor + ';">' + esc(statusLabel) + '</span>';
+  html += '<span style="margin-left:10px;font-size:12px;color:var(--muted,#888);">form v' + esc(sub.form_version) + when + '</span>';
+  html += '</div>';
+  const form = window.LYL_INTAKE;
+  const seen = {};
+  (form && form.sections ? form.sections : []).forEach(sec => {
+    html += '<div class="section-title" style="margin-top:18px;">' + esc(sec.title || sec.id) + '</div>';
+    (sec.questions || []).forEach(q => {
+      seen[q.id] = true;
+      let v = answers[q.id];
+      if (q.id === 'vitals_weight' && answers.vitals_weight_unit) v = (v == null ? '' : v) + ' ' + answers.vitals_weight_unit;
+      let disp;
+      if (Array.isArray(v)) disp = v.length ? v.map(esc).join(', ') : '&mdash;';
+      else if (v == null || v === '') disp = '&mdash;';
+      else disp = esc(v);
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);">';
+      html += '<div style="font-size:12px;color:var(--muted,#888);margin-bottom:2px;">' + esc(q.label || q.id) + '</div>';
+      html += '<div style="font-size:14px;color:var(--text,#222);white-space:pre-wrap;">' + disp + '</div>';
+      html += '</div>';
+    });
+  });
+  const extras = Object.keys(answers).filter(k => !seen[k] && k !== 'vitals_weight_unit');
+  if (extras.length) {
+    html += '<div class="section-title" style="margin-top:18px;">Other answers</div>';
+    extras.forEach(k => {
+      const v = answers[k];
+      const disp = Array.isArray(v) ? v.map(esc).join(', ') : (v == null || v === '' ? '&mdash;' : esc(v));
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border,#eee);">';
+      html += '<div style="font-size:12px;color:var(--muted,#888);margin-bottom:2px;">' + esc(k) + '</div>';
+      html += '<div style="font-size:14px;color:var(--text,#222);white-space:pre-wrap;">' + disp + '</div>';
+      html += '</div>';
+    });
+  }
+  root.innerHTML = html;
 }
 
 async function logEngineEdit(tableName, rowId, oldRow, newValues, editorProfileId) {
@@ -1368,7 +1437,7 @@ async function signOut() {
   // Reset session flags so next sign-in re-reads their preferences
   _historyFilterLoaded = false;
   _historyFilter = 'all';
-  _currentProfileId = null; _currentClientId = null; _intakeMounted = false; _activeLabUserId = null;
+  _currentProfileId = null; _currentClientId = null; _intakeMounted = false; _activeLabUserId = null; _activeClientId = null;
 }
 
 function showAuthError(msg, info=false) {
@@ -1451,6 +1520,7 @@ async function buildClientPicker() {
 async function onClientPick(clientId) {
   if (!clientId) {
     _activeLabUserId = null;
+    _activeClientId = null;
   } else {
     const c = _clientPickerMap[clientId];
     let uid = null;
@@ -1460,6 +1530,7 @@ async function onClientPick(clientId) {
       uid = row ? row.user_id : null;
     }
     _activeLabUserId = uid;
+    _activeClientId = clientId;
     if (!uid) { toast('That client has no login yet — a client account is needed before labs.'); }
   }
   await loadProfile();
@@ -1467,6 +1538,7 @@ async function onClientPick(clientId) {
   await loadEvents();
   const active = document.querySelector('.panel.active');
   if (active && active.id === 'panel-report') await generateAndShowReport();
+  if (active && active.id === 'panel-clientintake') await loadClientIntake();
 }
 
 function showTab(name) {
@@ -1474,7 +1546,7 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.bnav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
-  const tabIndex = { profile: 0, intake: 1, labs: 2, report: 3, history: 4 }[name];
+  const tabIndex = { profile: 0, intake: 1, labs: 2, report: 3, history: 4, clientintake: 6 }[name];
   if (tabIndex !== undefined) {
     const topTab = document.querySelectorAll('.tab')[tabIndex];
     if (topTab) topTab.classList.add('active');
@@ -1482,6 +1554,7 @@ function showTab(name) {
   const bnavBtn = document.querySelector('.bnav-tab[data-tab="' + name + '"]');
   if (bnavBtn) bnavBtn.classList.add('active');
   if (name === 'intake' && currentUser) initIntake();
+  if (name === 'clientintake' && currentUser) loadClientIntake();
   if (name === 'history' && currentUser) { loadHistory(); loadEvents(); }
   if (name === 'report' && currentUser) {
     if (_historyContext) {
