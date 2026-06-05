@@ -997,6 +997,7 @@
         </div>
         <div id="event-form" style="display:none;background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:16px;">
           <input type="hidden" id="event-id">
+          <div id="event-onbehalf-banner" style="display:none;background:var(--accent-light);border:1px solid #a3d9be;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px;color:var(--accent);"></div>
           <div class="form-grid" style="margin-bottom:12px;">
             <div class="form-field">
               <label>Date</label>
@@ -4989,7 +4990,7 @@ function showEventForm(eventId) {
     document.getElementById('event-category').value = e.category || 'other';
     document.getElementById('event-title').value = e.title || '';
     document.getElementById('event-description').value = e.description || '';
-    deleteBtn.style.display = 'inline-block';
+    deleteBtn.style.display = (currentUser && getActiveLabUserId() === currentUser.id) ? 'inline-block' : 'none';
   } else {
     document.getElementById('event-id').value = '';
     document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
@@ -4997,6 +4998,18 @@ function showEventForm(eventId) {
     document.getElementById('event-title').value = '';
     document.getElementById('event-description').value = '';
     deleteBtn.style.display = 'none';
+  }
+  const obBanner = document.getElementById('event-onbehalf-banner');
+  if (obBanner) {
+    const labUid = getActiveLabUserId();
+    if (currentUser && labUid && labUid !== currentUser.id) {
+      const c = _clientPickerMap[_activeClientId];
+      const nm = c ? (((c.first_name || '') + ' ' + (c.last_name || '')).trim() || c.email || 'this client') : 'this client';
+      obBanner.textContent = `Adding to ${nm}'s timeline (not your own).`;
+      obBanner.style.display = 'block';
+    } else {
+      obBanner.style.display = 'none';
+    }
   }
   form.style.display = 'block';
   form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
