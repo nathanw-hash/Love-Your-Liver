@@ -723,9 +723,14 @@
       <button class="tab" onclick="showTab('labs')">Enter Labs</button>
       <button class="tab" onclick="showTab('report')">Report</button>
       <button class="tab" onclick="showTab('history')">History</button>
-      <button class="tab admin-only" style="display:none" onclick="showTab('admin')">Admin</button>
-      <button class="tab provider-only" style="display:none" onclick="showTab('clientintake')">Client Intake</button>
-      <button class="tab provider-only" style="display:none" onclick="showTab('consult')">Consult</button>
+      <div class="provider-dd provider-only" id="provider-dd" style="display:none;position:relative;">
+        <button class="tab" id="provider-tab-btn" onclick="toggleProviderMenu(event)">Provider &#9662;</button>
+        <div class="provider-menu" id="provider-menu" style="display:none;flex-direction:column;gap:2px;position:absolute;right:0;top:calc(100% + 6px);min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.14);padding:6px;z-index:1500;">
+          <button class="provider-menu-item admin-only" style="display:none;width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:7px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="providerGo('admin')">Admin</button>
+          <button class="provider-menu-item" style="width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:7px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="providerGo('clientintake')">Client Intake</button>
+          <button class="provider-menu-item" style="width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:7px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="providerGo('consult')">Consult</button>
+        </div>
+      </div>
     </div>
     <div class="user-menu">
       <select id="client-picker" class="provider-only" style="display:none;margin-right:10px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:13px;max-width:200px;" onchange="onClientPick(this.value)"></select>
@@ -1683,11 +1688,16 @@ function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.bnav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
-  const tabIndex = { profile: 0, intake: 1, labs: 2, report: 3, history: 4, clientintake: 6, consult: 7 }[name];
+  const tabIndex = { profile: 0, intake: 1, labs: 2, report: 3, history: 4 }[name];
   if (tabIndex !== undefined) {
     const topTab = document.querySelectorAll('.tab')[tabIndex];
     if (topTab) topTab.classList.add('active');
   }
+    if (name === 'admin' || name === 'clientintake' || name === 'consult') {
+    const provBtn = document.getElementById('provider-tab-btn');
+    if (provBtn) provBtn.classList.add('active');
+  }
+  closeProviderMenu();
   const bnavBtn = document.querySelector('.bnav-tab[data-tab="' + name + '"]');
   if (bnavBtn) bnavBtn.classList.add('active');
   if (name === 'intake' && currentUser) initIntake();
@@ -5937,6 +5947,31 @@ function consultBuildContext(el, labs, rec, blood, hair) {
     '<div class="card"><div class="card-title">Recommendations</div>' +
       (actionsHtml || '<p style="color:var(--text3);font-size:14px">No specific actions flagged.</p>') + '</div>' +
     dosesHtml;
+}
+
+// =============================================================================
+// Provider dropdown menu (Milestone 3 - top-nav cleanup)
+// Groups the provider tools (Admin, Client Intake, Consult) behind one
+// "Provider" trigger in the top nav. Pure UI; no engine or parity impact.
+// =============================================================================
+function toggleProviderMenu(e) {
+  if (e) e.stopPropagation();
+  const m = document.getElementById('provider-menu');
+  if (!m) return;
+  if (m.style.display !== 'none') { closeProviderMenu(); return; }
+  m.style.display = 'flex';
+  setTimeout(function () { document.addEventListener('click', closeProviderMenu); }, 0);
+}
+
+function closeProviderMenu() {
+  const m = document.getElementById('provider-menu');
+  if (m) m.style.display = 'none';
+  document.removeEventListener('click', closeProviderMenu);
+}
+
+function providerGo(name) {
+  closeProviderMenu();
+  showTab(name);
 }
 
 const MARKER_ORDER = [
