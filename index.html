@@ -725,7 +725,7 @@
       <button class="tab" onclick="showTab('history')">History</button>
       <div class="provider-dd provider-only" id="provider-dd" style="display:none;position:relative;">
         <button class="tab" id="provider-tab-btn" onclick="toggleProviderMenu(event)">Provider &#9662;</button>
-        <div class="provider-menu" id="provider-menu" style="display:none;flex-direction:column;gap:2px;position:absolute;right:0;top:calc(100% + 6px);min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.14);padding:6px;z-index:1500;">
+        <div class="provider-menu" id="provider-menu" style="display:none;flex-direction:column;gap:2px;position:fixed;min-width:170px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.14);padding:6px;z-index:1500;">
           <button class="provider-menu-item admin-only" style="display:none;width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:7px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="providerGo('admin')">Admin</button>
           <button class="provider-menu-item" style="width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:7px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="providerGo('clientintake')">Client Intake</button>
           <button class="provider-menu-item" style="width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-radius:7px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'" onclick="providerGo('consult')">Consult</button>
@@ -5960,6 +5960,12 @@ function toggleProviderMenu(e) {
   if (!m) return;
   if (m.style.display !== 'none') { closeProviderMenu(); return; }
   m.style.display = 'flex';
+  const btn = document.getElementById('provider-tab-btn');
+  if (btn) {
+    const r = btn.getBoundingClientRect();
+    m.style.top = (r.bottom + 6) + 'px';
+    m.style.left = Math.max(8, r.right - m.offsetWidth) + 'px';
+  }
   setTimeout(function () { document.addEventListener('click', closeProviderMenu); }, 0);
 }
 

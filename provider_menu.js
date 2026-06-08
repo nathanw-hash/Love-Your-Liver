@@ -9,6 +9,12 @@ function toggleProviderMenu(e) {
   if (!m) return;
   if (m.style.display !== 'none') { closeProviderMenu(); return; }
   m.style.display = 'flex';
+  const btn = document.getElementById('provider-tab-btn');
+  if (btn) {
+    const r = btn.getBoundingClientRect();
+    m.style.top = (r.bottom + 6) + 'px';
+    m.style.left = Math.max(8, r.right - m.offsetWidth) + 'px';
+  }
   setTimeout(function () { document.addEventListener('click', closeProviderMenu); }, 0);
 }
 
