@@ -1664,6 +1664,12 @@ async function buildClientPicker() {
 }
 
 async function onClientPick(clientId) {
+  const _activePanel = document.querySelector('.panel.active');
+  if (_activePanel && _activePanel.id === 'panel-consult' && !consultConfirmDiscard()) {
+    const _sel = document.getElementById('client-picker');
+    if (_sel) _sel.value = _activeClientId || '';
+    return;
+  }
   if (!clientId) {
     _activeLabUserId = null;
     _activeClientId = null;
@@ -6191,6 +6197,7 @@ function consultOpen(id) {
   const row = _consultRows.find(function (r) { return String(r.id) === String(id); });
   const ed = document.getElementById('consult-editor');
   if (!row || !ed) return;
+  if (!consultConfirmDiscard()) return;
   ed.style.display = 'block';
   if (row.status === 'final') {
     _consultOpenId = null;
@@ -6227,6 +6234,22 @@ function consultOpen(id) {
   consultClearDirty();
   ed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
+
+// =============================================================================
+// Consultation workspace - unsaved-changes guard (Milestone 3, slice 3b.1)
+// Protects an open draft with pending edits (_consultDirty) from silent loss:
+// a beforeunload prompt on reload/close/navigate-away, plus confirm() gates on
+// the in-app actions that replace the editor (switching consult rows, switching
+// client). consultConfirmDiscard() short-circuits when nothing is dirty, so the
+// prompt only ever appears with real pending edits.
+// =============================================================================
+function consultConfirmDiscard() {
+  return !_consultDirty || confirm('Discard unsaved changes to this consultation?');
+}
+
+window.addEventListener('beforeunload', function (e) {
+  if (_consultDirty) { e.preventDefault(); e.returnValue = ''; }
+});
 
 const MARKER_ORDER = [
   'serum_retinol',
