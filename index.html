@@ -1660,7 +1660,7 @@ async function buildClientPicker() {
     html += '<option value="' + c.id + '">' + name + '</option>';
   });
   sel.innerHTML = html;
-  sel.value = '';
+  sel.value = _activeClientId || '';
 }
 
 async function onClientPick(clientId) {
