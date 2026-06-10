@@ -83,6 +83,7 @@ function consultNoteHtml(row, authorName, dob) {
       ['Copper', labs.hair_copper],
       ['Zinc', labs.hair_zinc],
       ['Zn/Cu ratio', consultRatio(labs.hair_zinc, labs.hair_copper)],
+      ['Phosphorus', labs.hair_phosphorus],
       ['Selenium', labs.hair_selenium],
       ['Molybdenum', labs.hair_molybdenum]
     ]) +
